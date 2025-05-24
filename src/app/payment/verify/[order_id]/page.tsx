@@ -25,7 +25,7 @@ const VerifyPaymentPage = () => {
         if (response.ok && data.status) {
           setStatus('success');
           clearCart();
-          router.push('/successful');
+          router.push('/payment/successful');
         } else {
           setStatus('failed');
         }

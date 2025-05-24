@@ -43,11 +43,10 @@ export default function PaymentPage() {
             console.log("Redirecting to: ", `/orders/${orderId}`)
             clearCart()
             window.location.href = data.data.payment_url
-            setIsProcessing(false)
-            router.push(`/orders/${orderId}`)
           } catch (error) {
+            console.log("Error: ", error)
             setError("Failed to process payment. Please try again.")
-            setIsProcessing(false)
+            // setIsProcessing(false)
           }
         }
     
@@ -75,7 +74,7 @@ export default function PaymentPage() {
                     // Handle successful verification
                     console.log('Payment verified successfully:', data);
                     clearCart();
-                    router.push(`/orders/${params.orderId}`);
+                    router.push(`/orders/${paymentReference}`);
                 } else {
                     console.error('Payment verification failed:', data);
                 }
@@ -109,7 +108,6 @@ export default function PaymentPage() {
                             onClick={() => {
                                 setIsProcessing(true);
                                 setError('Payment processing failed');
-                                setIsProcessing(false)
                             }}
                             className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#184193] hover:bg-[#123472] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#184193]"
                         >
