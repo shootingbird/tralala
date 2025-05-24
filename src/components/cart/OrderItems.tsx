@@ -10,15 +10,8 @@ import { useCart } from '@/context/CartContext';
 import { CouponHelper } from '@/lib/coupons';
 import { useAuth } from '@/contexts/AuthContext';
 
-interface CartItem {
-    productId: string;
-    title: string;
-    price: number;
-    image: string;
-    quantity: number;
-    wattage?: string;
-    color?: string;
-}
+// Remove unused CartItem interface
+
 interface Coupon {
     code: string;
     type: 'percentage' | 'fixed';
@@ -33,7 +26,13 @@ interface OrderItemsProps {
     pickupLocation: string | null;
     deliveryFee: string;
     deliveryDuration: string; 
-    shippingDetails: any;
+    shippingDetails: {
+        address?: string;
+        firstName?: string;
+        lastName?: string;
+        phone?: string;
+        email?: string;
+    };
 }
 
 export default function OrderItems({
@@ -45,14 +44,14 @@ export default function OrderItems({
     shippingDetails
 }: OrderItemsProps) {
     const router = useRouter();
-    const { cartItems, updateQuantity, removeFromCart,clearCart } = useCart();
+    const { cartItems, updateQuantity, removeFromCart, clearCart } = useCart();
     const [promoCode, setPromoCode] = useState('');
     const [showPromoInput, setShowPromoInput] = useState(false);
     const [itemToRemove, setItemToRemove] = useState<string | null>(null);
     const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
     const [couponError, setCouponError] = useState('');
     const [availableCoupons, setAvailableCoupons] = useState<Coupon[]>([]);
-    const { user, getToken } = useAuth(); 
+    const { getToken } = useAuth(); // Remove unused user variable
     const [orderNote, setOrderNote] = useState('');
  
     const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
@@ -72,7 +71,7 @@ export default function OrderItems({
                     const coupon = JSON.parse(savedCoupon);
                     setAppliedCoupon(coupon);
                 } catch (error) {
-                    console.error('Failed to parse saved coupon');
+                    console.error('Failed to parse saved coupon: ', error);
                 }
             }
         };
@@ -105,6 +104,7 @@ export default function OrderItems({
             }
         } catch (error) {
             setCouponError('Failed to verify coupon');
+            console.group("Error: ", error)
         }
     };
 

@@ -174,6 +174,8 @@ export default function ProductsPage() {
 
             setProducts(products);
             setCategoryData(cateogry_data)
+            console.log("Category data: ", categoryData)
+
 
             const validProducts = products.filter((p: Product) => p && p.rating != null);
             const prices = validProducts.map((p: Product) => p.price);

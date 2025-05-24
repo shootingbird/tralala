@@ -58,10 +58,7 @@ export const Header = () => {
     const [activeCategory, setActiveCategory] = useState<string | null>(null);
     const [showSubcategoryModal, setShowSubcategoryModal] = useState(false);
 
-    const handleCategoryClick = (categoryId: string) => {
-        setActiveCategory(categoryId);
-        setShowSubcategoryModal(true);
-    };
+
 
     const handleBackToCategories = () => {
         setShowSubcategoryModal(false);
@@ -119,6 +116,7 @@ export const Header = () => {
 
     useEffect(() => {
         if (isMenuOpen || showSubcategories) {
+            setShowSubcategories(false)
             document.body.style.overflow = "hidden"
         } else {
             document.body.style.overflow = "unset"

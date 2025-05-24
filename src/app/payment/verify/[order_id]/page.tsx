@@ -31,6 +31,7 @@ const VerifyPaymentPage = () => {
         }
       } catch (error) {
         setStatus('failed');
+        console.error('Error verifying payment:', error);
       }
     };
 

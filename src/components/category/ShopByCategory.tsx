@@ -4,7 +4,6 @@ import { Pagination } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/pagination';
 import { useState, useEffect } from 'react';
-import Cookies from 'js-cookie';
 
 interface Category {
     id: string;

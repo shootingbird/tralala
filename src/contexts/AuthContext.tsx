@@ -29,6 +29,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [isLoading, setIsLoading] = useState(true);
 
     const fetchAndUpdateUser = async () => {
+        setIsLoading(true)
         try {
             const token = Cookies.get('token');
             if (!token) return null;
@@ -61,6 +62,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const fetchInitialUser = async ({ token }: { token: string }) => {
         try {
             if (!token) return null;
+            console.log("THIS IS THE TOKEN BEING USED: ", token)
 
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/get-user`, {
                 method: 'POST',
@@ -73,6 +75,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             console.log(token)
 
             const data = await response.json();
+            console.log("Initial user deta: ", data)
 
             if (!response.ok) {
                 throw new Error(data.error || 'Failed to fetch user');
@@ -101,7 +104,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             });
 
             const data: AuthResponse = await response.json();
-            console.log(data)
+            console.log("THIS IS DATA SENT LOGIN: ", data)
 
             if (!response.ok) {
                 throw new Error((data as { error?: string }).error || 'Login failed');
@@ -109,6 +112,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
             Cookies.set('token', data.token, { expires: 70000 });
             Cookies.set('user', JSON.stringify(data.user), { expires: 70000 });
+            console.log("THIS IS THE USER token being SET: ", data.token)
             fetchInitialUser({ token: data.token });
 
             return { success: true };

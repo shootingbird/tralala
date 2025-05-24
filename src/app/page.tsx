@@ -32,6 +32,17 @@ interface Product {
   totalSold: number;
 }
 
+type PartialProduct = Partial<Product> & {
+  productId: string;
+  title: string;
+  brand: string;
+  price: number;
+  rating: number;
+  category: string;
+  image: string;
+  images: string[];
+};
+
 export default function Home() {
   const [deals, setDeals] = useState<Product[]>([]);
   const [newArrivals, setNewArrivals] = useState<Product[]>([]);
@@ -55,7 +66,7 @@ export default function Home() {
         console.log(dealsData);
 
 
-        const mapProduct = (product: any) => ({
+        const mapProduct = (product: PartialProduct) => ({
           ...product,
           dateCreated: product.dateCreated || new Date().toISOString(),
           dateUpdated: product.dateUpdated || new Date().toISOString(),

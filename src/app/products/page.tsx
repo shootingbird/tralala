@@ -37,13 +37,7 @@ interface Product {
         percentage: number;
     };
 }
-interface Category {
-    id: string;
-    name: string;
-    slug: string;
-    description: string;
-    image_url: string;
-}
+
 export default function ProductsPage() {
     return (
         <>
@@ -61,7 +55,6 @@ function ProductList() {
     const [isLoading, setIsLoading] = useState(false);
     const [products, setProducts] = useState<Product[]>([]);
     const [productFilters, setProductFilters] = useState<FilterOption[]>([]);
-    const [categories, setCategories] = useState<Category[]>([]);
     const searchQuery = searchParams.get('q') || '';
 
     const fetchProducts = async () => {

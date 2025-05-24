@@ -40,6 +40,7 @@ export function ProfileTab({ user }: ProfileTabProps) {
     const [modalMessage, setModalMessage] = useState('');
 
     useEffect(() => {
+        console.log("USER:", user)
         setProfile({
             firstName: user.firstName,
             lastName: user.lastName,

@@ -75,6 +75,9 @@ export default function PaymentPage() {
                     console.log('Payment verified successfully:', data);
                     clearCart();
                     router.push(`/orders/${paymentReference}`);
+                    setTimeout(() => {
+                        setPaymentReference("")
+                    }, 5000)
                 } else {
                     console.error('Payment verification failed:', data);
                 }

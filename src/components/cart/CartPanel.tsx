@@ -9,9 +9,10 @@ interface CartPanelProps {
 }
 
 export const CartPanel = ({ isOpen, onClose }: CartPanelProps) => {
+    const { cartItems, removeFromCart, updateQuantity } = useCart();
+    
     if (!isOpen) return null;
 
-    const { cartItems, removeFromCart, updateQuantity } = useCart();
     console.log(cartItems);
 
     const handleQuantityChange = (productId: string, increment: boolean) => {

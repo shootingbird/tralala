@@ -12,6 +12,7 @@ import { useAuth } from '@/contexts/AuthContext';
 interface OrderItem {
     id: string;
     user_id: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any    
     cart: any;
     status: string;
     address: string;

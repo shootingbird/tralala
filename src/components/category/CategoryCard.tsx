@@ -10,7 +10,7 @@ interface CategoryCardProps {
 }
 
 export const CategoryCard = ({ name, image_url, slug, className = '', id }: CategoryCardProps) => {
-
+    console.log("Slug: ", slug)
  
     return (
         <Link href={'/products/category/' + id} className={`flex flex-col  items-center justify-center relative ${className}`}>

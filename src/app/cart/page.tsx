@@ -64,7 +64,7 @@ export default function CartPage() {
                     const coupon = JSON.parse(savedCoupon);
                     setAppliedCoupon(coupon);
                 } catch (error) {
-                    console.error('Failed to parse saved coupon');
+                    console.error('Failed to parse saved coupon: ', error);
                 }
             }
         };
@@ -99,6 +99,7 @@ export default function CartPage() {
             }
         } catch (error) {
             setCouponError('Failed to verify coupon');
+            console.log("Error: ", error)
         }
     };
 
@@ -117,6 +118,7 @@ export default function CartPage() {
 
     const handleCheckout = () => {
         if (isAuthenticated) {
+            setIsAuthenticated(true)
             setShowAuthModal(true);
         } else {
             setCheckoutType(null);

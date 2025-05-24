@@ -45,10 +45,8 @@ interface Product {
 export default function ProductDetailPage() {
     const params = useParams();
     const productId = params.id as string;
-    const [selectedVariant, setSelectedVariant] = useState('500');
     const [isWishlisted, setIsWishlisted] = useState(false);
     const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
-    const [quantity, setQuantity] = useState(1);
     const [isAdded, setIsAdded] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [product, setProducts] = useState<Product>();
@@ -142,8 +140,7 @@ export default function ProductDetailPage() {
             setIsLoading(false);
         }
     };
-    const { addToCart, isInCart, removeFromCart, updateQuantity: updateQuantity, cartItems } = useCart();
-
+    const { addToCart, removeFromCart, updateQuantity, cartItems } = useCart();
 
     const [cartQuantity, setCartQuantity] = useState(1);
     console.log(cartItems)

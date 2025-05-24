@@ -24,6 +24,7 @@ interface OrderProduct {
     image?: string;
     price: number;
     quantity: number;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     product?: any; // From API response
 }
 
