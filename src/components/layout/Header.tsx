@@ -158,7 +158,7 @@ export const Header = () => {
     return (
         <header className="bg-white  top-0 w-full z-10 shadow-sm">
             <div className="hidden md:block">
-                <div className="container mx-auto px-4 py-4">
+                <div className="container mx-auto  px-4 pt-4 pb-1">
                     <div className="flex items-center justify-between">
                         <Link href="/" className="flex-shrink-0">
                             <Image src="/logo.png" alt="Steadfast" width={150} height={40} />
@@ -242,12 +242,12 @@ export const Header = () => {
                         </div>
                     </div>
 
-                    <div className="flex relative flex-col items-center justify-center gap-8 mt-4">
+                    <div className="flex relative flex-col items-center justify-center gap-8  mt-4">
                         <div className="flex flex-row items-center justify-center gap-8 mt-4">
                             <div className="relative group">
                                 <button
                                     onClick={() => setShowCategories(!showCategories)}
-                                    className="flex items-center gap-2 text-sm py-3 px-4 border border-[#184193] rounded-[2rem]"
+                                    className="flex items-center gap-2 text-sm py-3 px-4 bg-[#184193] text-white font-medium rounded-[.5rem]"
                                 >
                                     All Categories
                                     <svg
