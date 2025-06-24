@@ -53,7 +53,7 @@ export const Hero = () => {
     }, [])
 
     return (
-        <section className="relative">
+        <section className="relative ">
             <div className="absolute inset-0">
                 <Image
                     src="/hero.png"
