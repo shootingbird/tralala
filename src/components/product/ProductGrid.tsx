@@ -96,7 +96,10 @@ export const ProductGrid = ({
         if (!infiniteScroll) return;
 
         const handleScroll = () => {
-            if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 100) {
+            const scrollPosition = window.innerHeight + window.scrollY;
+            const scrollThreshold = document.documentElement.scrollHeight * 0.8;
+            
+            if (scrollPosition >= scrollThreshold) {
                 loadMore();
             }
         };
@@ -233,7 +236,8 @@ export const ProductGrid = ({
                                     )}
                                 </div>
                                 {loadingMore && (
-                                    <div className="mt-8 flex justify-center">
+                                    <div className="mt-8 flex flex-col items-center justify-center gap-2">
+                                        <p className="text-gray-600">Fetching...</p>
                                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
                                     </div>
                                 )}
