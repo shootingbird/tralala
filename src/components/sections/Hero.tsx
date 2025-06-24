@@ -65,7 +65,7 @@ export const Hero = () => {
                 />
             </div>
 
-            <div className="relative flex flex-col lg:flex-row min-h-[200px]">
+            <div className="relative flex flex-col lg:flex-row min-h-[20vh]">
                 <div className="hidden lg:block w-auto px-[3rem] bg-[#F8F3F2] p-4">
                     {isLoading ? (
                         <div className="space-y-3">
@@ -88,9 +88,9 @@ export const Hero = () => {
                     )}
                 </div>
 
-                <div className="flex-1 flex items-center px-8 py-8">
+                <div className="flex-1 flex items-center px-8 py-4">
                     <div className="text-left">
-                        <h1 className="text-xl lg:text-3xl font-bold text-white mb-4">
+                        <h1 className="text-xl lg:text-3xl font-bold text-white mb-2">
                             Free Delivery for Purchase
                             <br />
                             over NGN100,000
