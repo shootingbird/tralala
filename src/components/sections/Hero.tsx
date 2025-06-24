@@ -65,8 +65,8 @@ export const Hero = () => {
                 />
             </div>
 
-            <div className="relative flex min-h-[200px]">
-                <div className="w-auto px-[3rem] bg-[#F8F3F2] p-4">
+            <div className="relative flex flex-col lg:flex-row min-h-[200px]">
+                <div className="hidden lg:block w-auto px-[3rem] bg-[#F8F3F2] p-4">
                     {isLoading ? (
                         <div className="space-y-3">
                             {Array.from({ length: 4 }).map((_, index) => (
