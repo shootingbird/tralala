@@ -41,9 +41,9 @@ export default function Home() {
     const fetchProducts = async () => {
       try {
         const [dealsResponse, newArrivalsResponse, exploreResponse] = await Promise.all([
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products?filter=deals&max=10`),
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products?filter=new&max=8`),
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products?max=8`)
+          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products?filter=deals&max=20`),
+          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products?filter=new&max=20`),
+          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products?max=20`)
         ]);
 
 
@@ -113,7 +113,16 @@ export default function Home() {
         viewAllLink="/products/new"
         products={newArrivals}
         enableSales={false}
+        enablePagination={false}
+        infiniteScroll={false}
       />
+      <ProductGrid
+        title="Top Picks"
+        subtitle=""
+        viewAllLink="/products"
+        products={newArrivals}
+      />
+
       <WhyShopWithUs />
       <ProductGrid
         title="Explore Products"
