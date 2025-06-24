@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { X } from 'lucide-react';
 import { ProductCard } from './ProductCard';
 import { ProductFilter, FilterOption } from './ProductFilter';
@@ -38,7 +38,8 @@ interface ProductGridProps {
         label: string;
         href?: string;
     }[];
-
+    infiniteScroll?: boolean;
+    enablePagination?: boolean;
 }
 
 export const ProductGrid = ({
@@ -51,23 +52,58 @@ export const ProductGrid = ({
     breadCrumb,
     onFilterChange,
     isLoading = true,
-    maxRecord = 12
+    maxRecord = 12,
+    infiniteScroll = false,
+    enablePagination = true
 }: ProductGridProps) => {
     const [activeFilters, setActiveFilters] = useState<Record<string, FilterValue>>({});
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const [loading, setIsLoading] = useState(isLoading);
+    const [displayedProducts, setDisplayedProducts] = useState<typeof products>([]);
+    const [currentIndex, setCurrentIndex] = useState(0);
+    const [hasMore, setHasMore] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
 
     const totalPages = Math.ceil(products.length / maxRecord);
-    const startIndex = (currentPage - 1) * maxRecord;
-    const endIndex = startIndex + maxRecord;
- 
-    const currentProducts = products.slice(startIndex, endIndex);
-     useEffect(() => {
+
+    useEffect(() => {
         if (products && products.length > 0) {
             setIsLoading(false);
+            setDisplayedProducts(products.slice(0, maxRecord));
+            setCurrentIndex(maxRecord);
+            setHasMore(products.length > maxRecord);
         }
-    }, [products])
+    }, [products, maxRecord]);
+
+    const loadMore = useCallback(async () => {
+        if (!hasMore || loadingMore || !infiniteScroll) return;
+
+        setLoadingMore(true);
+        // Simulate API fetch delay
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        const nextIndex = currentIndex + maxRecord;
+        const newProducts = products.slice(currentIndex, nextIndex);
+        
+        setDisplayedProducts(prev => [...prev, ...newProducts]);
+        setCurrentIndex(nextIndex);
+        setHasMore(nextIndex < products.length);
+        setLoadingMore(false);
+    }, [currentIndex, hasMore, loadingMore, products, maxRecord, infiniteScroll]);
+
+    useEffect(() => {
+        if (!infiniteScroll) return;
+
+        const handleScroll = () => {
+            if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 100) {
+                loadMore();
+            }
+        };
+
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, [loadMore, infiniteScroll]);
 
     const handleFilterChange = (filterId: string, value: FilterValue) => {
         const newFilters = {
@@ -77,8 +113,6 @@ export const ProductGrid = ({
         setActiveFilters(newFilters);
         onFilterChange?.(newFilters);
     };
-
- 
 
     return (
         <section className="space-y-4 pb-[2rem] md:py-[2rem] relative">
@@ -173,38 +207,44 @@ export const ProductGrid = ({
                         {products.length === 0 && !isLoading ? (
                             <NoProducts />
                         ) : (
-                            <div className={`grid grid-cols-2 ${filters && isFilterOpen ? 'md:grid-cols-3' : 'md:grid-cols-6'} gap-3 space-y-2 md:space-y-0 md:gap-6`}>
-                                {loading ? (
-                                    Array.from({ length: 12 }).map((_, index) => (
-                                        <div key={index} className="animate-pulse bg-gray-200 rounded-[1rem] h-[20rem] md:h-[25rem]"></div>
-                                    ))
-                                ) : (
-                                    currentProducts.map((product, index) => (
-                                        <ProductCard
-                                            key={index}
-                                            enableSales={enableSales}
-                                            productId={product.productId}
-                                            title={product.title}
-                                            brand={product.brand}
-                                            category={product.category}
-                                            price={product.price}
-                                            rating={product.rating}
-                                            image={product.image}
-                                            images={product.images}
-                                            isNew={product.isNew}
-                                            discount={product.discount}
-                                        />
-                                    ))
+                            <>
+                                <div className={`grid grid-cols-2 ${filters && isFilterOpen ? 'md:grid-cols-3' : 'md:grid-cols-6'} gap-3 space-y-2 md:space-y-0 md:gap-6`}>
+                                    {loading ? (
+                                        Array.from({ length: 12 }).map((_, index) => (
+                                            <div key={index} className="animate-pulse bg-gray-200 rounded-[1rem] h-[20rem] md:h-[25rem]"></div>
+                                        ))
+                                    ) : (
+                                        displayedProducts.map((product, index) => (
+                                            <ProductCard
+                                                key={index}
+                                                enableSales={enableSales}
+                                                productId={product.productId}
+                                                title={product.title}
+                                                brand={product.brand}
+                                                category={product.category}
+                                                price={product.price}
+                                                rating={product.rating}
+                                                image={product.image}
+                                                images={product.images}
+                                                isNew={product.isNew}
+                                                discount={product.discount}
+                                            />
+                                        ))
+                                    )}
+                                </div>
+                                {loadingMore && (
+                                    <div className="mt-8 flex justify-center">
+                                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                                    </div>
                                 )}
-                            </div>
-                        )}
-
-                        {totalPages > 1 && (
-                            <Pagination
-                                currentPage={currentPage}
-                                totalPages={totalPages}
-                                onPageChange={setCurrentPage}
-                            />
+                                {!infiniteScroll && enablePagination && totalPages > 1 && (
+                                    <Pagination
+                                        currentPage={currentPage}
+                                        totalPages={totalPages}
+                                        onPageChange={setCurrentPage}
+                                    />
+                                )}
+                            </>
                         )}
                     </div>
                 </div>

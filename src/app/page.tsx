@@ -43,8 +43,8 @@ export default function Home() {
         const [dealsResponse, newArrivalsResponse, exploreResponse] = await Promise.all([
           fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products?filter=deals&max=20`),
           fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products?filter=new&max=20`),
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products?max=20`)
-        ]);
+          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products?max=200`)
+        ]); 
 
 
         const dealsData = await dealsResponse.json();
@@ -121,6 +121,8 @@ export default function Home() {
         subtitle=""
         viewAllLink="/products"
         products={newArrivals}
+        enablePagination={false}
+        infiniteScroll={false}
       />
 
       <WhyShopWithUs />
@@ -129,6 +131,8 @@ export default function Home() {
         subtitle=""
         viewAllLink="/products"
         products={exploreProducts}
+        enablePagination={false}
+        infiniteScroll={true}
       />
 
       <CTASection />
