@@ -23,6 +23,7 @@ export const Hero = () => {
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
+        console.log("TM")
         const cachedCategories = localStorage.getItem("categories")
         if (cachedCategories) {
             const parsedCategories = JSON.parse(cachedCategories)
