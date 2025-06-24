@@ -10,20 +10,17 @@ interface CategoryCardProps {
 }
 
 export const CategoryCard = ({ name, image_url, slug, className = '', id }: CategoryCardProps) => {
-
- 
     return (
-        <Link href={'/products/category/' + id} className={`flex flex-col  items-center justify-center relative ${className}`}>
-            <div className="relative w-[10rem] h-[10rem] overflow-hidden aspect-square rounded-full border border-[#00000020] mb-3">
+        <Link href={'/products/category/' + id} className={`flex flex-col items-center justify-center relative ${className}`}>
+            <div className="relative w-full aspect-square rounded-[2rem] overflow-hidden mb-3 bg-[#F5F5F5]">
                 <Image
                     src={image_url}
                     alt={name}
-                    width={500}
-                    height={500}
-                    className="object-cover transition-transform  aspect-square duration-300 group-hover:scale-110"
+                    fill
+                    className="object-cover transition-transform duration-300 hover:scale-105"
                 />
             </div>
-            <h3 className="text-sm font-medium line-clamp-1">{name}</h3>
+            <h3 className="text-sm text-center font-medium text-gray-800">{name}</h3>
         </Link>
     );
 };

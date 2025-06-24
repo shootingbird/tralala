@@ -106,8 +106,8 @@ export default function Home() {
       <TopBanner theme={'dark'} />
       <Header />
       <Hero />
-      <DealOfMonth products={deals} />
       <ShopByCategory />
+      <DealOfMonth products={deals} />
       <ProductGrid
         title="Explore Products"
         subtitle=""
