@@ -45,27 +45,27 @@ const ShopByCategory = () => {
     }, []);
 
     return (
-        <section className="py-12 bg-white">
+        <section className="py-8 bg-white">
             <div className="container mx-auto px-4">
-                <h2 className="text-2xl font-bold text-center mb-8">Shop by Categories</h2>
+                <h2 className="text-xl font-bold text-start mb-6">Shop by Categories</h2>
                 <div className="">
                     <div className="md:hidden">
                         <Swiper
                             modules={[Pagination]}
-                            spaceBetween={16}
-                            slidesPerView={2.2}
+                            spaceBetween={12}
+                            slidesPerView={2.5}
                             pagination={{
                                 clickable: true,
                             }}
-                            className="pb-10">
+                            className="pb-8">
                             {isLoading ? (
                                 Array.from({ length: 6 }).map((_, index) => (
                                     <SwiperSlide key={index}>
-                                        <div className="animate-pulse bg-gray-200 rounded-lg aspect-square"></div>
-                                        <div className="animate-pulse bg-gray-200 h-4 w-20 mx-auto mt-3 rounded"></div>
+                                        <div className="animate-pulse bg-gray-200 rounded-[2rem] w-[120px] h-[120px]"></div>
+                                        <div className="animate-pulse bg-gray-200 h-3 w-16 mx-auto mt-2 rounded"></div>
                                     </SwiperSlide>
-                                ))
-                            ) : (
+                                )))
+                            : (
                                 categories.slice(0, 7).map((category, index) => (
                                     <SwiperSlide key={index}>
                                         <CategoryCard {...category} />
@@ -75,12 +75,12 @@ const ShopByCategory = () => {
                         </Swiper>
                     </div>
 
-                    <div className="hidden md:grid grid-cols-3 lg:grid-cols-7 gap-6">
+                    <div className="hidden md:grid grid-cols-4 lg:grid-cols-7 gap-4">
                         {isLoading ? (
                             Array.from({ length: 7 }).map((_, index) => (
-                                <div key={index} className="space-y-3">
-                                    <div className="animate-pulse bg-gray-200 rounded-lg aspect-square"></div>
-                                    <div className="animate-pulse bg-gray-200 h-4 w-20 mx-auto rounded"></div>
+                                <div key={index} className="space-y-2">
+                                    <div className="animate-pulse bg-gray-200 rounded-[2rem] w-[120px] h-[120px] mx-auto"></div>
+                                    <div className="animate-pulse bg-gray-200 h-3 w-16 mx-auto rounded"></div>
                                 </div>
                             ))
                         ) : (

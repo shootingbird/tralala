@@ -107,14 +107,6 @@ export default function Home() {
       <Header />
       <Hero />
       <ShopByCategory />
-      <DealOfMonth products={deals} />
-      <ProductGrid
-        title="Explore Products"
-        subtitle=""
-        viewAllLink="/products"
-        products={exploreProducts}
-      />
-      <WhyShopWithUs />
       <ProductGrid
         title="New Arrivals"
         subtitle=""
@@ -122,6 +114,14 @@ export default function Home() {
         products={newArrivals}
         enableSales={false}
       />
+      <WhyShopWithUs />
+      <ProductGrid
+        title="Explore Products"
+        subtitle=""
+        viewAllLink="/products"
+        products={exploreProducts}
+      />
+
       <CTASection />
       <Footer />
       <InstallPWAPrompt />
