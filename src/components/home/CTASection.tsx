@@ -3,7 +3,7 @@ import { CTAButton } from '@/components/ui/CTAButton';
 
 export const CTASection = () => {
     return (
-        <section className="relative w-full min-h-[600px] md:h-[500px]">
+        <section className="relative w-full min-h-[600px] md:h-[500px] hidden lg:block">
             <Image
                 src="/cta.png"
                 alt="Luxury Chandelier"
