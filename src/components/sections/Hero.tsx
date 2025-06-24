@@ -54,7 +54,7 @@ export const Hero = () => {
     }, [])
 
     return (
-        <section className="relative ">
+        <section className="relative h-[20vh] sm:h-[20vh] lg:h-[23vh]">
             <div className="absolute inset-0">
                 <Image
                     src="/hero.png"
@@ -90,7 +90,7 @@ export const Hero = () => {
 
                 <div className="flex-1 flex items-center px-8 py-8">
                     <div className="text-left">
-                        <h1 className="text-3xl font-bold text-white mb-4">
+                        <h1 className="text-xl lg:text-3xl font-bold text-white mb-4">
                             Free Delivery for Purchase
                             <br />
                             over NGN100,000
