@@ -54,7 +54,7 @@ export const Hero = () => {
     }, [])
 
     return (
-        <section className="relative h-[20vh] sm:h-[20vh] lg:h-[23vh]">
+        <section className="relative h-[20vh] sm:h-[25vh] ">
             <div className="absolute inset-0">
                 <Image
                     src="/hero.png"
@@ -65,7 +65,7 @@ export const Hero = () => {
                 />
             </div>
 
-            <div className="relative flex flex-col lg:flex-row min-h-[20vh]">
+            <div className="relative flex flex-col lg:flex-row  h-full   min-h-[20vh]">
                 <div className="hidden lg:block w-auto px-[3rem] bg-[#F8F3F2] p-4">
                     {isLoading ? (
                         <div className="space-y-3">

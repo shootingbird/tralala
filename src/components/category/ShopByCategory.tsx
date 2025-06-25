@@ -49,7 +49,7 @@ const ShopByCategory = () => {
             <div className="container mx-auto px-4">
                 <h2 className="text-xl font-bold text-start mb-6">Shop by Categories</h2>
                 <div className="">
-                    <div className="md:hidden">
+                    <div className="md:hidden ">
                         <Swiper
                             modules={[Pagination]}
                             spaceBetween={12}

@@ -43,7 +43,7 @@ export default function Home() {
         const [dealsResponse, newArrivalsResponse, exploreResponse] = await Promise.all([
           fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products?filter=deals&max=20`),
           fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products?filter=new&max=20`),
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products?max=60`)
+          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products?max=200`)
         ]); 
 
 
