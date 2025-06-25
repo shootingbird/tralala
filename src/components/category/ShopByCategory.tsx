@@ -45,7 +45,7 @@ const ShopByCategory = () => {
     }, []);
 
     return (
-        <section className="py-8 bg-white">
+        <section className="pt-8  ">
             <div className="container mx-auto px-4">
                 <h2 className="text-xl font-bold text-start mb-6">Shop by Categories</h2>
                 <div className="">
@@ -56,8 +56,12 @@ const ShopByCategory = () => {
                             slidesPerView={2.5}
                             pagination={{
                                 clickable: true,
+                                dynamicBullets: true,
+                                dynamicMainBullets: 3,
+                                
                             }}
-                            className="pb-8">
+                            
+                            className="min-h-[13rem]">
                             {isLoading ? (
                                 Array.from({ length: 6 }).map((_, index) => (
                                     <SwiperSlide key={index}>

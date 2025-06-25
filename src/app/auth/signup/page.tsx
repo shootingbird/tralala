@@ -143,7 +143,7 @@ export default function SignupPage() {
                     name='phoneNumber'
                     required
                 />
-                <div className="space-y-4">
+                <div className="space-y-6">
                     <Input
                         label="Password"
                         type="password"

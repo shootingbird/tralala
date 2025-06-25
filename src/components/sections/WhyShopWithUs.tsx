@@ -30,7 +30,7 @@ const features = [
 
 export const WhyShopWithUs = () => {
     return (
-        <section className="py-5 md:py-[4rem] bg-[#F8F3F2]">
+        <section className="py-5 md:py-[4rem] md:bg-[#F8F3F2]">
             <div className="container mx-auto px-4">
 
                 <h2 className="text-xl font-semibold text-start mb-8"> Why Shop With Us</h2>
@@ -41,28 +41,28 @@ export const WhyShopWithUs = () => {
                         <Swiper
                             modules={[Pagination]}
                             spaceBetween={10}
-                            slidesPerView={2}
+                            slidesPerView={1.7}
                             pagination={{
                                 clickable: true,
                                 dynamicBullets: true,
                             }}
-                            className="mySwiper pb-10"
+                            className="mySwiper h-full pb-10"
                         >
                             {features.map((feature, index) => (
-                                <SwiperSlide key={index}>
+                                <SwiperSlide key={index} className="">
                                     <RippleEffect
                                         key={index}
-                                        className="   bg-[#F5F5F5] rounded-[1rem] p-4 text-center md:shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.3)] transition-transform hover:scale-105"
+                                        className="bg-[#FCF9F9] h-[200px] rounded-[1rem] p-5 text-center md:shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.3)] transition-transform hover:scale-105 grid justify-between flex-col"
                                     >
-                                        <div className="flex mb-2">
-                                            <div className="flex flex-col p-2 items-center justify-center rounded-lg bg-[#184193]">
+                                        <div className="flex flex-col">
+                                            <div className="flex mb-2">
                                                 <feature.icon className="w-10 h-10 text-[#FFFFFF]" />
                                             </div>
+                                            <h3 className="text-[1rem] md:text-lg font-bold text-black text-start my-2 whitespace-pre-line">
+                                                {feature.title.split(' ').join('\n')}
+                                            </h3>
                                         </div>
-                                        <h3 className="text-lg font-bold text-black text-start my-2">
-                                            {feature.title}
-                                        </h3>
-                                        <p className="text-black/80 text-start text-sm">
+                                        <p className="text-black  text-start text-xs md:text-sm flex-1">
                                             {feature.description}
                                         </p>
                                     </RippleEffect>
@@ -71,12 +71,11 @@ export const WhyShopWithUs = () => {
                         </Swiper>
                     </div>
 
-
                     <div className="hidden md:grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                         {features.map((feature, index) => (
                             <RippleEffect
                                 key={index}
-                                className="bg-[#FAFAFA] rounded-[1rem] p-6 text-center shadow-[-0px_-0px_10px_rgba(0,0,0,0.1),4px_4px_10px_rgba(0,0,0,0.2)] transition-transform hover:scale-105"
+                                className="bg-[#FAFAFA] rounded-[1rem] p-6 text-center shadow-[-0px_-0px_10px_rgba(0,0,0,0.1),4px_4px_10px_rgba(0,0,0,0.2)] transition-transform hover:scale-105 h-[220px] flex flex-col"
                             >
                                 <div className="flex mb-5">
                                     <div className="flex flex-col p-3 items-center justify-center rounded-lg bg-[#184193]">
@@ -86,7 +85,7 @@ export const WhyShopWithUs = () => {
                                 <h3 className="text-lg font-semibold text-black text-start my-2">
                                     {feature.title}
                                 </h3>
-                                <p className="text-black/80 text-start text-sm">
+                                <p className="text-black/80 text-start text-sm flex-1">
                                     {feature.description}
                                 </p>
                             </RippleEffect>
