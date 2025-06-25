@@ -27,8 +27,8 @@ const SearchComponent = () => {
     }
 
     return (
-        <form onSubmit={handleSearch} className="relative flex">
-            <div className="absolute flex flex-col h-full px-5 items-center justify-center">
+        <form onSubmit={handleSearch} className="relative  flex">
+            <div className="absolute hidden md:flex flex-col h-full px-5 items-center justify-center">
                 <SearchIcon className="w-4 h-4" />
             </div>
             <input
@@ -36,13 +36,19 @@ const SearchComponent = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search product, category"
-                className="w-full pl-13 pr-24 py-2.5 border bg-[#F0F0F0] text-black placeholder:text-black border-gray-200 rounded-[2rem] focus:outline-none text-sm"
+                className="w-full pl-5 md:pl-13 pr-24 py-2.5 border bg-[#F0F0F0] text-black placeholder:text-black border-gray-200 rounded-[2rem] focus:outline-none text-sm"
             />
             <button
                 type="submit"
-                className="absolute right-0 top-0 h-full px-6 bg-[#184193] text-white rounded-r-[2rem] text-sm font-medium"
+                className="hidden md:block  flex-col items-center justify-center absolute right-0 top-0 h-full px-6 bg-[#184193] text-white rounded-r-[2rem] text-sm font-medium"
             >
                 Search
+            </button>
+            <button
+                type="submit"
+                className="absolute  md:hidden right-0 top-0 h-full px-6  text-white rounded-r-[2rem] text-sm font-medium"
+            >
+                <SearchIcon className="w-5 h-5 text-[#323232]"  />
             </button>
         </form>
     )
@@ -78,7 +84,7 @@ export const Header = () => {
             name: string
             slug: string
         }[]
-        subcategories:[]
+        subcategories: []
     }
 
     const [categories, setCategories] = useState<Category[]>([])
@@ -89,7 +95,7 @@ export const Header = () => {
         if (cachedCategories) {
             const parsedCategories = JSON.parse(cachedCategories)
             setCategories(parsedCategories)
-            setIsLoading(false) 
+            setIsLoading(false)
         }
 
         const fetchCategories = async () => {
@@ -158,7 +164,7 @@ export const Header = () => {
     return (
         <header className="bg-white  top-0 w-full z-10 shadow-sm">
             <div className="hidden md:block">
-                <div className="container mx-auto  px-4 pt-4 ">
+                <div className="container mx-auto  px-4 pt-4  ">
                     <div className="flex items-center justify-between">
                         <Link href="/" className="flex-shrink-0">
                             <Image src="/logo.png" alt="Steadfast" width={150} height={40} />
@@ -324,7 +330,7 @@ export const Header = () => {
                                                                 className="text-[.8rem] text-[#2f2e2e] font-medium line-clamp-1 "
                                                                 onClick={() => setShowCategories(false)}
                                                             >
-                                                                {product}  
+                                                                {product}
                                                             </Link>
                                                         ))}
                                                     </div>
@@ -339,7 +345,7 @@ export const Header = () => {
             </div>
 
             <div className="md:hidden">
-                <div className="flex items-center justify-between px-4 py-3">
+                <div className="flex items-center justify-between px-4 pt-3 pb-1 md:py-3">
                     <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="p-2">
                         <Menu size={24} />
                     </button>
@@ -359,7 +365,7 @@ export const Header = () => {
                     </div>
                 </div>
 
-                <div className="px-4 pb-3">
+                <div className="px-4 pb-2 border-t border-[#00000020] pt-2 md:pt-0">
                     <Suspense fallback={<div className="w-full h-10 bg-gray-100 animate-pulse rounded-full" />}>
                         <SearchComponent />
                     </Suspense>
@@ -404,7 +410,7 @@ export const Header = () => {
                         </div>
                     </div>
                 )}
- 
+
                 {showSubcategoryModal && activeCategory && (
                     <div className="fixed inset-0 bg-white z-[60] flex flex-col">
                         <div className="flex justify-between items-center p-4 border-b  border-[#60606020]">
