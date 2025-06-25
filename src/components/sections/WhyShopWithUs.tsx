@@ -30,10 +30,10 @@ const features = [
 
 export const WhyShopWithUs = () => {
     return (
-        <section className="py-5 md:py-[4rem] md:bg-[#F8F3F2]">
+        <section className=" md:py-[4rem] md:bg-[#F8F3F2]">
             <div className="container mx-auto px-4">
 
-                <h2 className="text-xl font-semibold text-start mb-8"> Why Shop With Us</h2>
+                <h2 className="text-lg font-semibold text-start mb-5"> Why Shop With Us</h2>
 
 
                 <div className="">
