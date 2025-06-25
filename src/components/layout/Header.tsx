@@ -158,7 +158,7 @@ export const Header = () => {
     return (
         <header className="bg-white  top-0 w-full z-10 shadow-sm">
             <div className="hidden md:block">
-                <div className="container mx-auto  px-4 pt-4 pb-1">
+                <div className="container mx-auto  px-4 pt-4 ">
                     <div className="flex items-center justify-between">
                         <Link href="/" className="flex-shrink-0">
                             <Image src="/logo.png" alt="Steadfast" width={150} height={40} />

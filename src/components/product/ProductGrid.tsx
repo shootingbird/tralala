@@ -6,6 +6,10 @@ import { ProductFilter, FilterOption } from './ProductFilter';
 import { Pagination } from '@/components/common/Pagination';
 import { Breadcrumb } from '../ui/Breadcrumb';
 import { NoProducts } from '../ui/NoProducts';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Pagination as SwiperPagination } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/pagination';
 
 type FilterValue = string[] | number[] | { min?: number; max?: number };
 
@@ -40,6 +44,7 @@ interface ProductGridProps {
     }[];
     infiniteScroll?: boolean;
     enablePagination?: boolean;
+    scrollonmobile?: boolean;
 }
 
 export const ProductGrid = ({
@@ -54,7 +59,8 @@ export const ProductGrid = ({
     isLoading = true,
     maxRecord = 12,
     infiniteScroll = false,
-    enablePagination = true
+    enablePagination = true,
+    scrollonmobile = false
 }: ProductGridProps) => {
     const [activeFilters, setActiveFilters] = useState<Record<string, FilterValue>>({});
     const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -85,7 +91,7 @@ export const ProductGrid = ({
 
         const nextIndex = currentIndex + maxRecord;
         const newProducts = products.slice(currentIndex, nextIndex);
-        
+
         setDisplayedProducts(prev => [...prev, ...newProducts]);
         setCurrentIndex(nextIndex);
         setHasMore(nextIndex < products.length);
@@ -98,7 +104,7 @@ export const ProductGrid = ({
         const handleScroll = () => {
             const scrollPosition = window.innerHeight + window.scrollY;
             const scrollThreshold = document.documentElement.scrollHeight * 0.8;
-            
+
             if (scrollPosition >= scrollThreshold) {
                 loadMore();
             }
@@ -206,12 +212,42 @@ export const ProductGrid = ({
                         </div>
                     )}
 
-                    <div className="flex-1">
+                    <div className="block w-full flex-1">
                         {products.length === 0 && !isLoading ? (
                             <NoProducts />
                         ) : (
                             <>
-                                <div className={`grid grid-cols-2 ${filters && isFilterOpen ? 'md:grid-cols-3' : 'md:grid-cols-6'} gap-3 space-y-2 md:space-y-0 md:gap-6`}>
+                                {scrollonmobile && (
+
+                                    <div className="md:hidden">
+                                        <Swiper
+                                            modules={[SwiperPagination]}
+                                            spaceBetween={20}
+                                            slidesPerView={2.5}
+                                            pagination={{
+                                                clickable: true,
+                                                dynamicBullets: true,
+                                            }}
+                                            className="mySwiper pb-10"
+                                        >
+                                            {loading ? (
+                                                Array.from({ length: 3 }).map((_, index) => (
+                                                    <SwiperSlide key={index}>
+                                                        <div className="animate-pulse bg-gray-200 rounded-lg h-[300px] w-full"></div>
+                                                    </SwiperSlide>
+                                                ))
+                                            ) : (
+                                                displayedProducts.map((product, index) => (
+                                                    <SwiperSlide key={index}>
+                                                        <ProductCard {...product} />
+                                                    </SwiperSlide>
+                                                ))
+                                            )}
+                                        </Swiper>
+                                    </div>
+                                )}
+
+                                <div className={`${scrollonmobile ? 'hidden md:grid' : 'grid'} grid-cols-2 ${filters && isFilterOpen ? 'md:grid-cols-3' : 'md:grid-cols-6'} gap-3 space-y-2 md:space-y-0 md:gap-6`}>
                                     {loading ? (
                                         Array.from({ length: 12 }).map((_, index) => (
                                             <div key={index} className="animate-pulse bg-gray-200 rounded-[1rem] h-[20rem] md:h-[25rem]"></div>
@@ -253,6 +289,7 @@ export const ProductGrid = ({
                     </div>
                 </div>
             </div>
+
         </section>
     );
 };

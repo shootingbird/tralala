@@ -55,7 +55,7 @@ export const Hero = () => {
 
     return (
         <section className="relative h-[20vh] sm:h-[25vh] ">
-            <div className="absolute inset-0">
+            <div className="absolute inset-0 h-full">
                 <Image
                     src="/hero.png"
                     alt="Hero background"

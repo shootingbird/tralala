@@ -115,6 +115,7 @@ export default function Home() {
         enableSales={false}
         enablePagination={false}
         infiniteScroll={false}
+        scrollonmobile={true}
       />
       <ProductGrid
         title="Top Picks"
@@ -123,6 +124,8 @@ export default function Home() {
         products={newArrivals}
         enablePagination={false}
         infiniteScroll={false}
+        scrollonmobile={true}
+
       />
 
       <WhyShopWithUs />
