@@ -222,7 +222,7 @@ export const ProductGrid = ({
                                     <div className="md:hidden">
                                         <Swiper
                                             modules={[SwiperPagination]}
-                                            spaceBetween={20}
+                                            spaceBetween={13}
                                             slidesPerView={2.5}
                                             pagination={{
                                                 clickable: true,
@@ -239,7 +239,7 @@ export const ProductGrid = ({
                                             ) : (
                                                 displayedProducts.map((product, index) => (
                                                     <SwiperSlide key={index}>
-                                                        <ProductCard {...product} />
+                                                        <ProductCard {...product}  />
                                                     </SwiperSlide>
                                                 ))
                                             )}

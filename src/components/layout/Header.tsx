@@ -78,6 +78,7 @@ export const Header = () => {
             name: string
             slug: string
         }[]
+        subcategories:[]
     }
 
     const [categories, setCategories] = useState<Category[]>([])
@@ -88,18 +89,17 @@ export const Header = () => {
         if (cachedCategories) {
             const parsedCategories = JSON.parse(cachedCategories)
             setCategories(parsedCategories)
-            setIsLoading(false)
-            console.log(parsedCategories)
-            console.log(typeof parsedCategories)
+            setIsLoading(false) 
         }
 
         const fetchCategories = async () => {
             try {
                 const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/categories`)
                 const data = await response.json()
+                console.log(data)
                 if (Array.isArray(data.categories)) {
-                    const sortedCategories = data.categories.sort((a: { topProducts?: { length: number }[] }, b: { topProducts?: { length: number }[] }) =>
-                        (b.topProducts?.length || 0) - (a.topProducts?.length || 0)
+                    const sortedCategories = data.categories.sort((a: { subcategories?: { length: number }[] }, b: { subcategories?: { length: number }[] }) =>
+                        (b.subcategories?.length || 0) - (a.subcategories?.length || 0)
                     )
                     console.log(sortedCategories)
                     localStorage.setItem("categories", JSON.stringify(sortedCategories))
@@ -317,14 +317,14 @@ export const Header = () => {
                                                         </Link>
                                                     </div>
                                                     <div className="grid gap-3">
-                                                        {category.topProducts?.slice(0, 3).map((product) => (
+                                                        {category.subcategories?.slice(0, 3).map((product) => (
                                                             <Link
-                                                                key={product.id}
-                                                                href={`/products/v/${product.id}`}
+                                                                key={product}
+                                                                href={`/products/v/${product}`}
                                                                 className="text-[.8rem] text-[#2f2e2e] font-medium line-clamp-1 "
                                                                 onClick={() => setShowCategories(false)}
                                                             >
-                                                                {product.name}  
+                                                                {product}  
                                                             </Link>
                                                         ))}
                                                     </div>

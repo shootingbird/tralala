@@ -149,7 +149,7 @@ export const ProductCard = ({
                         />
                     </button>
                 </div>
-                <div className={`space-y-1 ${titleHeight ? 'h-5' : 'h-12'} md:h-auto cursor-pointer px-1`} onClick={handleProductClick}>
+                <div className={`space-y-1 ${titleHeight ? 'h-5' : 'h-8'} md:h-auto cursor-pointer px-1`} onClick={handleProductClick}>
                     <h3 className="font-medium text-[15px] line-clamp-2 md:line-clamp-1">{title}</h3>
                     <p className="hidden md:flex text-gray-600 text-xs line-clamp-1">{brand || category}</p>
                 </div>
@@ -172,7 +172,7 @@ export const ProductCard = ({
                         </div>
                     )}
                 </div>
-                <div className={`${padButton == true && ' '}`}>
+                <div className={` px-1 md:px-1 `}>
                     <ActionButton
                         variant={isAdded ? 'outline' : 'primary'}
                         fullWidth

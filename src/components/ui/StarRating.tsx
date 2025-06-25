@@ -14,7 +14,7 @@ export const StarRating = ({ rating }: OutlinedStarRatingProps) => {
             {stars.map((star) => (
                 <svg
                     key={star}
-                    className={`w-5 h-5 ${
+                    className={`w-4 md:w-5 h-4 md:h-5 ${
                         star <= normalizedRating ? 'text-[#E2A03F]' : 'text-gray-300'
                     }`}
                     fill="currentColor"
