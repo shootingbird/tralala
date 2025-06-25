@@ -60,15 +60,15 @@ export const Hero = () => {
                     src="/hero.png"
                     alt="Hero background"
                     fill
-                    className="object-cover"
+                    className="object-cover h-full"
                     priority
                 />
             </div>
 
-            <div className="relative flex flex-col lg:flex-row  h-full   min-h-[20vh]">
-                <div className="hidden lg:block w-auto px-[3rem] bg-[#F8F3F2] p-4">
+            <div className="relative flex flex-col lg:flex-row md:grid md:grid-cols-12 h-full   min-h-[20vh]">
+                <div className="hidden lg:block w-auto px-[3rem] col-span-2  bg-[#F8F3F2] p-4">
                     {isLoading ? (
-                        <div className="space-y-3">
+                        <div className="space-y-3 flex flex-col justify-between h-full">
                             {Array.from({ length: 4 }).map((_, index) => (
                                 <div key={index} className="h-5 bg-gray-200 rounded animate-pulse" />
                             ))}
@@ -88,7 +88,7 @@ export const Hero = () => {
                     )}
                 </div>
 
-                <div className="flex-1 flex items-center px-8 py-4">
+                <div className="flex-1 flex md:col-span-10 items-center px-8 py-4">
                     <div className="text-left">
                         <h1 className="text-xl lg:text-3xl font-bold text-white mb-2">
                             Free Delivery for Purchase
@@ -97,7 +97,7 @@ export const Hero = () => {
                         </h1>
                         <button
                             onClick={() => router.push('/products')}
-                            className="bg-[#184193] text-white px-6 py-2.5 rounded-md inline-flex items-center gap-2 hover:bg-blue-700 transition-colors text-sm"
+                            className="bg-[#184193] text-white px-6 mt-2 py-2.5 rounded-md inline-flex items-center gap-2 hover:bg-blue-700 transition-colors text-sm"
                         >
                             Shop Now
                             <ArrowRight size={18} />
