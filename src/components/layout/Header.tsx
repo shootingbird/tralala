@@ -396,12 +396,12 @@ export const Header = () => {
                                     <div className="space-y-4  pb-[5rem]">
                                         {categories.map((category) => (
                                             <div key={category.id} className="">
-                                                <Link
-                                                    href={`/products/category/${category.id}`}
+                                                <button
+                                                    onClick={() => handleCategoryClick(category.id)}
                                                     className="text-[.9rem] font-semibold  text-left flex items-center py-3 px-4 justify-between rounded-lg hover:text-white hover:bg-[#FF5722] transition-all duration-300"
                                                 >
                                                     {category.name}
-                                                </Link>
+                                                </button>
                                             </div>
                                         ))}
                                     </div>
@@ -429,17 +429,17 @@ export const Header = () => {
                         <div className="flex-1 overflow-y-auto">
                             <div className="p-4">
                                 <div className="space-y-4">
-                                    {categories.find(c => c.id === activeCategory)?.topProducts.map((product) => (
+                                    {categories.find(c => c.id === activeCategory)?.subcategories.map((product) => (
                                         <Link
-                                            key={product.id}
-                                            href={`/products/v/${product.id}`}
+                                            key={product}
+                                            href={`/products/category/${categories.find(c => c.id === activeCategory)?.id}`}
                                             className="block py-3 text-gray-600 border-b  border-[#60606020] hover:text-[#184193]"
                                             onClick={() => {
                                                 setIsMenuOpen(false);
                                                 setShowSubcategoryModal(false);
                                             }}
                                         >
-                                            {product.name}
+                                            {product}
                                         </Link>
                                     ))}
                                 </div>
