@@ -36,7 +36,7 @@ const SearchComponent = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search product, category"
-                className="w-full pl-5 md:pl-13 pr-24 py-2.5 border bg-[#F0F0F0] text-black placeholder:text-black border-gray-200 rounded-[2rem] focus:outline-none text-sm"
+                className="w-full pl-5 md:pl-13 pr-24 py-2.5 md:border bg-[#F0F0F0] text-black placeholder:text-black border-gray-200 rounded-[2rem] focus:outline-none text-sm"
             />
             <button
                 type="submit"
