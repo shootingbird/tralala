@@ -5,7 +5,7 @@ import type React from "react"
 import { useState, useRef, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { Menu, SearchIcon } from "lucide-react"
+import { ChevronRightIcon, Menu, SearchIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useSearchParams } from "next/navigation"
 import { CartPanel } from "@/components/cart/CartPanel"
@@ -395,13 +395,28 @@ export const Header = () => {
                                 ) : (
                                     <div className="space-y-4  pb-[5rem]">
                                         {categories.map((category) => (
-                                            <div key={category.id} className="">
-                                                <button
-                                                    onClick={() => handleCategoryClick(category.id)}
-                                                    className="text-[.9rem] font-semibold  text-left flex items-center py-3 px-4 justify-between rounded-lg hover:text-white hover:bg-[#FF5722] transition-all duration-300"
-                                                >
-                                                    {category.name}
-                                                </button>
+                                            <div key={category.id} className="flex  w-full justify-between">
+                                                {category.subcategories && category.subcategories.length > 0 ? (
+                                                    <>
+                                                        <button
+                                                            onClick={() => handleCategoryClick(category.id)}
+                                                            className="text-[.9rem] line-clamp-1 font-semibold  text-left flex items-center py-3 px-4 justify-between rounded-lg hover:text-white hover:bg-[#FF5722] transition-all duration-300"
+                                                        >
+                                                            {category.name}
+                                                        </button>
+                                                        <ChevronRightIcon />
+                                                    </>
+                                                ) : (
+                                                    <Link
+                                                        href={`/products/category/${category.id}`}
+                                                        className="text-[.9rem] line-clamp-1 font-semibold  text-left flex items-center py-3 px-4 justify-between rounded-lg hover:text-white hover:bg-[#FF5722] transition-all duration-300 w-full"
+                                                        onClick={() => {
+                                                            setIsMenuOpen(false);
+                                                        }}
+                                                    >
+                                                        {category.name}
+                                                    </Link>
+                                                )}
                                             </div>
                                         ))}
                                     </div>

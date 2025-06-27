@@ -234,6 +234,7 @@ export default function ProductsPage() {
         <>
             <TopBanner theme={'dark'} />
             <Header />
+            <br />
 
             <ProductGrid
                 title={categories.find(cat => cat.id == categorySlug)?.name || "Category"}
