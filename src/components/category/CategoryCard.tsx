@@ -17,10 +17,10 @@ export const CategoryCard = ({ name, image_url, slug, className = '', id }: Cate
                     src={image_url}
                     alt={name}
                     fill
-                    className="object-cover transition-transform duration-300 hover:scale-105"
+                    className="object-cover items-center transition-transform duration-300 hover:scale-105"
                 />
             </div>
-            <h3 className="text-xs text-center font-medium text-gray-800">{name}</h3>
+            <h3 className="text-xs text-center font-medium line-clamp-1 text-gray-800">{name}</h3>
         </Link>
     );
 };
