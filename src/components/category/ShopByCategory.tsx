@@ -1,6 +1,6 @@
 import { CategoryCard } from "./CategoryCard"
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { Pagination } from 'swiper/modules';
+import { Swiper, SwiperSlide } from 'swiper/react'
+import { Pagination, Autoplay } from 'swiper/modules'
 import 'swiper/css';
 import 'swiper/css/pagination';
 import { useState, useEffect } from 'react';
@@ -45,23 +45,23 @@ const ShopByCategory = () => {
     }, []);
 
     return (
-        <section className="pt-8  ">
-            <div className="container mx-auto px-4">
-                <h2 className="text-xl font-bold text-start mb-6">Shop by Categories</h2>
+        <section className="pt-4 ">
+            <div className="container mx-auto px-3 md:px-4">
+            <h2 className="text-lg font-semibold mb-3 ">Shop by Categories</h2>
                 <div className="">
-                    <div className="md:hidden ">
+                    <div className="md:hidden  overflow-hidden ">
                         <Swiper
-                            modules={[Pagination]}
-                            spaceBetween={12}
-                            slidesPerView={2.5}
-                            pagination={{
-                                clickable: true,
-                                dynamicBullets: true,
-                                dynamicMainBullets: 3,
+                            modules={[Pagination, Autoplay]}
+                            spaceBetween={7}
+                            slidesPerView={2.6}
+                            autoplay={{
+                                delay: 2000,
+                                disableOnInteraction: false,
+                                pauseOnMouseEnter: true,
                                 
                             }}
-                            
-                            className="min-h-[13rem]">
+                            loop={true}
+                            >
                             {isLoading ? (
                                 Array.from({ length: 6 }).map((_, index) => (
                                     <SwiperSlide key={index}>
