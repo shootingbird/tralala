@@ -48,7 +48,7 @@ const SearchComponent = () => {
                 type="submit"
                 className="absolute  md:hidden right-0 top-0 h-full px-6  text-white rounded-r-[2rem] text-sm font-medium"
             >
-                <SearchIcon className="w-5 h-5 text-[#323232]"  />
+                <SearchIcon className="w-5 h-5 text-[#323232]" />
             </button>
         </form>
     )
@@ -84,7 +84,12 @@ export const Header = () => {
             name: string
             slug: string
         }[]
-        subcategories: []
+        subcategories: {
+            id: string
+            name: string
+            slug: string
+            description: string
+        }[]
     }
 
     const [categories, setCategories] = useState<Category[]>([])
@@ -100,13 +105,16 @@ export const Header = () => {
 
         const fetchCategories = async () => {
             try {
+                console.log('before search')
                 const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/categories`)
                 const data = await response.json()
                 console.log(data)
                 if (Array.isArray(data.categories)) {
-                    const sortedCategories = data.categories.sort((a: { subcategories?: { length: number }[] }, b: { subcategories?: { length: number }[] }) =>
-                        (b.subcategories?.length || 0) - (a.subcategories?.length || 0)
-                    )
+                    const sortedCategories = data.categories.sort((a: Category, b: Category) => {
+                        const subcountDiff = (b.subcategories?.length || 0) - (a.subcategories?.length || 0)
+                        if (subcountDiff !== 0) return subcountDiff
+                        return a.name.localeCompare(b.name)
+                    })
                     console.log(sortedCategories)
                     localStorage.setItem("categories", JSON.stringify(sortedCategories))
                     setCategories(sortedCategories)
@@ -285,7 +293,7 @@ export const Header = () => {
                                             <li key={category.id}>
                                                 <Link
                                                     href={`/products/category/${category.id}`}
-                                                    className="text-sm py-1.5 px-4" >
+                                                    className="text-sm line-clamp-1   py-1.5 px-4" >
                                                     {category.name}
                                                 </Link>
                                             </li>
@@ -323,14 +331,14 @@ export const Header = () => {
                                                         </Link>
                                                     </div>
                                                     <div className="grid gap-3">
-                                                        {category.subcategories?.slice(0, 3).map((product) => (
+                                                        {category.subcategories?.slice(0, 3).map((subcategory) => (
                                                             <Link
-                                                                key={product}
-                                                                href={`/products/v/${product}`}
+                                                                key={subcategory.id}
+                                                                href={`/products/v/${subcategory.slug}`}
                                                                 className="text-[.8rem] text-[#2f2e2e] font-medium line-clamp-1 "
                                                                 onClick={() => setShowCategories(false)}
                                                             >
-                                                                {product}
+                                                                {subcategory.name}
                                                             </Link>
                                                         ))}
                                                     </div>
@@ -400,11 +408,11 @@ export const Header = () => {
                                                     <>
                                                         <button
                                                             onClick={() => handleCategoryClick(category.id)}
-                                                            className="text-[.9rem] line-clamp-1 font-semibold  text-left flex items-center py-3 px-4 justify-between rounded-lg hover:text-white hover:bg-[#FF5722] transition-all duration-300"
+                                                            className="text-[.9rem] w-full line-clamp-1 font-semibold  text-left flex items-center py-3 px-4 justify-between rounded-lg hover:text-white hover:bg-[#FF5722] transition-all duration-300"
                                                         >
                                                             {category.name}
-                                                        </button>
                                                         <ChevronRightIcon />
+                                                        </button>
                                                     </>
                                                 ) : (
                                                     <Link
@@ -444,9 +452,9 @@ export const Header = () => {
                         <div className="flex-1 overflow-y-auto">
                             <div className="p-4">
                                 <div className="space-y-4">
-                                    {categories.find(c => c.id === activeCategory)?.subcategories.map((product) => (
+                                    {categories.find(c => c.id === activeCategory)?.subcategories.map((subcategory) => (
                                         <Link
-                                            key={product}
+                                            key={subcategory.id}
                                             href={`/products/category/${categories.find(c => c.id === activeCategory)?.id}`}
                                             className="block py-3 text-gray-600 border-b  border-[#60606020] hover:text-[#184193]"
                                             onClick={() => {
@@ -454,7 +462,7 @@ export const Header = () => {
                                                 setShowSubcategoryModal(false);
                                             }}
                                         >
-                                            {product}
+                                            {subcategory.name}
                                         </Link>
                                     ))}
                                 </div>
