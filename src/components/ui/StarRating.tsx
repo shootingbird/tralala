@@ -5,8 +5,7 @@ interface OutlinedStarRatingProps {
 }
 
 export const StarRating = ({ rating }: OutlinedStarRatingProps) => {
-    // Ensure rating is a stable number between 1-5
-    const normalizedRating = Math.max(1, Math.min(5, Math.floor(rating)));
+     const normalizedRating = rating === null || rating === 0 ? 5 : Math.max(1, Math.min(5, Math.floor(rating)));
     const stars = [1, 2, 3, 4, 5];
     
     return (
