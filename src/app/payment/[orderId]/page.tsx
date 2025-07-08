@@ -56,38 +56,114 @@ export default function PaymentPage() {
         }
       }, [orderId, router, clearCart, getToken])
 
-      useEffect(() => {
-        const verifyPayment = async (reference: string) => {
-            try {
-                const headers: Record<string, string> = {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${process.env.NEXT_PUBLIC_PAYSTACK_SECRET_KEY}`
-                };
+    useEffect(() => {
+    const requestReferralEarnings = async (
+        accessToken: string,
+        padiCode: string,
+        orderId: string,
+        total: number
+    ) => {
+        try {
+        const response = await fetch(`https://steadfast-padi-backend.pxxl.tech/api/payment/${padiCode}/request-referral-earnings`, {
+            method: "POST",
+            headers: {
+            "Content-Type": "application/json",
+            "x-access-key": accessToken,
+            },
+            body: JSON.stringify({
+            orderId,
+            category: "POP/Surface Light",
+            amount: total,
+            }),
+        });
 
-                const response = await fetch(`https://api.paystack.co/transaction/verify/${reference}`, {
-                    method: 'GET',
-                    headers
-                });
+        const data = await response.json();
 
-                const data = await response.json();
+        if (response.ok) {
+            console.log("Referral earnings requested successfully:", data);
+            return true;
+        } else {
+            console.error("Referral earnings request failed:", data);
+            return false;
+        }
+        } catch (error) {
+        console.error("Error requesting referral earnings:", error);
+        return false;
+        }
+    };
 
-                if (response.ok && data.status && data.data.status === 'success') {
-                    // Handle successful verification
-                    console.log('Payment verified successfully:', data);
-                    clearCart();
-                    router.push(`/orders/${params.orderId}`);
-                } else {
-                    console.error('Payment verification failed:', data);
-                }
-            } catch (error) {
-                console.error('Error verifying payment:', error);
-            }
+    const authenticateAdmin = async (
+        padiCode: string,
+        orderId: string,
+        total: number
+    ): Promise<void> => {
+        try {
+        const response = await fetch("https://steadfast-padi-backend.pxxl.tech/api/admin-auth/login", {
+            method: "POST",
+            headers: {
+            "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+            email: "dev@steadfast.com",
+            password: "qwerty12345",
+            }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.status && data.data.accessToken) {
+            console.log("Admin authenticated successfully");
+            const accessToken = data.data.accessToken;
+
+            await requestReferralEarnings(accessToken, padiCode, orderId, total);
+        } else {
+            console.error("Admin authentication failed:", data);
+        }
+        } catch (error) {
+        console.error("Error authenticating admin:", error);
+        }
+    };
+
+    const verifyPayment = async (reference: string) => {
+        try {
+        const headers: Record<string, string> = {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${process.env.NEXT_PUBLIC_PAYSTACK_SECRET_TEST}`,
         };
 
-        if (paymentReference !== "") {
-            verifyPayment(paymentReference);
+        const response = await fetch(`https://api.paystack.co/transaction/verify/${reference}`, {
+            method: "GET",
+            headers,
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.status && data.data.status === "success") {
+            console.log("Payment verified successfully:", data);
+
+            const padiCode = localStorage.getItem("padiCode");
+            const orderId = params.orderId;
+            const total = data.data.amount / 100; // Paystack returns amount in kobo
+
+            if (padiCode && orderId && total) {
+            await authenticateAdmin(padiCode, orderId, total);
+            }
+
+            clearCart();
+            router.push(`/orders/${orderId}`);
+        } else {
+            console.error("Payment verification failed:", data);
         }
+        } catch (error) {
+        console.error("Error verifying payment:", error);
+        }
+    };
+
+    if (paymentReference !== "") {
+        verifyPayment(paymentReference);
+    }
     }, [paymentReference]);
+
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">

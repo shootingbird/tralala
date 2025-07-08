@@ -16,20 +16,32 @@ import { useRouter } from 'next/navigation';
 import { useCart } from '@/context/CartContext';
 import { CouponHelper, type Coupon } from '@/lib/coupons';
 
+interface ApiResponse<T = any> {
+  success: boolean;
+  message: string;
+  data: T | null;
+  statusCode: number;
+  timestamp: string;
+  traceId: string;
+}
+
 export default function CartPage() {
     const router = useRouter();
+    let subtotal = 0
     const { cartItems, updateQuantity, removeFromCart } = useCart();
     const [promoCode, setPromoCode] = useState('');
     const [showPromoInput, setShowPromoInput] = useState(false);
+    const [applyingCode, setapplyingCode] = useState<Boolean>(false);
     const [itemToRemove, setItemToRemove] = useState<string | null>(null);
     const [showAuthModal, setShowAuthModal] = useState(false);
     const [checkoutType, setCheckoutType] = useState<'guest' | 'signup' | null>(null);
+    const [fullTotal, setfullTotal] = useState<number>(0);
     const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
     const [couponError, setCouponError] = useState('');
     const [availableCoupons, setAvailableCoupons] = useState<Coupon[]>([]);
     const [isAuthenticated] = useState(false);
 
-    const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const freeShippingThreshold = 53000;
     const progressPercentage = Math.min(100, (subtotal / freeShippingThreshold) * 100);
     const remainingForFreeShipping = Math.max(0, freeShippingThreshold - subtotal);
@@ -37,6 +49,14 @@ export default function CartPage() {
         { label: 'Home', href: '/' },
         { label: 'Cart' }
     ];
+
+    useEffect(() => {
+            if (cartItems.length > 0){
+                console.log("USE EFFEC: ", subtotal)
+                setfullTotal(subtotal)
+            }
+            console.log("FULL TOTAL: ", fullTotal, subtotal)
+    }, [subtotal])
 
     const handleRemoveConfirm = () => {
         if (itemToRemove) {
@@ -103,6 +123,37 @@ export default function CartPage() {
             setCouponError('Failed to verify coupon');
         }
     };
+
+const applyPadiCoupon = async (padiCode: string): Promise<void> => {
+    setapplyingCode(true)
+  try {
+    const response = await fetch(
+      `https://steadfast-padi-backend.pxxl.tech/api/payment/${padiCode}/verify-padi-code`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    const data: ApiResponse<Coupon> = await response.json();
+
+    if (data.success && data.statusCode == 200) {
+        const discountedTotal = 0.98 * subtotal;
+        subtotal = discountedTotal
+        setfullTotal(subtotal)
+        console.log("Subtotal: ", subtotal, discountedTotal)
+    } else {
+      console.log("Coupon verification failed:", data.message);
+    }
+  } catch (error) {
+    console.error("Error verifying coupon:", error);
+  } finally{
+    setapplyingCode(false)
+  }
+};
+
 
     
     const calculateDiscount = () => {
@@ -294,10 +345,10 @@ export default function CartPage() {
                                             className="flex-1 p-2 border-2 border-[#EDF0F8] outline-0 rounded-xl"
                                         />
                                         <button
-                                            onClick={handleApplyCoupon}
-                                            className="px-4 bg-[#184193] text-white rounded-xl"
+                                            onClick={() => applyPadiCoupon(promoCode)}
+                                            className={applyingCode ? "px-4 bg-[#1E1E1E] text-white rounded-xl" : "px-4 bg-[#184193] text-white rounded-xl"}
                                         >
-                                            Apply
+                                            {applyingCode ? "Applying..." : "Apply"}
                                         </button>
                                     </div>
                                     {couponError && (
@@ -344,7 +395,7 @@ export default function CartPage() {
                                     </div>
                                     <div className="flex pt-6 justify-between border-t border-[#E0E5EB] font-medium">
                                         <span>Estimated total:</span>
-                                        <span>₦{estimatedTotal.toLocaleString()}</span>
+                                        <span>₦{fullTotal.toLocaleString()}</span>
                                     </div>
                                 </div>
                                 <Button

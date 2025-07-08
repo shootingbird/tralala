@@ -8,12 +8,25 @@ import { PickupSection } from '@/components/checkout/PickupSection';
 import { PaymentSection } from '@/components/checkout/PaymentSection';
 import { TopBanner } from '@/components/layout/TopBanner';
 import { Header } from '@/components/layout/Header';
+import { CouponHelper, type Coupon } from '@/lib/coupons';
+
+
+interface ApiResponse<T = any> {
+  success: boolean;
+  message: string;
+  data: T | null;
+  statusCode: number;
+  timestamp: string;
+  traceId: string;
+}
  
 export default function CheckoutPage() {
     const router = useRouter();
- 
+    const [applyingCode, setapplyingCode] = useState<boolean>(false);
+    const [fullTotal, setfullTotal] = useState<number>(0);
     const [currentStep, setCurrentStep] = useState(1);
     const [selectedState, setSelectedState] = useState('');
+    let subtotal = 0;
     const [selectedCity, setSelectedCity] = useState('');
     const [shippingDetails, setShippingDetails] = useState<any>(null);
     const [pickupData, setPickupData] = useState<{
@@ -32,6 +45,36 @@ export default function CheckoutPage() {
             setCurrentStep(currentStep - 1);
         }
     };
+
+    const applyPadiCoupon = async (padiCode: string): Promise<void> => {
+    setapplyingCode(true)
+  try {
+    const response = await fetch(
+      `https://steadfast-padi-backend.pxxl.tech/api/payment/${padiCode}/verify-padi-code`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    const data: ApiResponse<Coupon> = await response.json();
+
+    if (data.success && data.statusCode == 200) {
+        const discountedTotal = 0.98 * subtotal;
+        subtotal = discountedTotal
+        setfullTotal(subtotal)
+        console.log("Subtotal: ", subtotal, discountedTotal)
+    } else {
+      console.log("Coupon verification failed:", data.message);
+    }
+  } catch (error) {
+    console.error("Error verifying coupon:", error);
+  } finally{
+    setapplyingCode(false)
+  }
+};
 
     const handleContinue = async () => {
         window.scrollTo(0, 0);

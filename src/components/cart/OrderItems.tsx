@@ -19,6 +19,14 @@ interface CartItem {
     wattage?: string;
     color?: string;
 }
+interface ApiResponse<T = any> {
+  success: boolean;
+  message: string;
+  data: T | null;
+  statusCode: number;
+  timestamp: string;
+  traceId: string;
+}
 interface Coupon {
     code: string;
     type: 'percentage' | 'fixed';
@@ -46,20 +54,60 @@ export default function OrderItems({
 }: OrderItemsProps) {
     const router = useRouter();
     const { cartItems, updateQuantity, removeFromCart,clearCart } = useCart();
+    const [fullTotal, setfullTotal] = useState<number>(0);
+    let subtotal = 0;
     const [promoCode, setPromoCode] = useState('');
     const [showPromoInput, setShowPromoInput] = useState(false);
     const [itemToRemove, setItemToRemove] = useState<string | null>(null);
     const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
+    const [applyingCode, setapplyingCode] = useState<Boolean>(false);
     const [couponError, setCouponError] = useState('');
     const [availableCoupons, setAvailableCoupons] = useState<Coupon[]>([]);
     const { user, getToken } = useAuth(); 
     const [orderNote, setOrderNote] = useState('');
  
-    const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const freeShippingThreshold = 53000;
 
     console.log('Shipping Details:', shippingDetails);
 
+    useEffect(() => {
+            if (cartItems.length > 0){
+                console.log("USE EFFEC: ", subtotal)
+                setfullTotal(subtotal)
+            }
+            console.log("FULL TOTAL: ", fullTotal, subtotal)
+    }, [subtotal])
+
+    const applyPadiCoupon = async (padiCode: string): Promise<void> => {
+    setapplyingCode(true)
+  try {
+    const response = await fetch(
+      `https://steadfast-padi-backend.pxxl.tech/api/payment/${padiCode}/verify-padi-code`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    const data: ApiResponse<Coupon> = await response.json();
+
+    if (data.success && data.statusCode == 200) {
+        const discountedTotal = 0.98 * subtotal;
+        subtotal = discountedTotal
+        setfullTotal(subtotal)
+        console.log("Subtotal: ", subtotal, discountedTotal)
+    } else {
+      console.log("Coupon verification failed:", data.message);
+    }
+  } catch (error) {
+    console.error("Error verifying coupon:", error);
+  } finally{
+    setapplyingCode(false)
+  }
+};
 
     useEffect(() => {
         const fetchCoupons = async () => {
@@ -157,7 +205,7 @@ export default function OrderItems({
                     last_name: shippingDetails ? `${shippingDetails.lastName}` : '',
                     phone_number: shippingDetails?.phone || '',
                     email: shippingDetails?.email || '',
-                    total_amount: totalprice,
+                    total_amount: fullTotal + parseInt(deliveryFee),
                     payment_status: 'unpaid',
                     notes: orderNote,
                     coupon_id: appliedCoupon?.code || null,
@@ -172,6 +220,7 @@ export default function OrderItems({
                     }
                 })
             });
+            localStorage.setItem("padiCode", promoCode);
 
             if (!response.ok) {
                 throw new Error('Failed to create order');
@@ -325,10 +374,10 @@ export default function OrderItems({
                                     className="flex-1 p-3 border-2 border-[#EDF0F8] outline-0 rounded-xl"
                                 />
                                 <button
-                                    onClick={handleApplyCoupon}
+                                    onClick={() => applyPadiCoupon(promoCode)}
                                     className="px-4 bg-[#184193] text-white rounded-xl"
                                 >
-                                    Apply
+                                    {applyingCode ? "Applying..." : "Apply"}
                                 </button>
                             </div>
                             {couponError && (
@@ -397,7 +446,7 @@ export default function OrderItems({
                             </div>
                             <div className="flex pt-6 justify-between border-t border-[#E0E5EB] font-medium">
                                 <span>Estimated total:</span>
-                                <span>₦{estimatedTotal.toLocaleString()}</span>
+                                <span>₦{fullTotal.toLocaleString()}</span>
                             </div>
                         </div>
                         <Button
