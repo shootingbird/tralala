@@ -254,19 +254,20 @@ export default function ProductDetailPage() {
 
   // Next/prev image functions
   const nextImage = () => {
+    if (!product) return;
     setCurrentImageIndex((prevIndex) =>
       prevIndex === product.images.length - 1 ? 0 : prevIndex + 1
     );
   };
-
   const prevImage = () => {
+    if (!product) return;
     setCurrentImageIndex((prevIndex) =>
       prevIndex === 0 ? product.images.length - 1 : prevIndex - 1
     );
   };
 
   // Handle thumbnail click
-  const handleThumbnailClick = (index) => {
+  const handleThumbnailClick = (index: number) => {
     setCurrentImageIndex(index);
   };
 
@@ -449,6 +450,7 @@ export default function ProductDetailPage() {
                 product.images.map((image, index) => (
                   <div
                     key={index}
+                    onClick={() => handleThumbnailClick(index)}
                     className={`relative aspect-square overflow-hidden rounded-lg ${
                       currentImageIndex === index
                         ? "ring-1 ring-[#184193]/50  ring-offset-2"
@@ -558,7 +560,7 @@ export default function ProductDetailPage() {
                     <SelectTrigger className="w-full py-6">
                       <SelectValue placeholder="Select Variation" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white">
                       {product.variations.map((variation) => (
                         <SelectItem
                           key={variation.variation}
