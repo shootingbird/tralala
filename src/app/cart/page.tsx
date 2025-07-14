@@ -354,7 +354,7 @@ const applyPadiCoupon = async (padiCode: string): Promise<void> => {
                                     {couponError && (
                                         <p className="text-red-500 text-sm">{couponError}</p>
                                     )}
-                                    <div className="text-sm space-y-1 p-4">
+                                    {/* <div className="text-sm space-y-1 p-4">
                                         <p className="font-medium">Available Coupons: (click to add)</p>
                                         {availableCoupons.map((coupon) => (
                                             <div
@@ -366,7 +366,7 @@ const applyPadiCoupon = async (padiCode: string): Promise<void> => {
                                                 <span>{coupon.description}</span>
                                             </div>
                                         ))}
-                                    </div>
+                                    </div> */}
                                 </div>
                             )}
 

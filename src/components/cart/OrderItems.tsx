@@ -383,7 +383,7 @@ export default function OrderItems({
                             {couponError && (
                                 <p className="text-red-500 text-sm">{couponError}</p>
                             )}
-                            <div className="text-sm space-y-1 p-4">
+                            {/* <div className="text-sm space-y-1 p-4">
                                 <p className="font-medium">Available Coupons: (click to add)</p>
                                 {availableCoupons.map((coupon) => (
                                     <div
@@ -395,7 +395,7 @@ export default function OrderItems({
                                         <span>{coupon.description}</span>
                                     </div>
                                 ))}
-                            </div>
+                            </div> */}
                         </div>
                     )}
 
