@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation';
 import { useCart } from '@/context/CartContext';
 import { CouponHelper } from '@/lib/coupons';
 import { useAuth } from '@/contexts/AuthContext';
+import Cookies from 'js-cookie';
 
 interface CartItem {
     productId: string;
@@ -70,6 +71,15 @@ export default function OrderItems({
     const freeShippingThreshold = 53000;
 
     console.log('Shipping Details:', shippingDetails);
+
+    useEffect(() => {
+        const referralCoupon = Cookies.get('referral_coupon');
+        if (referralCoupon) {
+            setPromoCode(referralCoupon);
+            setShowPromoInput(true);
+            Cookies.remove('referral_coupon');
+        }
+    }, []);
 
     useEffect(() => {
             if (cartItems.length > 0){

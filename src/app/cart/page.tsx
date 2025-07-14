@@ -15,6 +15,7 @@ import { AuthModal } from '@/components/auth/AuthModal';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/context/CartContext';
 import { CouponHelper, type Coupon } from '@/lib/coupons';
+import Cookies from 'js-cookie';
 
 interface ApiResponse<T = any> {
   success: boolean;
@@ -49,6 +50,15 @@ export default function CartPage() {
         { label: 'Home', href: '/' },
         { label: 'Cart' }
     ];
+
+    useEffect(() => {
+        const referralCoupon = Cookies.get('referral_coupon');
+        if (referralCoupon) {
+            setPromoCode(referralCoupon);
+            setShowPromoInput(true);
+            Cookies.remove('referral_coupon');
+        }
+    }, []);
 
     useEffect(() => {
             if (cartItems.length > 0){
