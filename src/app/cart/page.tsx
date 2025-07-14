@@ -151,7 +151,7 @@ const applyPadiCoupon = async (padiCode: string): Promise<void> => {
     const data: ApiResponse<Coupon> = await response.json();
 
     if (data.success && data.statusCode == 200) {
-        const discountedTotal = 0.975 * subtotal;
+        const discountedTotal = 0.98 * subtotal;
         subtotal = discountedTotal
         setfullTotal(subtotal)
         setAppliedPadiCode(true)
@@ -398,7 +398,7 @@ const applyPadiCoupon = async (padiCode: string): Promise<void> => {
                                     {appliedPadiCode && (
                                         <div className="flex py-1 pb-3 justify-between text-gray-500">
                                             <span>Discount</span>
-                                            <span className='text-red-500'>-₦{(0.025* subtotal).toLocaleString()}</span>
+                                            <span className='text-red-500'>-₦{(0.02* subtotal).toLocaleString()}</span>
                                         </div>
                                     )}
                                     <div className="flex py-1 pb-6 justify-between text-gray-500">
