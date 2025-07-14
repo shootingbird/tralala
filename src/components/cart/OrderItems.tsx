@@ -415,7 +415,7 @@ export default function OrderItems({
                             {shippingSaving > 0 && (
                                 <div className="flex py-1 pb-3 justify-between text-gray-500">
                                     <span>Savings</span>
-                                    <span className='text-red-500'>-₦{totalSaving.toLocaleString()}</span>
+                                    <span className='text-red-500'>-₦{(0.025* subtotal).toLocaleString()}</span>
                                 </div>
                             )}
                             <div className="flex py-1 pb-6 justify-between text-gray-500">
