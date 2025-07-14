@@ -62,7 +62,7 @@ export default function CheckoutPage() {
     const data: ApiResponse<Coupon> = await response.json();
 
     if (data.success && data.statusCode == 200) {
-        const discountedTotal = 0.98 * subtotal;
+        const discountedTotal = 0.975 * subtotal;
         subtotal = discountedTotal
         setfullTotal(subtotal)
         console.log("Subtotal: ", subtotal, discountedTotal)

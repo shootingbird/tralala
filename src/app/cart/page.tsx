@@ -151,7 +151,7 @@ const applyPadiCoupon = async (padiCode: string): Promise<void> => {
     const data: ApiResponse<Coupon> = await response.json();
 
     if (data.success && data.statusCode == 200) {
-        const discountedTotal = 0.98 * subtotal;
+        const discountedTotal = 0.975 * subtotal;
         subtotal = discountedTotal
         setfullTotal(subtotal)
         setAppliedPadiCode(true)
