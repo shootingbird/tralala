@@ -60,6 +60,7 @@ export default function OrderItems({
     const [showPromoInput, setShowPromoInput] = useState(false);
     const [itemToRemove, setItemToRemove] = useState<string | null>(null);
     const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
+    const [appliedPadiCode, setAppliedPadiCode] = useState<boolean>(false);
     const [applyingCode, setapplyingCode] = useState<Boolean>(false);
     const [couponError, setCouponError] = useState('');
     const [availableCoupons, setAvailableCoupons] = useState<Coupon[]>([]);
@@ -98,6 +99,7 @@ export default function OrderItems({
         const discountedTotal = 0.98 * subtotal;
         subtotal = discountedTotal
         setfullTotal(subtotal)
+        setAppliedPadiCode(true)
         console.log("Subtotal: ", subtotal, discountedTotal)
     } else {
       console.log("Coupon verification failed:", data.message);
@@ -412,7 +414,7 @@ export default function OrderItems({
                                     <span>-₦{discount.toLocaleString()}</span>
                                 </div>
                             )}
-                            {shippingSaving > 0 && (
+                            {appliedPadiCode && (
                                 <div className="flex py-1 pb-3 justify-between text-gray-500">
                                     <span>Savings</span>
                                     <span className='text-red-500'>-₦{(0.025* subtotal).toLocaleString()}</span>
