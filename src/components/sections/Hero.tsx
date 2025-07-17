@@ -28,8 +28,6 @@ const slides = [
   {
     bgImage: "/hero2.png",
     text: "The NORDIC & SIMPLE LED CHANDELIER",
-    description:
-      "Elevate your space with sleek Nordic design and brilliant, energy-efficient LED light.",
   },
 ];
 
@@ -39,7 +37,6 @@ export const Hero = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [currentSlide, setCurrentSlide] = useState(0);
 
-  // Auto-slide logic
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
@@ -47,7 +44,6 @@ export const Hero = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Fetch categories
   useEffect(() => {
     const cachedCategories = localStorage.getItem("categories");
 
@@ -131,46 +127,83 @@ export const Hero = () => {
               aria-hidden={!isActive}
               aria-roledescription="slide"
             >
-              <Image
-                src={slide.bgImage}
-                alt={`Slide ${index + 1}`}
-                fill
-                className="object-cover"
-                priority={index === 0}
-              />
-              <div className="absolute inset-0 bg-black/20 flex items-center px-8 py-4">
-                <div className="text-white space-y-4 max-w-xl">
-                  <h1
-                    className={clsx(
-                      "text-xl lg:text-3xl font-bold whitespace-pre-line",
-                      isActive && "animate-fadeInUp"
-                    )}
-                  >
-                    {slide.text}
-                  </h1>
-                  {slide.description && (
-                    <p className="text-md lg:text-lg font-semibold">
-                      {slide.description}
-                    </p>
-                  )}
-                  <button
-                    onClick={() => router.push("/products")}
-                    className="group bg-[#184193] text-white px-6 py-2.5 rounded-md inline-flex items-center gap-2 hover:bg-[#0f398c] transition-all duration-300 transform hover:scale-105"
-                  >
-                    Shop Now
-                    <ArrowRight
-                      size={18}
-                      className="transform transition-transform duration-300 group-hover:translate-x-2"
+              {index === 1 ? (
+                <div className="flex w-full h-full">
+                  {/* Left side: blue with fade */}
+                  <div className="w-1/2 relative overflow-hidden">
+                    <div className="absolute inset-0 bg-[#005EB6] z-0" />
+                    <div className="absolute left-0 top-0 w-32 h-full bg-gradient-to-l from-transparent via-[#005EB6]/60 to-[#005EB6] z-10 pointer-events-none" />
+                    <div className="relative z-20 h-full flex items-center px-8 py-6 text-white">
+                      <div className="space-y-4 max-w-md">
+                        <h1 className="text-xl lg:text-3xl font-bold whitespace-pre-line animate-fadeInUp">
+                          {slide.text}
+                        </h1>
+                        <button
+                          onClick={() => router.push("/products")}
+                          className="group bg-white text-[#005EB6] px-6 py-2.5 rounded-md inline-flex items-center gap-2 hover:bg-gray-100 transition-all duration-300 transform hover:scale-105"
+                        >
+                          Shop Now
+                          <ArrowRight
+                            size={18}
+                            className="transform transition-transform duration-300 group-hover:translate-x-2"
+                          />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right side: Image with LEFT FADE-IN */}
+                  <div className="w-1/2 relative h-full">
+                    <Image
+                      src={slide.bgImage}
+                      alt={`Slide ${index + 1}`}
+                      width={10000}
+                      height={100000}
+                      className="object-cover h-full"
+                      priority={false}
                     />
-                  </button>
+                    <div className="absolute left-0 top-0 w-20 h-full bg-gradient-to-l from-transparent to-[#005EB6] z-10 pointer-events-none" />
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <>
+                  <Image
+                    src={slide.bgImage}
+                    alt={`Slide ${index + 1}`}
+                    fill
+                    className="object-cover"
+                    priority={index === 0}
+                  />
+                  <div className="absolute inset-0 bg-black/20 flex items-center px-8 py-4">
+                    <div className="text-white space-y-4 max-w-xl">
+                      <h1
+                        className={clsx(
+                          "text-xl lg:text-3xl font-bold whitespace-pre-line",
+                          isActive && "animate-fadeInUp"
+                        )}
+                      >
+                        {slide.text}
+                      </h1>
+                      <button
+                        onClick={() => router.push("/products")}
+                        className="group bg-[#184193] text-white px-6 py-2.5 rounded-md inline-flex items-center gap-2 hover:bg-[#0f398c] transition-all duration-300 transform hover:scale-105"
+                      >
+                        Shop Now
+                        <ArrowRight
+                          size={18}
+                          className="transform transition-transform duration-300 group-hover:translate-x-2"
+                        />
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           );
         })}
       </div>
 
-      {/* Animation Keyframes */}
+      {/* Animation Styles */}
       <style jsx>{`
         @keyframes fadeInUp {
           0% {
