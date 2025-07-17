@@ -128,28 +128,32 @@ export const Hero = () => {
               aria-roledescription="slide"
             >
               {index === 1 ? (
-                <div className="flex w-full h-full">
+                <div className="flex w-full h-full relative">
+                  <div className="border space-y-4 absolute z-50 text-white px-8 py-4 h-full flex flex-col items-start justify-center">
+                    <h1
+                      className={clsx(
+                        "text-xl lg:text-3xl font-bold whitespace-pre-line",
+                        isActive && "animate-fadeInUp"
+                      )}
+                    >
+                      {slide.text}
+                    </h1>
+                    <button
+                      onClick={() => router.push("/products")}
+                      className="group bg-white text-[#005EB6] px-6 py-2.5 rounded-md inline-flex items-center gap-2 hover:bg-gray-100 transition-all duration-300 transform hover:scale-105"
+                    >
+                      Shop Now
+                      <ArrowRight
+                        size={18}
+                        className="transform transition-transform duration-300 group-hover:translate-x-2"
+                      />
+                    </button>
+                  </div>
                   {/* Left side: blue with fade */}
                   <div className="w-1/2 relative overflow-hidden">
                     <div className="absolute inset-0 bg-[#005EB6] z-0" />
                     <div className="absolute left-0 top-0 w-32 h-full bg-gradient-to-l from-transparent via-[#005EB6]/60 to-[#005EB6] z-10 pointer-events-none" />
-                    <div className="relative z-20 h-full flex items-center px-8 py-6 text-white">
-                      <div className="space-y-4 max-w-md">
-                        <h1 className="text-xl lg:text-3xl font-bold whitespace-pre-line animate-fadeInUp">
-                          {slide.text}
-                        </h1>
-                        <button
-                          onClick={() => router.push("/products")}
-                          className="group bg-white text-[#005EB6] px-6 py-2.5 rounded-md inline-flex items-center gap-2 hover:bg-gray-100 transition-all duration-300 transform hover:scale-105"
-                        >
-                          Shop Now
-                          <ArrowRight
-                            size={18}
-                            className="transform transition-transform duration-300 group-hover:translate-x-2"
-                          />
-                        </button>
-                      </div>
-                    </div>
+                    <div className="relative z-20 h-full flex items-center px-8 py-6 text-white"></div>
                   </div>
 
                   {/* Right side: Image with LEFT FADE-IN */}
@@ -162,7 +166,7 @@ export const Hero = () => {
                       className="object-cover h-full"
                       priority={false}
                     />
-                    <div className="absolute left-0 top-0 w-20 h-full bg-gradient-to-l from-transparent to-[#005EB6] z-10 pointer-events-none" />
+                    <div className="absolute -left-0.5 top-0 w-20 h-full bg-gradient-to-l from-transparent to-[#005EB6] z-10 pointer-events-none" />
                   </div>
                 </div>
               ) : (
