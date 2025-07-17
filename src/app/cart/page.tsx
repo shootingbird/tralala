@@ -15,6 +15,7 @@ import { AuthModal } from '@/components/auth/AuthModal';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/context/CartContext';
 import { CouponHelper, type Coupon } from '@/lib/coupons';
+import Cookies from 'js-cookie';
 
 interface ApiResponse<T = any> {
   success: boolean;
@@ -37,6 +38,7 @@ export default function CartPage() {
     const [checkoutType, setCheckoutType] = useState<'guest' | 'signup' | null>(null);
     const [fullTotal, setfullTotal] = useState<number>(0);
     const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
+    const [appliedPadiCode, setAppliedPadiCode] = useState<boolean>(false);
     const [couponError, setCouponError] = useState('');
     const [availableCoupons, setAvailableCoupons] = useState<Coupon[]>([]);
     const [isAuthenticated] = useState(false);
@@ -49,6 +51,15 @@ export default function CartPage() {
         { label: 'Home', href: '/' },
         { label: 'Cart' }
     ];
+
+    useEffect(() => {
+        const referralCoupon = Cookies.get('referral_coupon');
+        if (referralCoupon) {
+            setPromoCode(referralCoupon);
+            setShowPromoInput(true);
+            Cookies.remove('referral_coupon');
+        }
+    }, []);
 
     useEffect(() => {
             if (cartItems.length > 0){
@@ -143,6 +154,7 @@ const applyPadiCoupon = async (padiCode: string): Promise<void> => {
         const discountedTotal = 0.98 * subtotal;
         subtotal = discountedTotal
         setfullTotal(subtotal)
+        setAppliedPadiCode(true)
         console.log("Subtotal: ", subtotal, discountedTotal)
     } else {
       console.log("Coupon verification failed:", data.message);
@@ -354,7 +366,7 @@ const applyPadiCoupon = async (padiCode: string): Promise<void> => {
                                     {couponError && (
                                         <p className="text-red-500 text-sm">{couponError}</p>
                                     )}
-                                    <div className="text-sm space-y-1 p-4">
+                                    {/* <div className="text-sm space-y-1 p-4">
                                         <p className="font-medium">Available Coupons: (click to add)</p>
                                         {availableCoupons.map((coupon) => (
                                             <div
@@ -366,7 +378,7 @@ const applyPadiCoupon = async (padiCode: string): Promise<void> => {
                                                 <span>{coupon.description}</span>
                                             </div>
                                         ))}
-                                    </div>
+                                    </div> */}
                                 </div>
                             )}
 
@@ -383,10 +395,10 @@ const applyPadiCoupon = async (padiCode: string): Promise<void> => {
                                             <span>-₦{discount.toLocaleString()}</span>
                                         </div>
                                     )}
-                                    {shippingSaving > 0 && (
+                                    {appliedPadiCode && (
                                         <div className="flex py-1 pb-3 justify-between text-gray-500">
-                                            <span>Savings</span>
-                                            <span className='text-red-500'>-₦{totalSaving.toLocaleString()}</span>
+                                            <span>Discount</span>
+                                            <span className='text-red-500'>-₦{(0.02* subtotal).toLocaleString()}</span>
                                         </div>
                                     )}
                                     <div className="flex py-1 pb-6 justify-between text-gray-500">

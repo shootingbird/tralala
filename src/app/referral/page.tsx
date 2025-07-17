@@ -13,7 +13,7 @@ export default function ReferralPage() {
     const searchParams = useSearchParams();
 
     useEffect(() => {
-        const code = searchParams.get('ref');
+        const code = searchParams.get('ref'); 
 
         if (code) {
             Cookies.set('referral_coupon', code, { expires: 30 });

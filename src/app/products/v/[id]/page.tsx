@@ -5,7 +5,13 @@ import { useEffect } from "react";
 import { useWishlist } from "@/context/WishlistContext";
 import { useParams } from "next/navigation";
 import Image from "next/image";
-import { Heart, Loader2, Share2 } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Heart,
+  Loader2,
+  Share2,
+} from "lucide-react";
 import { TopBanner } from "@/components/layout/TopBanner";
 import { Header } from "@/components/layout/Header";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
@@ -16,6 +22,19 @@ import { Footer } from "@/components/layout/Footer";
 import { ProductTabs } from "@/components/product/ProductTabs";
 import { useCart } from "@/context/CartContext";
 import { useIsMobile } from "@/lib/mobile";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+interface Variation {
+  price: number;
+  quantity: number;
+  variation: string;
+}
 
 interface Product {
   productId: string;
@@ -41,13 +60,17 @@ interface Product {
     amount: number;
     percentage: number;
   };
+  variations: Variation[];
+  stock_quantity: number;
 }
 export default function ProductDetailPage() {
   const params = useParams();
   const productId = params.id as string;
-  const [selectedVariant, setSelectedVariant] = useState("500");
+  const [selectedVariationName, setSelectedVariationName] =
+    useState<string>("");
   const [isWishlisted, setIsWishlisted] = useState(false);
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [isAdded, setIsAdded] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -58,6 +81,10 @@ export default function ProductDetailPage() {
   const isMobile = useIsMobile();
   const enterTimeout = useRef<NodeJS.Timeout | null>(null);
   const leaveTimeout = useRef<NodeJS.Timeout | null>(null);
+
+  const selectedVariation =
+    product?.variations.find((v) => v.variation === selectedVariationName) ??
+    null;
 
   const handleMouseEnter = () => {
     if (leaveTimeout.current) clearTimeout(leaveTimeout.current);
@@ -126,9 +153,21 @@ export default function ProductDetailPage() {
     };
     fetchProducts();
   }, [productId]);
+
   useEffect(() => {
+    if (product && product.variations?.length) {
+      setSelectedVariationName(product.variations[0].variation);
+    }
+  }, [product]);
+
+  useEffect(() => {
+    if (product?.variations && product.variations.length > 0) {
+      setSelectedVariationName(product.variations[0].variation);
+    }
+
     setIsWishlisted(isInWishlist(productId));
   }, [productId, isInWishlist]);
+
   const toggleWishlist = async () => {
     try {
       setIsLoading(true);
@@ -164,7 +203,6 @@ export default function ProductDetailPage() {
   } = useCart();
 
   const [cartQuantity, setCartQuantity] = useState(1);
-  console.log(cartItems);
 
   useEffect(() => {
     const itemInCart = cartItems.find((item) => item.productId == productId);
@@ -214,6 +252,32 @@ export default function ProductDetailPage() {
     }
   };
 
+  // Next/prev image functions
+  const nextImage = () => {
+    if (!product) return;
+    setCurrentImageIndex((prevIndex) =>
+      prevIndex === product.images.length - 1 ? 0 : prevIndex + 1
+    );
+  };
+  const prevImage = () => {
+    if (!product) return;
+    setCurrentImageIndex((prevIndex) =>
+      prevIndex === 0 ? product.images.length - 1 : prevIndex - 1
+    );
+  };
+
+  // Handle thumbnail click
+  const handleThumbnailClick = (index: number) => {
+    setCurrentImageIndex(index);
+  };
+
+  const displayPrice = (() => {
+    if (selectedVariation && selectedVariation.price > 0) {
+      return selectedVariation.price;
+    }
+    return product?.price ?? 0;
+  })();
+
   const [isSharing, setIsSharing] = useState(false);
 
   const handleShare = async () => {
@@ -248,6 +312,7 @@ export default function ProductDetailPage() {
     return <div>Product not found</div>;
   }
 
+  console.log(currentImageIndex);
   if (isPageLoading) {
     return (
       <>
@@ -317,7 +382,7 @@ export default function ProductDetailPage() {
       </>
     );
   }
-
+  console.log(product?.price.toLocaleString());
   return (
     <>
       <TopBanner theme="dark" />
@@ -332,7 +397,7 @@ export default function ProductDetailPage() {
         />
 
         <div className="flex flex-col md:flex-row gap-8 mt-8">
-          <div className="md:w-2/5">
+          <div className="flex-1">
             <div
               className="relative aspect-square mb-4 cursor-crosshair"
               onMouseEnter={handleMouseEnter}
@@ -340,18 +405,58 @@ export default function ProductDetailPage() {
               onMouseMove={handleMouseMove}
             >
               {product && (
-                <Image
-                  src={product.images[0]}
-                  alt={product.title || "Product Image"}
-                  fill
-                  className="object-cover rounded-lg"
-                />
+                // <Image
+                //   src={product.images[0]}
+                //   alt={product.title || "Product Image"}
+                //   fill
+                //   className="object-cover rounded-lg"
+                // />
+                <div className="relative flex justify-center items-center aspect-square overflow-hidden rounded-2xl bg-white ">
+                  {/* Main Image */}
+                  {product?.images?.[currentImageIndex] ? (
+                    <Image
+                      src={product.images[currentImageIndex]}
+                      alt={`${product.name} - View ${currentImageIndex + 1}`}
+                      className="object-cover "
+                      fill
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center h-full">
+                      <span className="text-gray-400">No image available</span>
+                    </div>
+                  )}
+
+                  {/* Navigation arrows */}
+                  <button
+                    onClick={prevImage}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center shadow-sm hover:bg-white transition-colors"
+                    aria-label="Previous image"
+                  >
+                    <ChevronLeft className="h-5 w-5" />
+                  </button>
+                  <button
+                    onClick={nextImage}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center shadow-sm hover:bg-white transition-colors"
+                    aria-label="Next image"
+                  >
+                    <ChevronRight className="h-5 w-5" />
+                  </button>
+                </div>
               )}
             </div>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-5 gap-4">
               {product &&
-                product.images.slice(0, 3).map((image, index) => (
-                  <div key={index} className="relative aspect-square">
+                product?.images.length > 1 &&
+                product.images.map((image, index) => (
+                  <div
+                    key={index}
+                    onClick={() => handleThumbnailClick(index)}
+                    className={`relative aspect-square overflow-hidden rounded-lg ${
+                      currentImageIndex === index
+                        ? "ring-1 ring-[#184193]/50  ring-offset-2"
+                        : "opacity-70 hover:opacity-100"
+                    }`}
+                  >
                     <Image
                       src={image}
                       alt={`${product.title} view ${index + 1}`}
@@ -370,7 +475,7 @@ export default function ProductDetailPage() {
           </div>
 
           {isHovering && !isMobile ? (
-            <div className="md:w-3/5 md:h-[30rem] overflow-hidden">
+            <div className="flex-1 md:h-[30rem] overflow-hidden">
               <div className="col-span-3 relative aspect-square rounded-lg overflow-hidden transition-opacity duration-200 opacity-100">
                 {product && (
                   <div
@@ -386,7 +491,7 @@ export default function ProductDetailPage() {
               </div>
             </div>
           ) : (
-            <div className="md:w-3/5">
+            <div className="flex-1">
               <div className="flex flex-col md:flex-row gap-5 md:gap-0 md:items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <div className="flex">
@@ -441,27 +546,42 @@ export default function ProductDetailPage() {
                 {product?.description}
               </p>
 
-              <p className="text-2xl font-semibold mb-8">
-                NGN {product?.price.toLocaleString()}.00
+              <p className="text-2xl font-semibold  border-b border-gray-200 pb-6">
+                NGN {displayPrice.toLocaleString()}.00
               </p>
 
-              {/* <div className="mb-8">
-                            <h3 className="font-medium mb-4">Choose your variation</h3>
-                            <div className="flex gap-4">
-                                {['400', '500', '600'].map((size) => (
-                                    <button
-                                        key={size}
-                                        onClick={() => setSelectedVariant(size)}
-                                        className={`w-24 py-2 rounded-full border ${selectedVariant === size
-                                            ? 'border-[#184193] bg-[#184193] text-white'
-                                            : 'border-gray-200'
-                                            }`}
-                                    >
-                                        {size}
-                                    </button>
-                                ))}
-                            </div>
-                        </div> */}
+              {product?.variations && product?.variations.length > 0 && (
+                <div className="pt-5">
+                  <h3 className="font-medium mb-4">Variation</h3>
+                  <Select
+                    value={selectedVariationName}
+                    onValueChange={(value) => setSelectedVariationName(value)}
+                  >
+                    <SelectTrigger className="w-full py-6">
+                      <SelectValue placeholder="Select Variation" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white">
+                      {product.variations.map((variation) => (
+                        <SelectItem
+                          key={variation.variation}
+                          value={variation.variation}
+                        >
+                          {variation.variation}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {
+                <p className="text-[#184193] text-base font-medium truncate py-8">
+                  {product?.variations && product?.variations.length
+                    ? selectedVariation?.quantity
+                    : product?.stock_quantity}{" "}
+                  product available
+                </p>
+              }
 
               <div className="flex gap-4">
                 <div className="flex w-45 items-center bg-[#F4F4F4] rounded-xl ">
@@ -469,7 +589,7 @@ export default function ProductDetailPage() {
                     onClick={() =>
                       handleQuantityChange(product?.productId || "", false)
                     }
-                    className="px-4 py-3 text-lg"
+                    className="px-4 py-3 text-2xl"
                   >
                     -
                   </button>
@@ -478,16 +598,18 @@ export default function ProductDetailPage() {
                     onClick={() =>
                       handleQuantityChange(product?.productId || "", true)
                     }
-                    className="px-4 py-3 text-lg"
+                    className="px-4 py-3 text-2xl"
                   >
                     +
                   </button>
                 </div>
+
                 <ActionButton
                   variant={isAdded ? "outline" : "primary"}
                   fullWidth
                   isCart
                   onClick={handleAddToCart}
+                  className="max-w-96"
                 >
                   {isAdded ? "CLEAR CART" : "ADD TO CART"}
                 </ActionButton>

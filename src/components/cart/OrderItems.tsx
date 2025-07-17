@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation';
 import { useCart } from '@/context/CartContext';
 import { CouponHelper } from '@/lib/coupons';
 import { useAuth } from '@/contexts/AuthContext';
+import Cookies from 'js-cookie';
 
 interface CartItem {
     productId: string;
@@ -60,6 +61,7 @@ export default function OrderItems({
     const [showPromoInput, setShowPromoInput] = useState(false);
     const [itemToRemove, setItemToRemove] = useState<string | null>(null);
     const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
+    const [appliedPadiCode, setAppliedPadiCode] = useState<boolean>(false);
     const [applyingCode, setapplyingCode] = useState<Boolean>(false);
     const [couponError, setCouponError] = useState('');
     const [availableCoupons, setAvailableCoupons] = useState<Coupon[]>([]);
@@ -70,6 +72,15 @@ export default function OrderItems({
     const freeShippingThreshold = 53000;
 
     console.log('Shipping Details:', shippingDetails);
+
+    useEffect(() => {
+        const referralCoupon = Cookies.get('referral_coupon');
+        if (referralCoupon) {
+            setPromoCode(referralCoupon);
+            setShowPromoInput(true);
+            Cookies.remove('referral_coupon');
+        }
+    }, []);
 
     useEffect(() => {
             if (cartItems.length > 0){
@@ -98,6 +109,7 @@ export default function OrderItems({
         const discountedTotal = 0.98 * subtotal;
         subtotal = discountedTotal
         setfullTotal(subtotal)
+        setAppliedPadiCode(true)
         console.log("Subtotal: ", subtotal, discountedTotal)
     } else {
       console.log("Coupon verification failed:", data.message);
@@ -383,7 +395,7 @@ export default function OrderItems({
                             {couponError && (
                                 <p className="text-red-500 text-sm">{couponError}</p>
                             )}
-                            <div className="text-sm space-y-1 p-4">
+                            {/* <div className="text-sm space-y-1 p-4">
                                 <p className="font-medium">Available Coupons: (click to add)</p>
                                 {availableCoupons.map((coupon) => (
                                     <div
@@ -395,7 +407,7 @@ export default function OrderItems({
                                         <span>{coupon.description}</span>
                                     </div>
                                 ))}
-                            </div>
+                            </div> */}
                         </div>
                     )}
 
@@ -412,10 +424,10 @@ export default function OrderItems({
                                     <span>-₦{discount.toLocaleString()}</span>
                                 </div>
                             )}
-                            {shippingSaving > 0 && (
+                            {appliedPadiCode && (
                                 <div className="flex py-1 pb-3 justify-between text-gray-500">
                                     <span>Savings</span>
-                                    <span className='text-red-500'>-₦{totalSaving.toLocaleString()}</span>
+                                    <span className='text-red-500'>-₦{(0.02* subtotal).toLocaleString()}</span>
                                 </div>
                             )}
                             <div className="flex py-1 pb-6 justify-between text-gray-500">
