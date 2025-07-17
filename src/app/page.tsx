@@ -40,59 +40,66 @@ export default function Home() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const [dealsResponse, newArrivalsResponse, exploreResponse] = await Promise.all([
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products?filter=top&max=20`),
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products?filter=new&max=20`),
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products?filter=explore&max=200`)
-        ]); 
-
+        const [dealsResponse, newArrivalsResponse, exploreResponse] =
+          await Promise.all([
+            fetch(
+              `${process.env.NEXT_PUBLIC_API_URL}/api/products?filter=top&max=20`
+            ),
+            fetch(
+              `${process.env.NEXT_PUBLIC_API_URL}/api/products?filter=new&max=20`
+            ),
+            fetch(
+              `${process.env.NEXT_PUBLIC_API_URL}/api/products?filter=explore&max=200`
+            ),
+          ]);
 
         const dealsData = await dealsResponse.json();
         const newArrivalsData = await newArrivalsResponse.json();
         const exploreData = await exploreResponse.json();
 
-
         console.log(dealsData);
-
 
         const mapProduct = (product: any) => ({
           ...product,
           dateCreated: product.dateCreated || new Date().toISOString(),
           dateUpdated: product.dateUpdated || new Date().toISOString(),
-          categoryId: product.categoryId || '',
+          categoryId: product.categoryId || "",
           stock: product.stock || 0,
-          totalSold: product.totalSold || 0
+          totalSold: product.totalSold || 0,
         });
 
         if (Array.isArray(dealsData.products)) {
-
           const mappedDeals = dealsData.products.map(mapProduct);
-          localStorage.setItem('deals', JSON.stringify(mappedDeals));
+          localStorage.setItem("deals", JSON.stringify(mappedDeals));
           setDeals(mappedDeals);
         }
 
         if (Array.isArray(newArrivalsData.products)) {
-
           const mappedNewArrivals = newArrivalsData.products.map(mapProduct);
-          localStorage.setItem('newArrivals', JSON.stringify(mappedNewArrivals));
+          localStorage.setItem(
+            "newArrivals",
+            JSON.stringify(mappedNewArrivals)
+          );
           setNewArrivals(mappedNewArrivals);
         }
 
         if (Array.isArray(exploreData.products)) {
           const mappedExplore = exploreData.products.map(mapProduct);
-          localStorage.setItem('exploreProducts', JSON.stringify(mappedExplore));
+          localStorage.setItem(
+            "exploreProducts",
+            JSON.stringify(mappedExplore)
+          );
           setExploreProducts(mappedExplore);
         }
-
       } catch (error) {
-        console.error('Error fetching products:', error);
+        console.error("Error fetching products:", error);
       }
     };
 
-    const cachedDeals = localStorage.getItem('deals');
+    const cachedDeals = localStorage.getItem("deals");
 
-    const cachedNewArrivals = localStorage.getItem('newArrivals');
-    const cachedExplore = localStorage.getItem('exploreProducts');
+    const cachedNewArrivals = localStorage.getItem("newArrivals");
+    const cachedExplore = localStorage.getItem("exploreProducts");
 
     if (cachedDeals) setDeals(JSON.parse(cachedDeals));
     if (cachedNewArrivals) setNewArrivals(JSON.parse(cachedNewArrivals));
@@ -103,7 +110,7 @@ export default function Home() {
 
   return (
     <>
-      <TopBanner theme={'dark'} />
+      <TopBanner theme={"dark"} />
       <Header />
       <Hero />
       <ShopByCategory />
@@ -125,7 +132,6 @@ export default function Home() {
         enablePagination={false}
         infiniteScroll={false}
         scrollonmobile={true}
-
       />
 
       <WhyShopWithUs />

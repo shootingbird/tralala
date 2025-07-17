@@ -1,110 +1,192 @@
-import { ArrowRight } from 'lucide-react';
-import Image from 'next/image';
-import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
+"use client";
+
+import { ArrowRight } from "lucide-react";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useState, useEffect, useMemo } from "react";
+import Link from "next/link";
+import clsx from "clsx";
 
 interface Category {
-    id: string
-    name: string
-    slug: string
-    description: string
-    image_url: string
-    topProducts: {
-        id: string
-        name: string
-        slug: string
-    }[]
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  image_url: string;
+  topProducts: {
+    id: string;
+    name: string;
+    slug: string;
+  }[];
 }
 
+const slides = [
+  {
+    bgImage: "/hero.png",
+    text: "Free Delivery for Purchase\nover NGN100,000",
+  },
+  {
+    bgImage: "/hero2.png",
+    text: "The NORDIC & SIMPLE LED CHANDELIER",
+    description:
+      "Elevate your space with sleek Nordic design and brilliant, energy-efficient LED light.",
+  },
+];
+
 export const Hero = () => {
-    const router = useRouter();
-    const [categories, setCategories] = useState<Category[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [currentSlide, setCurrentSlide] = useState(0);
 
-    useEffect(() => {
-        console.log("TM")
-        const cachedCategories = localStorage.getItem("categories")
-        if (cachedCategories) {
-            const parsedCategories = JSON.parse(cachedCategories)
-            setCategories(parsedCategories)
-            setIsLoading(false)
+  // Auto-slide logic
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % slides.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Fetch categories
+  useEffect(() => {
+    const cachedCategories = localStorage.getItem("categories");
+
+    if (cachedCategories) {
+      setCategories(JSON.parse(cachedCategories));
+      setIsLoading(false);
+    }
+
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/categories`
+        );
+        const data = await response.json();
+        if (Array.isArray(data.categories)) {
+          const sortedCategories = data.categories.sort(
+            (
+              a: { topProducts?: { length: number }[] },
+              b: { topProducts?: { length: number }[] }
+            ) => (b.topProducts?.length || 0) - (a.topProducts?.length || 0)
+          );
+          localStorage.setItem("categories", JSON.stringify(sortedCategories));
+          setCategories(sortedCategories);
+          setIsLoading(false);
         }
-
-        const fetchCategories = async () => {
-            try {
-                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/categories`)
-                const data = await response.json()
-                if (Array.isArray(data.categories)) {
-                    const sortedCategories = data.categories.sort((a: { topProducts?: { length: number }[] }, b: { topProducts?: { length: number }[] }) =>
-                        (b.topProducts?.length || 0) - (a.topProducts?.length || 0)
-                    )
-                    localStorage.setItem("categories", JSON.stringify(sortedCategories))
-                    setCategories(sortedCategories)
-                    setIsLoading(false)
-                }
-            } catch (error: unknown) {
-                if (error instanceof Error) {
-                    console.error("Error fetching categories:", error.message)
-                }
-            }
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          console.error("Error fetching categories:", error.message);
         }
+      }
+    };
 
-        fetchCategories()
-    }, [])
+    fetchCategories();
+  }, []);
 
-    return (
-        <section className="relative h-[20vh] sm:h-[25vh] ">
-            <div className="absolute inset-0 h-full">
-                <Image
-                    src="/hero.png"
-                    alt="Hero background"
-                    fill
-                    className="object-cover h-full"
-                    priority
-                />
-            </div>
+  const topCategories = useMemo(() => categories.slice(0, 4), [categories]);
 
-            <div className="relative flex flex-col lg:flex-row md:grid md:grid-cols-12 h-full   min-h-[20vh]">
-                <div className="hidden lg:block w-auto px-[3rem] col-span-2  bg-[#F8F3F2] p-4">
-                    {isLoading ? (
-                        <div className="space-y-3 flex flex-col justify-between h-full">
-                            {Array.from({ length: 4 }).map((_, index) => (
-                                <div key={index} className="h-5 bg-gray-200 rounded animate-pulse" />
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="space-y-2.5  h-full flex flex-col justify-between">
-                            {categories.slice(0, 4).map((category) => (
-                                <Link
-                                    key={category.id}
-                                    href={`/products/category/${category.id}`}
-                                    className="block textblack font-medium hover:text-[#184193] transition-colors text-[.9rem] py-1"
-                                >
-                                    {category.name}
-                                </Link>
-                            ))}
-                        </div>
+  return (
+    <section className="relative h-[20vh] sm:h-[25vh] flex overflow-hidden">
+      {/* Sidebar */}
+      <aside
+        className="hidden lg:block w-auto px-12 bg-[#F8F3F2] py-4"
+        aria-label="Top categories"
+      >
+        {isLoading ? (
+          <div className="space-y-3 h-full flex flex-col justify-between animate-pulse">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="h-5 bg-gray-200 rounded" />
+            ))}
+          </div>
+        ) : (
+          <nav className="space-y-2.5 h-full flex flex-col justify-between">
+            {topCategories.map((category) => (
+              <Link
+                key={category.id}
+                href={`/products/category/${category.id}`}
+                className="text-black font-medium hover:text-[#184193] transition-colors text-[.9rem] py-1"
+              >
+                {category.name}
+              </Link>
+            ))}
+          </nav>
+        )}
+      </aside>
+
+      {/* Carousel */}
+      <div className="relative w-full h-full overflow-hidden">
+        {slides.map((slide, index) => {
+          const isActive = index === currentSlide;
+          return (
+            <div
+              key={index}
+              className={clsx(
+                "absolute inset-0 h-full w-full transition-opacity duration-1000 ease-in-out",
+                {
+                  "opacity-100 z-10": isActive,
+                  "opacity-0 z-0": !isActive,
+                }
+              )}
+              role="group"
+              aria-hidden={!isActive}
+              aria-roledescription="slide"
+            >
+              <Image
+                src={slide.bgImage}
+                alt={`Slide ${index + 1}`}
+                fill
+                className="object-cover"
+                priority={index === 0}
+              />
+              <div className="absolute inset-0 bg-black/20 flex items-center px-8 py-4">
+                <div className="text-white space-y-4 max-w-xl">
+                  <h1
+                    className={clsx(
+                      "text-xl lg:text-3xl font-bold whitespace-pre-line",
+                      isActive && "animate-fadeInUp"
                     )}
+                  >
+                    {slide.text}
+                  </h1>
+                  {slide.description && (
+                    <p className="text-md lg:text-lg font-semibold">
+                      {slide.description}
+                    </p>
+                  )}
+                  <button
+                    onClick={() => router.push("/products")}
+                    className="group bg-[#184193] text-white px-6 py-2.5 rounded-md inline-flex items-center gap-2 hover:bg-[#0f398c] transition-all duration-300 transform hover:scale-105"
+                  >
+                    Shop Now
+                    <ArrowRight
+                      size={18}
+                      className="transform transition-transform duration-300 group-hover:translate-x-2"
+                    />
+                  </button>
                 </div>
-
-                <div className="flex-1 flex md:col-span-10 items-center px-8 py-4">
-                    <div className="text-left">
-                        <h1 className="text-xl lg:text-3xl font-bold text-white mb-2">
-                            Free Delivery for Purchase
-                            <br />
-                            over NGN100,000
-                        </h1>
-                        <button
-                            onClick={() => router.push('/products')}
-                            className="bg-[#184193] text-white px-6 mt-2 py-2.5 rounded-md inline-flex items-center gap-2 hover:bg-blue-700 transition-colors text-sm"
-                        >
-                            Shop Now
-                            <ArrowRight size={18} />
-                        </button>
-                    </div>
-                </div>
+              </div>
             </div>
-        </section>
-    );
+          );
+        })}
+      </div>
+
+      {/* Animation Keyframes */}
+      <style jsx>{`
+        @keyframes fadeInUp {
+          0% {
+            opacity: 0;
+            transform: translateY(30px);
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        .animate-fadeInUp {
+          animation: fadeInUp 1s ease-out forwards;
+        }
+      `}</style>
+    </section>
+  );
 };
