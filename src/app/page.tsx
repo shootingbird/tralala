@@ -7,7 +7,7 @@ import { Header } from "@/components/layout/Header";
 import { TopBanner } from "@/components/layout/TopBanner";
 import { ProductGrid } from "@/components/product/ProductGrid";
 import { InstallPWAPrompt } from "@/components/pwa/InstallPWAPrompt";
-import { DealOfMonth } from "@/components/sections/DealOfMonth";
+// import { DealOfMonth } from "@/components/sections/DealOfMonth";
 import { Hero } from "@/components/sections/Hero";
 import { WhyShopWithUs } from "@/components/sections/WhyShopWithUs";
 
@@ -30,6 +30,7 @@ interface Product {
   categoryId: string;
   stock: number;
   totalSold: number;
+  variations?: { price: number; quantity: number; variation: string }[];
 }
 
 export default function Home() {
@@ -59,7 +60,7 @@ export default function Home() {
 
         console.log(dealsData);
 
-        const mapProduct = (product: any) => ({
+        const mapProduct = (product: Product) => ({
           ...product,
           dateCreated: product.dateCreated || new Date().toISOString(),
           dateUpdated: product.dateUpdated || new Date().toISOString(),
