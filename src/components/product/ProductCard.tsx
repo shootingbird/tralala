@@ -210,7 +210,7 @@ export const ProductCard = ({
               isCart
               onClick={() => router.push(`/products/v/${productId}`)}
             >
-              {isAdded ? "ADDED TO CART" : "CHOOSE VARIATION"}
+              {isAdded ? "ADDED TO CART" : "SEE OPTIONS"}
             </ActionButton>
           ) : (
             <ActionButton

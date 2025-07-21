@@ -36,6 +36,11 @@ interface Product {
     amount: number;
     percentage: number;
   };
+  variations?: {
+    price: number;
+    quantity: number;
+    variation: string;
+  }[];
 }
 interface Category {
   id: string;
@@ -246,7 +251,6 @@ export default function ProductsPage() {
 
     setProducts(filteredProducts);
   };
-
   return (
     <>
       <TopBanner theme={"dark"} />
