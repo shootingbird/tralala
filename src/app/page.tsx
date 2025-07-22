@@ -108,7 +108,7 @@ export default function Home() {
 
     fetchProducts();
   }, []);
-
+  console.log("Deals:", deals);
   return (
     <>
       <TopBanner theme={"dark"} />

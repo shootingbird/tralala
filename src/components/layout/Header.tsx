@@ -365,7 +365,7 @@ export const Header = () => {
                                 .map((subcategory) => (
                                   <Link
                                     key={subcategory.id}
-                                    href={`/products/category/${subcategory.id}`}
+                                    href={`/products/category/sub_category/${subcategory.id}`}
                                     className="text-[.8rem] text-[#2f2e2e] font-medium line-clamp-1 "
                                     onClick={() => setShowCategories(false)}
                                   >
