@@ -518,9 +518,7 @@ export const Header = () => {
                     ?.subcategories.map((subcategory) => (
                       <Link
                         key={subcategory.id}
-                        href={`/products/category/${
-                          categories.find((c) => c.id === activeCategory)?.id
-                        }`}
+                        href={`/products/category/sub_category/${subcategory.id}`}
                         className="block py-3 text-gray-600 border-b  border-[#60606020] hover:text-[#184193]"
                         onClick={() => {
                           setIsMenuOpen(false);
