@@ -148,6 +148,7 @@ export default function PaymentPage() {
             const total = data.data.amount / 100; // Paystack returns amount in kobo
 
             const code = padiCode || padiTry;
+            console.log("Padi: ", padiCode, padiTry, orderId, total)
 
             if (code && orderId && total) {
                 console.log("Sharp");

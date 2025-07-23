@@ -55,8 +55,19 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                     last_name: lastName,
                     phone_number: phoneNumber
                 });
-
+    
             if (result.success) {
+                // If signup was successful, automatically log in the user
+                if (!isLogin) {
+                    const loginResult = await login({ email, password });
+                    if (!loginResult.success) {
+                        setErrorMessage(loginResult.error || 'Auto-login failed after signup');
+                        setShowErrorModal(true);
+                        setIsLoading(false);
+                        return;
+                    }
+                }
+                
                 setShowSuccessModal(true);
                 setTimeout(() => {
                     onClose(true);
