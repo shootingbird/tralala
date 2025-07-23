@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import Cookies from 'js-cookie';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/context/CartContext';
 
@@ -142,12 +143,17 @@ export default function PaymentPage() {
             console.log("Payment verified successfully:", data);
 
             const padiCode = localStorage.getItem("padiCode");
+            const padiTry = Cookies.get("padiCode");
             const orderId = params.orderId;
             const total = data.data.amount / 100; // Paystack returns amount in kobo
 
-            if (padiCode && orderId && total) {
-            await authenticateAdmin(padiCode, orderId, total);
+            const code = padiCode || padiTry;
+
+            if (code && orderId && total) {
+                console.log("Sharp");
+                await authenticateAdmin(code, orderId, total);
             }
+
 
             clearCart();
             router.push(`/orders/${orderId}`);
