@@ -133,6 +133,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(null);
         Cookies.remove('token');
         Cookies.remove('user');
+        localStorage.clear()
     };
 
     const signup = async (credentials: SignupCredentials) => {
