@@ -96,7 +96,7 @@ useEffect(() => {
         console.log("INterestingggggg")
 
         const padiCode = localStorage.getItem("padiCode") || Cookies.get("padiCode") || '';
-        const total = data.data.amount;
+        const total = (data.data.amount * 0.017);
         console.log("Padi Code: ", padiCode, "Order ID: ", orderId, "Total: ", total);
 
         const accessToken = "f02a115cd294dc3c05f87a8838dd27391174aed66436e92acaade9e5a1d99bf17050f24b4d2ccdca98a4e5b4f64fb0d86dea";
