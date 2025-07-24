@@ -34,8 +34,16 @@ const requestReferralEarnings = async (
   total: number
 ): Promise<boolean> => {
   try {
+    // Validate required parameters
+    if (!padiCode || !orderId || !total || !accessToken) {
+      console.error('Missing required parameters for referral earnings request');
+      return false;
+    }
+
+    console.log('Requesting referral earnings with:', { padiCode, orderId, total });
+
     const response = await fetch(
-      `https://steadfast-padi-backend.pxxl.tech/api/payment/${padiCode}/request-referral-earnings`,
+      `https://steadfast-padi-backend.pxxl.tech/api/payment/${encodeURIComponent(padiCode)}/request-referral-earnings`,
       {
         method: "POST",
         headers: {
@@ -44,20 +52,25 @@ const requestReferralEarnings = async (
         },
         body: JSON.stringify({
           orderId,
-          category: "POP/Surface Light",
-          amount: total,
+          category: "POP/Surface Light", // Consider making this dynamic
+          amount: Number(total),
         }),
       }
     );
 
     const data: ReferralEarningsResponse = await response.json();
-    console.log("Referral response: ", data);
+    console.log("Referral response status:", response.status);
+    console.log("Referral response data:", data);
 
     if (response.ok && data.success) {
       console.log("Referral earnings requested successfully");
       return true;
     } else {
-      console.error("Referral earnings request failed:", data);
+      console.error("Referral earnings request failed:", {
+        status: response.status,
+        statusText: response.statusText,
+        data
+      });
       return false;
     }
   } catch (error) {
@@ -80,11 +93,13 @@ useEffect(() => {
       if (response.ok && data.status) {
         setStatus('success');
         clearCart();
+        console.log("INterestingggggg")
 
         const padiCode = localStorage.getItem("padiCode") || Cookies.get("padiCode") || '';
         const total = data.data.amount;
+        console.log("Padi Code: ", padiCode, "Order ID: ", orderId, "Total: ", total);
 
-        const accessToken = "6ba2ef40d8dc5eca6e40661436b38d909b04409f5fae6399dc1cfa784f4830b77466502c0d3b8db6e60ad44a3b3fea137d2ed782bac448577bb788814ab929f51f6ad71e691569717f5df786348d7c04";
+        const accessToken = "f02a115cd294dc3c05f87a8838dd27391174aed66436e92acaade9e5a1d99bf17050f24b4d2ccdca98a4e5b4f64fb0d86dea";
 
         const success = await requestReferralEarnings(accessToken, padiCode, orderId, total);
         if (success) {
