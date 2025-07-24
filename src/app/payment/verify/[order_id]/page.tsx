@@ -52,7 +52,7 @@ const requestReferralEarnings = async (
         },
         body: JSON.stringify({
           orderId,
-          category: "POP/Surface Light", // Consider making this dynamic
+          category: "Miscellaneous", // Consider making this dynamic
           amount: Number(total),
         }),
       }
