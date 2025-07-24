@@ -65,10 +65,14 @@ const VerifyPaymentPage = () => {
         });
 
         const data = await response.json();
+        console.log("Daata: ", data, data.success)
 
-        if (response.ok && data.success) {
+
+
+        if (response.ok) {
             console.log("Admin authenticated successfully");
             const accessToken = data.data.accessToken;
+            console.log("Accesstoken: ", accessToken, data.data)
 
             await requestReferralEarnings(accessToken, padiCode, orderId, total);
         } else {
