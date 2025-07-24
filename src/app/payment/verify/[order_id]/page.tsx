@@ -66,7 +66,7 @@ const VerifyPaymentPage = () => {
 
         const data = await response.json();
 
-        if (response.ok && data.status && data.data.accessToken) {
+        if (response.ok && data.success) {
             console.log("Admin authenticated successfully");
             const accessToken = data.data.accessToken;
 
