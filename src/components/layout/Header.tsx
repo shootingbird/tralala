@@ -59,6 +59,7 @@ export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showCategories, setShowCategories] = useState(false);
   const { wishlist } = useWishlist();
+  const router = useRouter()
   const { cartItems } = useCart();
   const [showSubcategories, setShowSubcategories] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
@@ -234,6 +235,7 @@ export const Header = () => {
                             onClick={() => {
                               logout();
                               setIsDropdownOpen(false);
+                              router.push("/")
                             }}
                             className="flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 w-full"
                           >
