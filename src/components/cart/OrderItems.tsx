@@ -78,7 +78,11 @@ export default function OrderItems({
         if (referralCoupon) {
             setPromoCode(referralCoupon);
             setShowPromoInput(true);
-            Cookies.remove('referral_coupon');
+        }
+        const padiCode = localStorage.getItem("padiCode")
+        if (padiCode){
+            setPromoCode(padiCode)
+            setShowPromoInput(true)
         }
     }, []);
 
@@ -381,9 +385,12 @@ export default function OrderItems({
                                 <input
                                     type="text"
                                     value={promoCode}
-                                    onChange={(e) => setPromoCode(e.target.value)}
+                                    onChange={(e) => {
+                                        setPromoCode(e.target.value)
+                                        localStorage.setItem("padiCode", e.target.value)
+                                    }}
                                     placeholder="Enter promo code"
-                                    className="flex-1 p-3 border-2 border-[#EDF0F8] outline-0 rounded-xl"
+                                    className="flex-1 p-2 border-2 border-[#EDF0F8] outline-0 rounded-xl"
                                 />
                                 <button
                                     onClick={() => applyPadiCoupon(promoCode)}

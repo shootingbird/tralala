@@ -57,7 +57,6 @@ export default function CartPage() {
         if (referralCoupon) {
             setPromoCode(referralCoupon);
             setShowPromoInput(true);
-            Cookies.remove('referral_coupon');
         }
     }, []);
 
@@ -352,7 +351,10 @@ const applyPadiCoupon = async (padiCode: string): Promise<void> => {
                                         <input
                                             type="text"
                                             value={promoCode}
-                                            onChange={(e) => setPromoCode(e.target.value)}
+                                            onChange={(e) => {
+                                                setPromoCode(e.target.value)
+                                                localStorage.setItem("padiCode", e.target.value)
+                                            }}
                                             placeholder="Enter promo code"
                                             className="flex-1 p-2 border-2 border-[#EDF0F8] outline-0 rounded-xl"
                                         />

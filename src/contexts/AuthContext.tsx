@@ -18,7 +18,9 @@ interface AuthContextType {
     isLoading: boolean;
     changePassword: (passwords: { oldPassword: string; newPassword: string }) => Promise<{ success: boolean; error?: string }>;
     forgotPassword: (email: string) => Promise<{ success: boolean; error?: string }>;
+    checkVerificationCode: (code: string, email: string) => Promise<{ success: boolean; error?: string }>;
     resendVerificationCode: (email: string) => Promise<{ success: boolean; error?: string }>;
+    resetPasswordNow: (email: string, new_password: string) => Promise<{ success: boolean, error?: string }>;
     getToken: () => string | null;
 }
 
@@ -131,6 +133,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(null);
         Cookies.remove('token');
         Cookies.remove('user');
+        localStorage.clear()
     };
 
     const signup = async (credentials: SignupCredentials) => {
@@ -334,6 +337,67 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return Cookies.get('token') || null;
     };
 
+    const checkVerificationCode = async (code: string, email: string) => {
+        try {
+            console.log("Code: ", code, email)
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/verify-otp`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ otp: code, email: email })
+            });
+    
+            const data = await response.json();
+    
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to verify OTP');
+            }
+    
+            return { success: true };
+        } catch (error: unknown) {
+            if (error instanceof Error) {
+                return {
+                    success: false,
+                    error: error.message
+                };
+            } else {
+                return {
+                    success: false,
+                    error: 'Failed to verify OTP'
+                };
+            }
+        }
+    }
+
+const resetPasswordNow = async (email: string, new_password: string) => {
+    try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/reset-now`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: email, new_password: new_password })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Failed to reset password');
+        }
+
+        return { success: true };
+    } catch (error: unknown) {
+        if (error instanceof Error) {
+            return {
+                success: false,
+                error: error.message
+            };
+        } else {
+            return {
+                success: false,
+                error: 'Failed to reset password'
+            };
+        }
+    }
+}
+
     return (
         <AuthContext.Provider value={{
             user,
@@ -345,8 +409,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             resendVerificationCode,
             changePassword,
             forgotPassword,
+            checkVerificationCode,
             isAuthenticated: !!user,
             isLoading,
+            resetPasswordNow,
             getToken
         }}>
             {children}

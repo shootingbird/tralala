@@ -1,8 +1,22 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Cookies from 'js-cookie';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCart } from '@/context/CartContext';
+type AdminAuthResponse = {
+  success: boolean;
+  data: {
+    accessToken: string;
+  };
+  message?: string;
+};
+
+type ReferralEarningsResponse = {
+  success: boolean;
+  message?: string;
+};
+
 
 const VerifyPaymentPage = () => {
   const router = useRouter();
@@ -11,31 +25,100 @@ const VerifyPaymentPage = () => {
   const orderId = searchParams.get('order_id');
   const [status, setStatus] = useState<'pending' | 'success' | 'failed'>('pending');
 
-  useEffect(() => {
-    const verifyPayment = async () => {
-      if (!orderId) {
-        setStatus('failed');
-        return;
+
+
+const requestReferralEarnings = async (
+  accessToken: string,
+  padiCode: string,
+  orderId: string,
+  total: number
+): Promise<boolean> => {
+  try {
+    // Validate required parameters
+    if (!padiCode || !orderId || !total || !accessToken) {
+      console.error('Missing required parameters for referral earnings request');
+      return false;
+    }
+
+    console.log('Requesting referral earnings with:', { padiCode, orderId, total });
+
+    const response = await fetch(
+      `https://steadfast-padi-backend.pxxl.tech/api/payment/${encodeURIComponent(padiCode)}/request-referral-earnings`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-access-key": accessToken,
+        },
+        body: JSON.stringify({
+          orderId,
+          category: "Miscellaneous", // Consider making this dynamic
+          amount: Number(total),
+        }),
       }
+    );
 
-      try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/payments/verify/${orderId}`);
-        const data = await response.json();
+    const data: ReferralEarningsResponse = await response.json();
+    console.log("Referral response status:", response.status);
+    console.log("Referral response data:", data);
 
-        if (response.ok && data.status) {
-          setStatus('success');
-          clearCart();
+    if (response.ok && data.success) {
+      console.log("Referral earnings requested successfully");
+      return true;
+    } else {
+      console.error("Referral earnings request failed:", {
+        status: response.status,
+        statusText: response.statusText,
+        data
+      });
+      return false;
+    }
+  } catch (error) {
+    console.error("Error requesting referral earnings:", error);
+    return false;
+  }
+};
+
+useEffect(() => {
+  const verifyPayment = async () => {
+    if (!orderId) {
+      setStatus('failed');
+      return;
+    }
+
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/payments/verify/${orderId}`);
+      const data = await response.json();
+
+      if (response.ok && data.status) {
+        setStatus('success');
+        clearCart();
+        console.log("INterestingggggg")
+
+        const padiCode = localStorage.getItem("padiCode") || Cookies.get("padiCode") || '';
+        const total = (data.data.amount * 0.017);
+        console.log("Padi Code: ", padiCode, "Order ID: ", orderId, "Total: ", total);
+
+        const accessToken = "f02a115cd294dc3c05f87a8838dd27391174aed66436e92acaade9e5a1d99bf17050f24b4d2ccdca98a4e5b4f64fb0d86dea";
+
+        const success = await requestReferralEarnings(accessToken, padiCode, orderId, total);
+        if (success) {
           router.push('/successful');
         } else {
-          setStatus('failed');
+          console.warn('Referral earnings could not be requested');
+          router.push('/successful'); // Still go forward even if referral fails
         }
-      } catch (error) {
+      } else {
         setStatus('failed');
       }
-    };
+    } catch (error) {
+      console.error("Payment verification error:", error);
+      setStatus('failed');
+    }
+  };
 
-    verifyPayment();
-  }, [orderId, router]);
+  verifyPayment();
+}, [orderId, router]);
 
   return (
     <div className="container mx-auto p-4">
