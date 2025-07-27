@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useEffect } from "react";
 import { useWishlist } from "@/context/WishlistContext";
 import { useParams } from "next/navigation";
@@ -22,18 +22,13 @@ import { Footer } from "@/components/layout/Footer";
 import { ProductTabs } from "@/components/product/ProductTabs";
 import { useCart } from "@/context/CartContext";
 import { useIsMobile } from "@/lib/mobile";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import LoadingSkeloton from "./LoadingSkeloton";
 
 interface Variation {
   price: number;
   quantity: number;
   variation: string;
+  variationQuantityInCart?: number;
 }
 
 interface Product {
@@ -66,46 +61,33 @@ interface Product {
 export default function ProductDetailPage() {
   const params = useParams();
   const productId = params.id as string;
-  const [selectedVariationName, setSelectedVariationName] =
-    useState<string>("");
-  const [isWishlisted, setIsWishlisted] = useState(false);
-  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [quantity, setQuantity] = useState(1);
-  const [isAdded, setIsAdded] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [product, setProducts] = useState<Product>();
-  const [isPageLoading, setIsPageLoading] = useState(true);
-  const [magnifyPosition, setMagnifyPosition] = useState({ x: 0, y: 0 });
-  const [isHovering, setIsHovering] = useState(false);
   const isMobile = useIsMobile();
+
+  const [product, setProducts] = useState<Product>();
+  const [isLoading, setIsLoading] = useState(false);
+
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isHovering, setIsHovering] = useState(false);
+  const [magnifyPosition, setMagnifyPosition] = useState({ x: 0, y: 0 });
   const enterTimeout = useRef<NodeJS.Timeout | null>(null);
   const leaveTimeout = useRef<NodeJS.Timeout | null>(null);
 
-  const selectedVariation =
-    product?.variations.find((v) => v.variation === selectedVariationName) ??
-    null;
+  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
+  const [isWishlisted, setIsWishlisted] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
 
-  const handleMouseEnter = () => {
-    if (leaveTimeout.current) clearTimeout(leaveTimeout.current);
-    enterTimeout.current = setTimeout(() => {
-      setIsHovering(true);
-    }, 10);
-  };
-
-  const handleMouseLeave = () => {
-    if (enterTimeout.current) clearTimeout(enterTimeout.current);
-    leaveTimeout.current = setTimeout(() => {
-      setIsHovering(false);
-    }, 0);
-  };
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const { left, top, width, height } =
-      e.currentTarget.getBoundingClientRect();
-    const x = ((e.clientX - left) / width) * 100;
-    const y = ((e.clientY - top) / height) * 100;
-    setMagnifyPosition({ x, y });
-  };
+  const {
+    addToCart,
+    // isInCart,
+    removeFromCart,
+    updateQuantity: updateQuantity,
+    cartItems,
+  } = useCart();
+  const [variationInCart, setVariationInCart] = useState<Variation[]>([]);
+  const [selectedVariationName, setSelectedVariationName] =
+    useState<string>("");
+  const [isAdded, setIsAdded] = useState(false);
+  const [isPageLoading, setIsPageLoading] = useState(true);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -161,12 +143,68 @@ export default function ProductDetailPage() {
   }, [product]);
 
   useEffect(() => {
+    if (product?.variations) {
+      const initialVariationInCart: Variation[] = product.variations.map(
+        (v) => {
+          const item = cartItems.find(
+            (item) => item.productId === product.productId
+            // &&
+            // item.variation?.variation === v.variation
+          );
+
+          return {
+            ...v,
+            variationQuantityInCart: item?.quantity || 0,
+          };
+        }
+      );
+
+      setVariationInCart(initialVariationInCart);
+    }
+  }, [product, cartItems]);
+
+  useEffect(() => {
     if (product?.variations && product.variations.length > 0) {
       setSelectedVariationName(product.variations[0].variation);
     }
 
     setIsWishlisted(isInWishlist(productId));
   }, [productId, isInWishlist]);
+
+  const priceRange = useMemo(() => {
+    if (product?.variations && product.variations.length > 0) {
+      const prices = product.variations.map((v) => v.price);
+      const min = Math.min(...prices);
+      const max = Math.max(...prices);
+      return { min, max };
+    }
+    return null;
+  }, [product]);
+
+  const selectedVariation =
+    product?.variations.find((v) => v.variation === selectedVariationName) ??
+    null;
+
+  const handleMouseEnter = () => {
+    if (leaveTimeout.current) clearTimeout(leaveTimeout.current);
+    enterTimeout.current = setTimeout(() => {
+      setIsHovering(true);
+    }, 10);
+  };
+
+  const handleMouseLeave = () => {
+    if (enterTimeout.current) clearTimeout(enterTimeout.current);
+    leaveTimeout.current = setTimeout(() => {
+      setIsHovering(false);
+    }, 0);
+  };
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const { left, top, width, height } =
+      e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - left) / width) * 100;
+    const y = ((e.clientY - top) / height) * 100;
+    setMagnifyPosition({ x, y });
+  };
 
   const toggleWishlist = async () => {
     try {
@@ -194,19 +232,11 @@ export default function ProductDetailPage() {
       setIsLoading(false);
     }
   };
-  const {
-    addToCart,
-    isInCart,
-    removeFromCart,
-    updateQuantity: updateQuantity,
-    cartItems,
-  } = useCart();
 
   const [cartQuantity, setCartQuantity] = useState(1);
 
   useEffect(() => {
     const itemInCart = cartItems.find((item) => item.productId == productId);
-    console.log(itemInCart);
 
     if (itemInCart) {
       setCartQuantity(itemInCart.quantity);
@@ -252,6 +282,65 @@ export default function ProductDetailPage() {
     }
   };
 
+  const handleVariationQuantityChange = (
+    variationName: string,
+    increment: boolean
+  ) => {
+    setVariationInCart((prev) => {
+      const variation = product?.variations.find(
+        (v) => v.variation === variationName
+      );
+      if (!variation) return prev;
+
+      const existing = prev.find((v) => v.variation === variationName);
+      const currentQuantity = existing?.variationQuantityInCart || 0;
+      const newQuantity = currentQuantity + (increment ? 1 : -1);
+
+      if (newQuantity < 0) return prev;
+
+      if (newQuantity > variation.quantity) {
+        alert(
+          `Only ${variation.quantity} unit(s) available for ${variationName}`
+        );
+        return prev;
+      }
+
+      const updated = existing
+        ? prev.map((v) =>
+            v.variation === variationName
+              ? { ...v, variationQuantityInCart: newQuantity }
+              : v
+          )
+        : [...prev, { ...variation, variationQuantityInCart: newQuantity }];
+
+      return updated;
+    });
+  };
+
+  const handleAddAllVariationsToCart = () => {
+    if (!product) return;
+
+    variationInCart.forEach((variation) => {
+      if (
+        variation.variationQuantityInCart &&
+        variation.variationQuantityInCart > 0
+      ) {
+        addToCart({
+          productId: product.productId,
+          title: product.title || product.name,
+          price: variation.price,
+          quantity: variation.variationQuantityInCart,
+          image: product.images[0],
+          category: product.category,
+          brand: product.brand,
+          rating: product.rating,
+          thumbnail: product.images[0],
+          // variation,
+        });
+      }
+    });
+  };
+
   // Next/prev image functions
   const nextImage = () => {
     if (!product) return;
@@ -270,15 +359,6 @@ export default function ProductDetailPage() {
   const handleThumbnailClick = (index: number) => {
     setCurrentImageIndex(index);
   };
-
-  const displayPrice = (() => {
-    if (selectedVariation && selectedVariation.price > 0) {
-      return selectedVariation.price;
-    }
-    return product?.price ?? 0;
-  })();
-
-  const [isSharing, setIsSharing] = useState(false);
 
   const handleShare = async () => {
     if (isSharing) return;
@@ -312,77 +392,10 @@ export default function ProductDetailPage() {
     return <div>Product not found</div>;
   }
 
-  console.log(currentImageIndex);
   if (isPageLoading) {
-    return (
-      <>
-        <TopBanner theme="dark" />
-        <Header />
-        <main className="container mx-auto px-4 pt-8 pb-[5rem]">
-          <div className="animate-pulse">
-            <div className="h-6 w-64 bg-gray-200 rounded mb-8" />
-
-            <div className="flex flex-col md:flex-row gap-8">
-              <div className="md:w-2/5">
-                <div className="relative aspect-square mb-4 bg-gray-200 rounded-lg" />
-                <div className="grid grid-cols-3 gap-4">
-                  {[1, 2, 3].map((index) => (
-                    <div
-                      key={index}
-                      className="aspect-square bg-gray-200 rounded-lg"
-                    />
-                  ))}
-                </div>
-              </div>
-
-              <div className="md:w-3/5 space-y-4">
-                <div className="flex justify-between items-center">
-                  <div className="w-32 h-6 bg-gray-200 rounded" />
-                  <div className="flex gap-4">
-                    {[1, 2, 3].map((index) => (
-                      <div
-                        key={index}
-                        className="w-10 h-10 bg-gray-200 rounded-xl"
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                <div className="h-8 w-3/4 bg-gray-200 rounded" />
-                <div className="h-4 w-1/4 bg-gray-200 rounded" />
-                <div className="space-y-2">
-                  <div className="h-4 w-full bg-gray-200 rounded" />
-                  <div className="h-4 w-full bg-gray-200 rounded" />
-                  <div className="h-4 w-2/3 bg-gray-200 rounded" />
-                </div>
-
-                <div className="h-8 w-1/3 bg-gray-200 rounded" />
-
-                <div>
-                  <div className="h-6 w-48 bg-gray-200 rounded mb-4" />
-                  <div className="flex gap-4">
-                    {[1, 2, 3].map((index) => (
-                      <div
-                        key={index}
-                        className="w-24 h-10 bg-gray-200 rounded-full"
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                <div className="flex gap-4 pt-4">
-                  <div className="w-32 h-12 bg-gray-200 rounded-xl" />
-                  <div className="flex-1 h-12 bg-gray-200 rounded-xl" />
-                </div>
-              </div>
-            </div>
-          </div>
-        </main>
-        <Footer />
-      </>
-    );
+    return <LoadingSkeloton />;
   }
-  console.log(product?.price.toLocaleString());
+
   return (
     <>
       <TopBanner theme="dark" />
@@ -405,12 +418,6 @@ export default function ProductDetailPage() {
               onMouseMove={handleMouseMove}
             >
               {product && (
-                // <Image
-                //   src={product.images[0]}
-                //   alt={product.title || "Product Image"}
-                //   fill
-                //   className="object-cover rounded-lg"
-                // />
                 <div className="relative flex justify-center items-center aspect-square overflow-hidden rounded-2xl bg-white ">
                   {/* Main Image */}
                   {product?.images?.[currentImageIndex] ? (
@@ -546,31 +553,64 @@ export default function ProductDetailPage() {
                 {product?.description}
               </p>
 
-              <p className="text-2xl font-semibold  border-b border-gray-200 pb-6">
-                NGN {displayPrice.toLocaleString()}.00
+              <p className="text-2xl font-semibold border-b border-gray-200 pb-6">
+                NGN{" "}
+                {priceRange
+                  ? `${priceRange.min.toLocaleString()}.00 - ${priceRange.max.toLocaleString()}.00`
+                  : product?.price.toLocaleString()}
+                .00
               </p>
 
               {product?.variations && product?.variations.length > 0 && (
                 <div className="pt-5">
                   <h3 className="font-medium mb-4">Variation</h3>
-                  <Select
-                    value={selectedVariationName}
-                    onValueChange={(value) => setSelectedVariationName(value)}
-                  >
-                    <SelectTrigger className="w-full py-6">
-                      <SelectValue placeholder="Select Variation" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white">
-                      {product.variations.map((variation) => (
-                        <SelectItem
-                          key={variation.variation}
-                          value={variation.variation}
-                        >
-                          {variation.variation}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className=" grid gap-4 h-80 overflow-y-auto">
+                    {product.variations.map((variation) => (
+                      <div
+                        key={variation.variation}
+                        className="flex justify-between items-center gap-4 py-3 border-b"
+                      >
+                        <div>
+                          <p className="font-medium">{variation.variation}</p>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm text-gray-600">
+                            NGN {variation.price.toLocaleString()}
+                          </p>
+                          <div className="flex items-center bg-[#F4F4F4] rounded-xl">
+                            <button
+                              onClick={() =>
+                                handleVariationQuantityChange(
+                                  variation.variation,
+                                  false
+                                )
+                              }
+                              className="px-3 py-2 text-xl"
+                            >
+                              -
+                            </button>
+                            <span className="px-4">
+                              {variationInCart.find(
+                                (v) => v.variation === variation.variation
+                              )?.variationQuantityInCart || 0}
+                            </span>
+                            <button
+                              onClick={() =>
+                                handleVariationQuantityChange(
+                                  variation.variation,
+                                  true
+                                )
+                              }
+                              className="px-3 py-2 text-xl"
+                            >
+                              +
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
 
@@ -583,37 +623,48 @@ export default function ProductDetailPage() {
                 </p>
               }
 
-              <div className="flex gap-4">
-                <div className="flex w-45 items-center bg-[#F4F4F4] rounded-xl ">
-                  <button
-                    onClick={() =>
-                      handleQuantityChange(product?.productId || "", false)
-                    }
-                    className="px-4 py-3 text-2xl"
-                  >
-                    -
-                  </button>
-                  <span className="flex-1 text-center">{cartQuantity}</span>
-                  <button
-                    onClick={() =>
-                      handleQuantityChange(product?.productId || "", true)
-                    }
-                    className="px-4 py-3 text-2xl"
-                  >
-                    +
-                  </button>
-                </div>
-
+              {product?.variations && product.variations.length > 0 ? (
                 <ActionButton
                   variant={isAdded ? "outline" : "primary"}
                   fullWidth
                   isCart
-                  onClick={handleAddToCart}
+                  onClick={handleAddAllVariationsToCart}
                   className="max-w-96"
                 >
                   {isAdded ? "CLEAR CART" : "ADD TO CART"}
                 </ActionButton>
-              </div>
+              ) : (
+                <div className="flex gap-4">
+                  <div className="flex w-45 items-center bg-[#F4F4F4] rounded-xl ">
+                    <button
+                      onClick={() =>
+                        handleQuantityChange(product?.productId || "", false)
+                      }
+                      className="px-4 py-3 text-2xl"
+                    >
+                      -
+                    </button>
+                    <span className="flex-1 text-center">{cartQuantity}</span>
+                    <button
+                      onClick={() =>
+                        handleQuantityChange(product?.productId || "", true)
+                      }
+                      className="px-4 py-3 text-2xl"
+                    >
+                      +
+                    </button>
+                  </div>
+                  <ActionButton
+                    variant={isAdded ? "outline" : "primary"}
+                    fullWidth
+                    isCart
+                    onClick={handleAddToCart}
+                    className="max-w-96"
+                  >
+                    {isAdded ? "CLEAR CART" : "ADD TO CART"}
+                  </ActionButton>
+                </div>
+              )}
             </div>
           )}
         </div>

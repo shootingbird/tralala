@@ -105,12 +105,10 @@ export const Header = () => {
 
     const fetchCategories = async () => {
       try {
-        console.log("before search");
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/api/categories`
         );
         const data = await response.json();
-        console.log(data);
         if (Array.isArray(data.categories)) {
           const sortedCategories = data.categories.sort(
             (a: Category, b: Category) => {
@@ -120,7 +118,6 @@ export const Header = () => {
               return a.name.localeCompare(b.name);
             }
           );
-          console.log(sortedCategories);
           localStorage.setItem("categories", JSON.stringify(sortedCategories));
           setCategories(sortedCategories);
           setIsLoading(false);
@@ -176,7 +173,6 @@ export const Header = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  console.log(categories);
   return (
     <header className="bg-white  top-0 w-full z-10 shadow-sm">
       <div className="hidden md:block">
