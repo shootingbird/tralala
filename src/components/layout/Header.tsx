@@ -36,7 +36,7 @@ const SearchComponent = () => {
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
         placeholder="Search product, category"
-        className="w-full pl-5 md:pl-13 pr-24 py-2.5 md:border bg-[#F0F0F0] text-black placeholder:text-black border-gray-200 rounded-[2rem] focus:outline-none text-sm"
+        className="w-full pl-5 md:pl-13 pr-12 md:pr-24 py-2.5 md:border bg-[#F0F0F0] text-black placeholder:text-black border-gray-200 rounded-[2rem] focus:outline-none text-sm"
       />
       <button
         type="submit"
@@ -46,7 +46,7 @@ const SearchComponent = () => {
       </button>
       <button
         type="submit"
-        className="absolute  md:hidden right-0 top-0 h-full px-6  text-white rounded-r-[2rem] text-sm font-medium"
+        className="absolute  md:hidden right-0 top-0 h-full px-2  text-white rounded-r-[2rem] text-sm font-medium w-10"
       >
         <SearchIcon className="w-5 h-5 text-[#323232]" />
       </button>
@@ -59,7 +59,7 @@ export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showCategories, setShowCategories] = useState(false);
   const { wishlist } = useWishlist();
-  const router = useRouter()
+  const router = useRouter();
   const { cartItems } = useCart();
   const [showSubcategories, setShowSubcategories] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
@@ -231,7 +231,7 @@ export const Header = () => {
                             onClick={() => {
                               logout();
                               setIsDropdownOpen(false);
-                              router.push("/")
+                              router.push("/");
                             }}
                             className="flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 w-full"
                           >
@@ -389,6 +389,16 @@ export const Header = () => {
           <Link href="/" className="flex-shrink-0">
             <Image src="/logo.png" alt="Steadfast" width={120} height={32} />
           </Link>
+          <div className="px-4 pb-2 pt-2 md:pt-0">
+            <Suspense
+              fallback={
+                <div className="w-full h-10 bg-gray-100 animate-pulse rounded-full" />
+              }
+            >
+              <SearchComponent />
+            </Suspense>
+          </div>
+
           <div className="flex">
             <Link href="/auth/login" className="relative p-2">
               <User size={24} />
@@ -403,16 +413,6 @@ export const Header = () => {
               </span>
             </button>
           </div>
-        </div>
-
-        <div className="px-4 pb-2 border-t border-[#00000020] pt-2 md:pt-0">
-          <Suspense
-            fallback={
-              <div className="w-full h-10 bg-gray-100 animate-pulse rounded-full" />
-            }
-          >
-            <SearchComponent />
-          </Suspense>
         </div>
 
         {isMenuOpen && (

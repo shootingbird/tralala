@@ -499,7 +499,7 @@ export default function ProductDetailPage() {
             </div>
           ) : (
             <div className="flex-1">
-              <div className="flex flex-col md:flex-row gap-5 md:gap-0 md:items-center justify-between mb-4">
+              <div className="hidden  md:flex flex-col md:flex-row gap-5 md:gap-0 md:items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <div className="flex">
                     <StarRating rating={product?.rating || 0} />
@@ -549,14 +549,61 @@ export default function ProductDetailPage() {
 
               <h1 className="text-2xl font-semibold mb-2">{product?.title}</h1>
               <p className="text-gray-400 text-sm mb-4">{product?.category}</p>
-              <p className="text-gray-600 mb-8 leading-relaxed line-clamp-5">
+              <div className="flex md:hidden flex-col md:flex-row gap-5 md:gap-0 md:items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="flex">
+                    <StarRating rating={product?.rating || 0} />
+                  </div>
+                  <span className="text-sm text-gray-600">
+                    {product?.review_count || 0} Reviews
+                  </span>
+                </div>
+                <div className="flex items-center gap-4">
+                  <button className="flex items-center gap-1 bg-[#FFF0F0] text-[#D46F77] px-3 py-2 rounded-xl">
+                    <Heart size={16} className="text-[#D46F77]" />
+                    <span className="text-sm text-[#D46F77]">
+                      {product?.review_count || 0}
+                    </span>
+                  </button>
+                  <button
+                    className={`flex items-center bg-[#EDF0F8] text-[#000] px-3 py-2 rounded-xl ${
+                      isLoading ? "opacity-50 cursor-not-allowed" : ""
+                    }`}
+                    aria-label="Add to wishlist"
+                    onClick={toggleWishlist}
+                    disabled={isLoading}
+                  >
+                    <BookmarkIcon
+                      className={isWishlisted ? "text-black-500" : "text-black"}
+                      isFilled={isWishlisted}
+                    />
+                  </button>
+                  <button
+                    onClick={handleShare}
+                    disabled={isSharing}
+                    className={`flex items-center bg-[#EDF0F8] text-[#000] px-3 py-2 rounded-xl ${
+                      isSharing ? "opacity-50 cursor-not-allowed" : ""
+                    }`}
+                  >
+                    {!isSharing ? (
+                      <Share2 size={20} className={`text-black`} />
+                    ) : (
+                      <Loader2
+                        size={20}
+                        className={`text-black  animate-spin`}
+                      />
+                    )}
+                  </button>
+                </div>
+              </div>
+              <p className="hidden md:block text-gray-600 mb-8 leading-relaxed line-clamp-5">
                 {product?.description}
               </p>
 
-              <p className="text-2xl font-semibold border-b border-gray-200 pb-6">
+              <p className="text-lg md:text-2xl text-gray-700 font-semibold border-y border-gray-200 py-2 md:border-t-0 md:pb-4">
                 NGN{" "}
                 {priceRange
-                  ? `${priceRange.min.toLocaleString()}.00 - ${priceRange.max.toLocaleString()}.00`
+                  ? `${priceRange.min.toLocaleString()}.00 -  NGN ${priceRange.max.toLocaleString()}.00`
                   : product?.price.toLocaleString()}
                 .00
               </p>
@@ -564,7 +611,7 @@ export default function ProductDetailPage() {
               {product?.variations && product?.variations.length > 0 && (
                 <div className="pt-5">
                   <h3 className="font-medium mb-4">Variation</h3>
-                  <div className=" grid gap-4 h-80 overflow-y-auto">
+                  <div className=" grid gap-4 md:h-80 md:overflow-y-auto">
                     {product.variations.map((variation) => (
                       <div
                         key={variation.variation}
@@ -629,7 +676,7 @@ export default function ProductDetailPage() {
                   fullWidth
                   isCart
                   onClick={handleAddAllVariationsToCart}
-                  className="max-w-96"
+                  className="w-full md:max-w-96"
                 >
                   {isAdded ? "CLEAR CART" : "ADD TO CART"}
                 </ActionButton>

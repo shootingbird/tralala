@@ -82,7 +82,7 @@ export const Hero = () => {
   const topCategories = useMemo(() => categories.slice(0, 4), [categories]);
 
   return (
-    <section className="relative h-[20vh] sm:h-[25vh] flex overflow-hidden">
+    <section className="relative h-[20vh] sm:h-[25vh] hidden  md:flex overflow-hidden">
       {/* Sidebar */}
       <aside
         className="hidden lg:block w-auto px-12 bg-[#F8F3F2] py-4"
