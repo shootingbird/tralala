@@ -416,7 +416,7 @@ export const Header = () => {
         </div>
 
         {isMenuOpen && (
-          <div className="fixed inset-0 bg-white z-50 flex flex-col">
+          <div className="fixed inset-0 bg-white z-50 flex flex-col w-2/3">
             <div className="flex justify-between items-center p-4 border-b">
               <h2 className="text-base font-bold">Categories</h2>
               <button onClick={() => setIsMenuOpen(false)} className="p-2">
@@ -481,7 +481,7 @@ export const Header = () => {
         )}
 
         {showSubcategoryModal && activeCategory && (
-          <div className="fixed inset-0 bg-white z-[60] flex flex-col">
+          <div className="fixed inset-0 bg-white z-[60] flex flex-col w-2/3">
             <div className="flex justify-between items-center p-4 border-b  border-[#60606020]">
               <button
                 onClick={handleBackToCategories}
