@@ -105,7 +105,6 @@ export const ProductCard = ({
       setIsLoading(false);
     }
   };
-  console.log(variations);
   return (
     <div className="flex flex-col">
       <div

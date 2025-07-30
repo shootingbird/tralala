@@ -50,15 +50,13 @@ export default function Home() {
               `${process.env.NEXT_PUBLIC_API_URL}/api/products?filter=new&max=20`
             ),
             fetch(
-              `${process.env.NEXT_PUBLIC_API_URL}/api/products?filter=explore&max=200`
+              `${process.env.NEXT_PUBLIC_API_URL}/api/products?filter=explore&max=20`
             ),
           ]);
 
         const dealsData = await dealsResponse.json();
         const newArrivalsData = await newArrivalsResponse.json();
         const exploreData = await exploreResponse.json();
-
-        console.log(dealsData);
 
         const mapProduct = (product: Product) => ({
           ...product,
@@ -108,7 +106,9 @@ export default function Home() {
 
     fetchProducts();
   }, []);
-  console.log("Deals:", deals);
+
+  console.log("deals", deals);
+
   return (
     <>
       <TopBanner theme={"dark"} />

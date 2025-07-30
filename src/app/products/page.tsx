@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useCallback } from "react";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { ProductGrid } from "@/components/product/ProductGrid";
@@ -70,8 +70,9 @@ function ProductList() {
   const [categories, setCategories] = useState<Category[]>([]);
   const searchQuery = searchParams.get("q") || "";
 
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     setIsLoading(true);
+    console.log("Hello");
     try {
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/products${
@@ -123,11 +124,13 @@ function ProductList() {
       console.error("Error fetching products:", error);
       setIsLoading(false);
     }
-  };
+  }, [searchQuery]);
 
   useEffect(() => {
     fetchProducts();
-  }, [searchParams]);
+  }, [searchParams, fetchProducts]);
+
+  // console.log(products);
 
   const handleFilterChange = async (filters: Record<string, FilterValue>) => {
     setIsLoading(true);
