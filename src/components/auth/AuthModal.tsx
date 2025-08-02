@@ -311,7 +311,7 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                   Verify Your Email
                 </h2>
                 <p className="text-sm md:text-base text-gray-600">
-                  We've sent a verification code to{" "}
+                  {" We've"} sent a verification code to{" "}
                   <span className="font-medium">{email}</span>
                 </p>
               </div>

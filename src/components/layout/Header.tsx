@@ -389,15 +389,6 @@ export const Header = () => {
           <Link href="/" className="flex-shrink-0">
             <Image src="/logo.png" alt="Steadfast" width={120} height={32} />
           </Link>
-          <div className="px-4 pb-2 pt-2 md:pt-0">
-            <Suspense
-              fallback={
-                <div className="w-full h-10 bg-gray-100 animate-pulse rounded-full" />
-              }
-            >
-              <SearchComponent />
-            </Suspense>
-          </div>
 
           <div className="flex">
             <Link href="/auth/login" className="relative p-2">
@@ -413,6 +404,16 @@ export const Header = () => {
               </span>
             </button>
           </div>
+        </div>
+
+        <div className="px-4 pb-2 border-t border-[#00000020] pt-2 md:pt-0">
+          <Suspense
+            fallback={
+              <div className="w-full h-10 bg-gray-100 animate-pulse rounded-full" />
+            }
+          >
+            <SearchComponent />
+          </Suspense>
         </div>
 
         {isMenuOpen && (

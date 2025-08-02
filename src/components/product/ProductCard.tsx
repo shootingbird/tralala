@@ -155,7 +155,7 @@ export const ProductCard = ({
           } md:h-auto cursor-pointer px-1`}
           onClick={handleProductClick}
         >
-          <h3 className="font-medium text-[15px] line-clamp-2 md:line-clamp-1">
+          <h3 className="font-medium text-sm line-clamp-2 md:line-clamp-1">
             {title}
           </h3>
           <p className="hidden md:flex text-gray-600 text-xs line-clamp-1">
@@ -163,7 +163,7 @@ export const ProductCard = ({
           </p>
         </div>
 
-        <div className="flex items-start gap-2 mb-2 md:mb-[1rem]  px-1 flex-col justify-center">
+        <div className="flex items-start gap-2 mb-2 md:mb-[1rem]  px-1 flex-col justify-center text-sm">
           <span className="font-semibold">NGN {price.toLocaleString()}</span>
           {enableSales && discount && (
             <div className="hidden md:flex items-center space-x-1 text-xs">
@@ -201,15 +201,18 @@ export const ProductCard = ({
             </div>
           )}
         </div>
-        <div className={` px-1 md:px-1 `}>
+        <div className={` px-1 md:px-1 text-sm`}>
           {variations.length > 0 ? (
             <ActionButton
               variant={isAdded ? "outline" : "primary"}
               fullWidth
               isCart
               onClick={() => router.push(`/products/v/${productId}`)}
+              className="text-sm"
             >
-              {isAdded ? "ADDED TO CART" : "SEE OPTIONS"}
+              <span className="text-xs">
+                {isAdded ? "ADDED TO CART" : "SEE OPTIONS"}
+              </span>
             </ActionButton>
           ) : (
             <ActionButton
@@ -217,8 +220,11 @@ export const ProductCard = ({
               fullWidth
               isCart
               onClick={handleAddToCart}
+              className="text-xs"
             >
-              {isAdded ? "ADDED TO CART" : "ADD TO CART"}
+              <span className="text-xs">
+                {isAdded ? "ADDED TO CART" : "ADD TO CART"}
+              </span>
             </ActionButton>
           )}
         </div>
