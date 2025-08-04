@@ -85,7 +85,7 @@ export const Hero = () => {
     <section className="relative h-[20vh] sm:h-[25vh] hidden  md:flex overflow-hidden">
       {/* Sidebar */}
       <aside
-        className="hidden lg:block w-auto px-12  bg-[#F8F3F2] py-4"
+        className="hidden lg:block w-auto px-12 bg-[#F8F3F2] py-4"
         aria-label="Top categories"
       >
         {isLoading ? (
@@ -95,12 +95,12 @@ export const Hero = () => {
             ))}
           </div>
         ) : (
-          <nav className="h-full flex flex-col justify-between">
+          <nav className="space-y-2.5 h-full flex flex-col justify-between">
             {topCategories.map((category) => (
               <Link
                 key={category.id}
                 href={`/products/category/${category.id}`}
-                className="text-black font-medium hover:text-[#184193] transition-colors text-xs py-1"
+                className="text-black font-medium hover:text-[#184193] transition-colors text-[.9rem] py-1"
               >
                 {category.name}
               </Link>
@@ -129,7 +129,7 @@ export const Hero = () => {
             >
               {index === 1 ? (
                 <div className="flex w-full h-full relative">
-                  <div className="border space-y-4 absolute z-50 text-white px-8 py-4 h-full flex flex-col items-start justify-center">
+                  <div className="space-y-4 absolute z-50 text-white px-8 py-4 h-full flex flex-col items-start justify-center">
                     <h1
                       className={clsx(
                         "text-xl lg:text-3xl font-bold whitespace-pre-line",

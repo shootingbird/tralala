@@ -132,7 +132,7 @@ export const ProductCard = ({
         )}
       </div>
 
-      <div className="mt-4 space-y-2">
+      <div className="mt-2 md:mt-4 md:space-y-2">
         <div className="flex justify-between px-1">
           <StarRating rating={rating} />
           <button
@@ -151,13 +151,13 @@ export const ProductCard = ({
         </div>
         <div
           className={`space-y-1 ${
-            titleHeight ? "h-5" : "h-8"
+            titleHeight ? "md:h-5" : "md:h-8"
           } md:h-auto cursor-pointer px-1`}
           onClick={handleProductClick}
         >
-          <h3 className="font-medium text-sm line-clamp-2 md:line-clamp-1">
+          <p className="font-medium text-sm line-clamp-2 md:line-clamp-1 truncate">
             {title}
-          </h3>
+          </p>
           <p className="hidden md:flex text-gray-600 text-xs line-clamp-1">
             {brand || category}
           </p>

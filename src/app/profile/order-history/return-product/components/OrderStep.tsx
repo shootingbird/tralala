@@ -1,9 +1,12 @@
 "use client";
 
+import { Pagination } from "@/components/common/Pagination";
+import { Button } from "@/components/ui/Button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
+import { EllipsisVertical } from "lucide-react";
 import Image from "next/image";
-import React from "react";
+import React, { useState } from "react";
 
 type Product = {
   image: string;
@@ -15,6 +18,10 @@ type Product = {
   createdAt: string;
   status: string;
   placedDate: string;
+};
+
+type OrderStepProps = {
+  onClickNext: () => void;
 };
 
 const products: Product[] = [
@@ -98,21 +105,11 @@ const products: Product[] = [
 ];
 
 const ProductCard = ({ product }: { product: Product }) => {
-  const {
-    image,
-    orderId,
-    product_qty,
-    createdAt,
-    status,
-    placedDate,
-    name,
-    category,
-    variation,
-  } = product;
+  const { image, orderId, placedDate, name, category, variation } = product;
 
   return (
-    <div className="flex justify-between items-start gap-4 md:gap-6 group transition-all duration-200 hover:bg-gray-50 rounded-xl py-3 md:p-4">
-      <div>
+    <div className="flex justify-between items-center gap-4 md:gap-6 group transition-all duration-200 hover:bg-gray-50 rounded-xl py-3 md:p-4">
+      <div className="hidden md:inline-block">
         <Checkbox
           id="toggle-2"
           defaultChecked
@@ -146,18 +143,48 @@ const ProductCard = ({ product }: { product: Product }) => {
           </div>
         </div>
       </div>
+
+      <button
+        className="md:hidden p-1 text-gray-600 hover:text-[#184193] transition"
+        aria-label="Order options"
+      >
+        <EllipsisVertical className="w-5 h-5" />
+      </button>
     </div>
   );
 };
 
-const OrderStep = () => {
+const OrderStep: React.FC<OrderStepProps> = ({ onClickNext }) => {
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 5;
+  const totalPages = Math.ceil(products.length / pageSize);
+  const paginatedProducts = products.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
   return (
     <div className="flex flex-col gap-4">
-      {products.map((product) => (
-        <div key={product.orderId} className="mb:pb-4 md:border-b">
-          <ProductCard product={product} />
-        </div>
+      <p className="font-medium text-lg md:text-xl text-gray-700">
+        1. Select the product you want to return
+      </p>
+      {paginatedProducts.map((product) => (
+        <ProductCard key={product.orderId} product={product} />
       ))}
+
+      <div className="flex justify-end gap-2">
+        <Button variant="outline" className="max-w-30">
+          Cancel
+        </Button>
+        <Button className="max-w-30" onClick={onClickNext}>
+          Next
+        </Button>
+      </div>
+
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
     </div>
   );
 };

@@ -175,7 +175,7 @@ export const Header = () => {
   }, []);
 
   return (
-    <header className="bg-white  top-0 w-full z-10 shadow-sm">
+    <header className="bg-white  top-0 w-full z-10 md:shadow-sm">
       <div className="hidden md:block">
         <div className="container mx-auto  px-4 pt-4  ">
           <div className="flex items-center justify-between">
@@ -383,12 +383,14 @@ export const Header = () => {
 
       <div className="md:hidden">
         <div className="flex items-center justify-between px-4 pt-3 pb-1 md:py-3">
-          <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="p-2">
-            <Menu size={24} />
-          </button>
-          <Link href="/" className="flex-shrink-0">
-            <Image src="/logo.png" alt="Steadfast" width={120} height={32} />
-          </Link>
+          <div className="flex items-center sm:gap-2">
+            <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="p-2">
+              <Menu size={24} />
+            </button>
+            <Link href="/" className="flex-shrink-0">
+              <Image src="/logo.png" alt="Steadfast" width={120} height={32} />
+            </Link>
+          </div>
 
           <div className="flex">
             <Link href="/auth/login" className="relative p-2">
@@ -406,7 +408,7 @@ export const Header = () => {
           </div>
         </div>
 
-        <div className="px-4 pb-2 border-t border-[#00000020] pt-2 md:pt-0">
+        <div className="px-4 pb-2 pt-2 md:pt-0">
           <Suspense
             fallback={
               <div className="w-full h-10 bg-gray-100 animate-pulse rounded-full" />
