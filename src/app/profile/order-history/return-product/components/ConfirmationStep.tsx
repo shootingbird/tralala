@@ -21,7 +21,7 @@ const ConfirmationStep = () => {
         Current Status: <span className="font-normal">Rending Review</span>
       </p>
 
-      <Link href={"/profile/order-history/return-product"}>
+      <Link href={"/profile/order-history"}>
         <Button className="py-2 px-6" style={{ borderRadius: "120px" }}>
           View My Returns
         </Button>
