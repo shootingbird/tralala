@@ -73,7 +73,7 @@ export default function ReturnProduct() {
       case ReturnStep.RESOLUTION:
         return (
           <ResolutionStep
-            onClickNext={() => setReturnStep(ReturnStep.RESOLUTION)}
+            onClickNext={() => setReturnStep(ReturnStep.CONFIRMATION)}
           />
         );
       case ReturnStep.CONFIRMATION:
@@ -99,7 +99,7 @@ export default function ReturnProduct() {
               Return Product
             </h2>
 
-            <div className="md:border md:py-6 md:px-4 rounded-md">
+            <div className="md:border md:py-6 md:px-4 rounded-md container mx-auto max-w-6xl">
               {returnStep === ReturnStep.REASON && (
                 <div className="flex justify-between items-center gap-4 md:gap-6 group transition-all duration-200 hover:bg-gray-50 rounded-xl border border-[#184193] p-2 md:p-6 md:w-[90%] m-auto mb-16">
                   <div className="flex items-center gap-4 md:gap-6 w-full">
