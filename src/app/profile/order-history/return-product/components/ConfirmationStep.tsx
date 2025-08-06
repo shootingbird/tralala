@@ -23,7 +23,7 @@ const ConfirmationStep = () => {
 
       <Link href={"/profile/order-history"}>
         <Button className="py-2 px-6" style={{ borderRadius: "120px" }}>
-          View My Returns
+          View My Return
         </Button>
       </Link>
     </div>
