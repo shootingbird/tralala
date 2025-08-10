@@ -23,6 +23,7 @@ import { ProductTabs } from "@/components/product/ProductTabs";
 import { useCart } from "@/context/CartContext";
 import { useIsMobile } from "@/lib/mobile";
 import LoadingSkeloton from "./LoadingSkeloton";
+import NotFound from "@/app/not-found";
 
 interface Variation {
   price: number;
@@ -389,7 +390,7 @@ export default function ProductDetailPage() {
   };
 
   if (!product && !isPageLoading) {
-    return <div>Product not found</div>;
+    return <NotFound />;
   }
 
   if (isPageLoading) {

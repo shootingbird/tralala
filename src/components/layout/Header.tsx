@@ -14,6 +14,13 @@ import { ChevronDown, LogOut, User, ShoppingBag, Heart } from "lucide-react";
 import { useWishlist } from "@/context/WishlistContext";
 import { useCart } from "@/context/CartContext";
 
+const navLinks = [
+  { name: "Why Shop With Us", href: "/why-shop-with-us" },
+  { name: "Contact Us", href: "/contact-us" },
+  { name: "About Us", href: "/about-us" },
+  { name: "Privacy Policy", href: "/privacy-policy" },
+];
+
 const SearchComponent = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -54,7 +61,7 @@ const SearchComponent = () => {
   );
 };
 
-export const Header = () => {
+export const Header = ({ showSearch = false }) => {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showCategories, setShowCategories] = useState(false);
@@ -408,15 +415,17 @@ export const Header = () => {
           </div>
         </div>
 
-        <div className="px-4 pb-2 pt-2 md:pt-0">
-          <Suspense
-            fallback={
-              <div className="w-full h-10 bg-gray-100 animate-pulse rounded-full" />
-            }
-          >
-            <SearchComponent />
-          </Suspense>
-        </div>
+        {showSearch && (
+          <div className="px-4 pb-2 pt-2 md:pt-0">
+            <Suspense
+              fallback={
+                <div className="w-full h-10 bg-gray-100 animate-pulse rounded-full" />
+              }
+            >
+              <SearchComponent />
+            </Suspense>
+          </div>
+        )}
 
         {isMenuOpen && (
           <div className="fixed inset-0 bg-white z-50 flex flex-col w-2/3">
@@ -435,8 +444,8 @@ export const Header = () => {
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto">
-              <div className="p-4">
+            <div className="flex-1 overflow-y-auto ">
+              <div className="p-4 h-full">
                 {isLoading ? (
                   <div className="space-y-6">
                     {Array.from({ length: 6 }).map((_, index) => (
@@ -446,36 +455,53 @@ export const Header = () => {
                     ))}
                   </div>
                 ) : (
-                  <div className="space-y-4  pb-[5rem]">
-                    {categories.map((category) => (
-                      <div
-                        key={category.id}
-                        className="flex  w-full justify-between"
-                      >
-                        {category.subcategories &&
-                        category.subcategories.length > 0 ? (
-                          <>
-                            <button
-                              onClick={() => handleCategoryClick(category.id)}
-                              className="text-[.9rem] w-full line-clamp-1 font-semibold  text-left flex items-center py-3 px-4 justify-between rounded-lg hover:text-white hover:bg-[#FF5722] transition-all duration-300"
+                  <div className="flex  flex-col justify-between h-full">
+                    <div>
+                      {categories.map((category) => (
+                        <div
+                          key={category.id}
+                          className="flex  w-full justify-between"
+                        >
+                          {category.subcategories &&
+                          category.subcategories.length > 0 ? (
+                            <>
+                              <button
+                                onClick={() => handleCategoryClick(category.id)}
+                                className="text-[.9rem] w-full line-clamp-1 font-semibold  text-left flex items-center py-3 px-4 justify-between rounded-lg hover:text-white hover:bg-[#FF5722] transition-all duration-300"
+                              >
+                                {category.name}
+                                <ChevronRightIcon />
+                              </button>
+                            </>
+                          ) : (
+                            <Link
+                              href={`/products/category/${category.id}`}
+                              className="text-[.9rem] line-clamp-1 font-semibold  text-left flex items-center py-3 px-4 justify-between rounded-lg hover:text-white hover:bg-[#FF5722] transition-all duration-300 w-full"
+                              onClick={() => {
+                                setIsMenuOpen(false);
+                              }}
                             >
                               {category.name}
-                              <ChevronRightIcon />
-                            </button>
-                          </>
-                        ) : (
+                            </Link>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    <ul>
+                      {navLinks.map((nav) => (
+                        <li key={nav.name}>
                           <Link
-                            href={`/products/category/${category.id}`}
+                            href={nav.href}
                             className="text-[.9rem] line-clamp-1 font-semibold  text-left flex items-center py-3 px-4 justify-between rounded-lg hover:text-white hover:bg-[#FF5722] transition-all duration-300 w-full"
                             onClick={() => {
                               setIsMenuOpen(false);
                             }}
                           >
-                            {category.name}
+                            {nav.name}{" "}
                           </Link>
-                        )}
-                      </div>
-                    ))}
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 )}
               </div>

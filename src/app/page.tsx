@@ -112,7 +112,7 @@ export default function Home() {
   return (
     <>
       <TopBanner theme={"dark"} />
-      <Header />
+      <Header showSearch={true} />
       <Hero />
       <ShopByCategory />
       <ProductGrid
