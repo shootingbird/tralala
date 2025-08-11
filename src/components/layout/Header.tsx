@@ -155,6 +155,11 @@ export const Header = ({ showSearch = false }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  function capitalizeWord(str: string) {
+    if (!str) return "";
+    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+  }
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -455,7 +460,7 @@ export const Header = ({ showSearch = false }) => {
                     ))}
                   </div>
                 ) : (
-                  <div className="flex  flex-col justify-between h-full">
+                  <div className="flex  flex-col justify-between h-full gap-10">
                     <div>
                       {categories.map((category) => (
                         <div
@@ -467,32 +472,32 @@ export const Header = ({ showSearch = false }) => {
                             <>
                               <button
                                 onClick={() => handleCategoryClick(category.id)}
-                                className="text-[.9rem] w-full line-clamp-1 font-semibold  text-left flex items-center py-3 px-4 justify-between rounded-lg hover:text-white hover:bg-[#FF5722] transition-all duration-300 lowercase first-letter:capitalize"
+                                className="text-sm w-full line-clamp-1 font-semibold  text-left flex items-center py-3 pl-4 justify-between rounded-lg hover:text-white hover:bg-[#FF5722] transition-all duration-300 capitalize"
                               >
-                                {category.name}
+                                {capitalizeWord(category.name)}
                                 <ChevronRightIcon />
                               </button>
                             </>
                           ) : (
                             <Link
                               href={`/products/category/${category.id}`}
-                              className="text-[.9rem] line-clamp-1 font-semibold  text-left flex items-center py-3 px-4 justify-between rounded-lg hover:text-white hover:bg-[#FF5722] transition-all duration-300 w-full lowercase first-letter:uppercase"
+                              className="text-sm line-clamp-1 font-semibold  text-left flex items-center py-3 px-4 justify-between rounded-lg hover:text-white hover:bg-[#FF5722] transition-all duration-300 w-full capitalize"
                               onClick={() => {
                                 setIsMenuOpen(false);
                               }}
                             >
-                              {category.name}
+                              {capitalizeWord(category.name)}
                             </Link>
                           )}
                         </div>
                       ))}
                     </div>
-                    <ul>
+                    <ul className="mt-20">
                       {navLinks.map((nav) => (
                         <li key={nav.name}>
                           <Link
                             href={nav.href}
-                            className="text-[.9rem] line-clamp-1 font-semibold  text-left flex items-center py-3 px-4 justify-between rounded-lg hover:text-white hover:bg-[#FF5722] transition-all duration-300 w-full"
+                            className="text-sm line-clamp-1 font-semibold  text-left flex items-center py-3 px-4 justify-between rounded-lg hover:text-white hover:bg-[#FF5722] transition-all duration-300 w-full"
                             onClick={() => {
                               setIsMenuOpen(false);
                             }}
