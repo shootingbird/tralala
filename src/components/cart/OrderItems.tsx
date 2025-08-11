@@ -519,7 +519,7 @@ export default function OrderItems({
                       checked={selectedPayment === option.id}
                       onChange={() => setSelectedPayment(option.id)}
                       aria-checked={selectedPayment === option.id}
-                      className="peer appearance-none w-3 h-3 rounded-full   checked:bg-[#184193] border-none   transition-colors ring-3 ring-gray-500 checked:ring-[#184193] outline-3 outline-white
+                      className="peer appearance-none w-3 h-3 rounded-full   checked:bg-[#184193] border-none   transition-colors ring-4 ring-gray-600 checked:ring-[#184193] outline-3 outline-white
 "
                     />
                   </div>
