@@ -146,7 +146,7 @@ export default function Home() {
       />
 
       <CTASection />
-      <Footer />
+      {/* <Footer /> */}
       <InstallPWAPrompt />
     </>
   );

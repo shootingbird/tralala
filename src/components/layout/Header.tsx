@@ -467,7 +467,7 @@ export const Header = ({ showSearch = false }) => {
                             <>
                               <button
                                 onClick={() => handleCategoryClick(category.id)}
-                                className="text-[.9rem] w-full line-clamp-1 font-semibold  text-left flex items-center py-3 px-4 justify-between rounded-lg hover:text-white hover:bg-[#FF5722] transition-all duration-300"
+                                className="text-[.9rem] w-full line-clamp-1 font-semibold  text-left flex items-center py-3 px-4 justify-between rounded-lg hover:text-white hover:bg-[#FF5722] transition-all duration-300 lowercase first-letter:capitalize"
                               >
                                 {category.name}
                                 <ChevronRightIcon />
@@ -476,7 +476,7 @@ export const Header = ({ showSearch = false }) => {
                           ) : (
                             <Link
                               href={`/products/category/${category.id}`}
-                              className="text-[.9rem] line-clamp-1 font-semibold  text-left flex items-center py-3 px-4 justify-between rounded-lg hover:text-white hover:bg-[#FF5722] transition-all duration-300 w-full"
+                              className="text-[.9rem] line-clamp-1 font-semibold  text-left flex items-center py-3 px-4 justify-between rounded-lg hover:text-white hover:bg-[#FF5722] transition-all duration-300 w-full lowercase first-letter:uppercase"
                               onClick={() => {
                                 setIsMenuOpen(false);
                               }}
