@@ -86,7 +86,7 @@ export default function OrderItems({
   const [isApplyingCode, setIsApplyingCode] = useState<boolean>(false);
   const [couponError, setCouponError] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [selectedPayment, setSelectedPayment] = useState<string>("");
+  const [selectedPayment, setSelectedPayment] = useState<string>("pay_now");
   const [orderNote, setOrderNote] = useState<string>("");
 
   // Derived values (memoized)
@@ -472,7 +472,7 @@ export default function OrderItems({
               </div>
             </div>
             <div className="flex py-4 font-medium bg-[#EDF0F8] rounded-md px-6">
-              <span>payment Method</span>
+              <span>Payment Method</span>
             </div>
 
             <div className="flex flex-col w-full gap-2">
@@ -486,22 +486,27 @@ export default function OrderItems({
                 >
                   {/* Icon + Label */}
                   <div>
-                    <div className="flex items-center">
-                      {option.icon}
-                      <span className="text-sm font-medium">
-                        {option.label}
-                      </span>
-                    </div>
-
-                    {option.id != "pay_now" && (
-                      <div className="flex gap-2 mt-1">
-                        <Info className="text-xs text-gray-400" />
-                        <span className="text-xs text-gray-400 max-w-70">
-                          Share a payment link with friends and loved ones for
-                          them to pay on your behalf
+                    <div
+                      className={`flex ${
+                        option.id === "pay_now" ? "items-center" : ""
+                      }`}
+                    >
+                      <span>{option.icon}</span>
+                      <div>
+                        <span className="text-sm font-medium">
+                          {option.label}
                         </span>
+                        {option.id != "pay_now" && (
+                          <div className="flex gap-1 mt-1">
+                            <Info className="text-[8px] w-3 h-3 text-gray-500" />
+                            <span className="text-[10px] text-[#667085] max-w-70">
+                              Share a payment link with friends and loved ones
+                              for them to pay on your behalf
+                            </span>
+                          </div>
+                        )}
                       </div>
-                    )}
+                    </div>
                   </div>
 
                   {/* Custom Large Radio */}
@@ -514,25 +519,40 @@ export default function OrderItems({
                       checked={selectedPayment === option.id}
                       onChange={() => setSelectedPayment(option.id)}
                       aria-checked={selectedPayment === option.id}
-                      className="peer appearance-none w-3 h-3 rounded-full   checked:bg-[#184193] border-none   transition-colors ring-3 ring-gray-200 checked:ring-[#184193] outline-3 outline-white
+                      className="peer appearance-none w-3 h-3 rounded-full   checked:bg-[#184193] border-none   transition-colors ring-3 ring-gray-500 checked:ring-[#184193] outline-3 outline-white
 "
                     />
                   </div>
                 </label>
               ))}
             </div>
-            <Button
-              onClick={handlePayment}
-              rounded={true}
-              disabled={cartItems.length === 0 || isLoading}
-              className={`w-full py-3 px-4 bg-[#184193] text-white rounded-full mt-4 ${
-                isLoading || cartItems.length === 0
-                  ? "opacity-50 cursor-not-allowed"
-                  : ""
-              }`}
-            >
-              {isLoading ? "Processing..." : "Proceed to payment"}
-            </Button>
+            {selectedPayment === "pay_now" ? (
+              <Button
+                onClick={handlePayment}
+                rounded={true}
+                disabled={cartItems.length === 0 || isLoading}
+                className={`w-full py-3 px-4 bg-[#184193] text-white rounded-full mt-4 ${
+                  isLoading || cartItems.length === 0
+                    ? "opacity-50 cursor-not-allowed"
+                    : ""
+                }`}
+              >
+                {isLoading ? "Processing..." : "Proceed to payment"}
+              </Button>
+            ) : (
+              <Button
+                onClick={handlePayment}
+                rounded={true}
+                disabled={cartItems.length === 0 || isLoading}
+                className={`w-full py-3 px-4 bg-[#184193] text-white rounded-full mt-4 ${
+                  isLoading || cartItems.length === 0
+                    ? "opacity-50 cursor-not-allowed"
+                    : ""
+                }`}
+              >
+                {isLoading ? "Generating..." : "Generate Payment Link"}
+              </Button>
+            )}
           </div>
         </div>
       </div>
