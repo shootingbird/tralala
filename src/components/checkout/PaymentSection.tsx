@@ -24,7 +24,7 @@ export const PaymentSection = ({
     typeof pickupLocation.location === "string"
       ? pickupLocation.location
       : pickupLocation.location?.value || null;
-
+  console.log(deliveryInfo);
   return (
     <>
       <OrderItems
@@ -33,6 +33,7 @@ export const PaymentSection = ({
         pickupLocation={pickupLocationValue}
         deliveryFee={deliveryInfo.fee}
         deliveryDuration={deliveryInfo.duration}
+        deliveryInfo={deliveryInfo}
         shippingDetails={shippingDetails}
       />
     </>

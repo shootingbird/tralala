@@ -9,6 +9,7 @@ import { PaymentSection } from "@/components/checkout/PaymentSection";
 import { TopBanner } from "@/components/layout/TopBanner";
 import { Header } from "@/components/layout/Header";
 import { CouponHelper, type Coupon } from "@/lib/coupons";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface ApiResponse<T = any> {
   success: boolean;
@@ -19,6 +20,18 @@ interface ApiResponse<T = any> {
   traceId: string;
 }
 
+export type ApiZone = {
+  id?: number;
+  state: string;
+  city?: string;
+  fee: number | string;
+  duration: string;
+  pickups: string[];
+  is_active?: boolean;
+  // any extra fields the API returns
+  [key: string]: any;
+};
+
 export default function CheckoutPage() {
   const router = useRouter();
   const [applyingCode, setapplyingCode] = useState<boolean>(false);
@@ -28,15 +41,14 @@ export default function CheckoutPage() {
   let subtotal = 0;
   const [selectedCity, setSelectedCity] = useState("");
   const [shippingDetails, setShippingDetails] = useState<any>(null);
-  const [pickupData, setPickupData] = useState<{
-    pickup: any;
-    fee: string;
-    duration: string;
-  } | null>(null);
+  const [pickupData, setPickupData] = useState<ApiZone | null>(null);
   const [deliveryInfo, setDeliveryInfo] = useState<{
     fee: string;
     duration: string;
   }>({ fee: "", duration: "" });
+  // const { user } = useAuth();
+
+  // console.log(user);
 
   const handleBack = () => {
     window.scrollTo(0, 0);
@@ -47,6 +59,7 @@ export default function CheckoutPage() {
     }
   };
 
+  // console.log(deliveryInfo);
   const applyPadiCoupon = async (padiCode: string): Promise<void> => {
     setapplyingCode(true);
     try {
@@ -78,6 +91,7 @@ export default function CheckoutPage() {
   };
 
   const handleContinue = async () => {
+    console.log(currentStep);
     window.scrollTo(0, 0);
     if (currentStep === 1 && !selectedState) {
       alert("Please select a state before proceeding");
@@ -163,10 +177,7 @@ export default function CheckoutPage() {
                   city: selectedCity,
                   location: pickupData?.pickup,
                 }}
-                deliveryInfo={{
-                  fee: deliveryInfo?.fee || "",
-                  duration: deliveryInfo?.duration || "",
-                }}
+                deliveryInfo={deliveryInfo}
               />
             )}
           </div>

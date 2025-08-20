@@ -1,3 +1,4 @@
+// app/(somewhere)/page.tsx  (or where your Home component lives)
 "use client";
 import { useEffect, useState } from "react";
 import ShopByCategory from "@/components/category/ShopByCategory";
@@ -36,27 +37,22 @@ interface Product {
 export default function Home() {
   const [deals, setDeals] = useState<Product[]>([]);
   const [newArrivals, setNewArrivals] = useState<Product[]>([]);
-  const [exploreProducts, setExploreProducts] = useState<Product[]>([]);
+  // exploreProducts removed from client-side fetch — ProductGrid will load it from the backend
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const [dealsResponse, newArrivalsResponse, exploreResponse] =
-          await Promise.all([
-            fetch(
-              `${process.env.NEXT_PUBLIC_API_URL}/api/products?filter=top&max=20`
-            ),
-            fetch(
-              `${process.env.NEXT_PUBLIC_API_URL}/api/products?filter=new&max=20`
-            ),
-            fetch(
-              `${process.env.NEXT_PUBLIC_API_URL}/api/products?filter=explore&max=20`
-            ),
-          ]);
+        const [dealsResponse, newArrivalsResponse] = await Promise.all([
+          fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/api/products?page=1&per_page=20&filter=top&max=20`
+          ),
+          fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/api/products?page=1&per_page=20&filter=new&max=20`
+          ),
+        ]);
 
         const dealsData = await dealsResponse.json();
         const newArrivalsData = await newArrivalsResponse.json();
-        const exploreData = await exploreResponse.json();
 
         const mapProduct = (product: Product) => ({
           ...product,
@@ -81,33 +77,19 @@ export default function Home() {
           );
           setNewArrivals(mappedNewArrivals);
         }
-
-        if (Array.isArray(exploreData.products)) {
-          const mappedExplore = exploreData.products.map(mapProduct);
-          localStorage.setItem(
-            "exploreProducts",
-            JSON.stringify(mappedExplore)
-          );
-          setExploreProducts(mappedExplore);
-        }
       } catch (error) {
         console.error("Error fetching products:", error);
       }
     };
 
     const cachedDeals = localStorage.getItem("deals");
-
     const cachedNewArrivals = localStorage.getItem("newArrivals");
-    const cachedExplore = localStorage.getItem("exploreProducts");
 
     if (cachedDeals) setDeals(JSON.parse(cachedDeals));
     if (cachedNewArrivals) setNewArrivals(JSON.parse(cachedNewArrivals));
-    if (cachedExplore) setExploreProducts(JSON.parse(cachedExplore));
 
     fetchProducts();
   }, []);
-
-  console.log("deals", deals);
 
   return (
     <>
@@ -136,13 +118,17 @@ export default function Home() {
       />
 
       <WhyShopWithUs />
+
+      {/* Explore Products - now backend-driven infinite scroll */}
       <ProductGrid
         title="Explore Products"
         subtitle=""
         viewAllLink="/products"
-        products={exploreProducts}
+        products={[]} // no client-side full list
         enablePagination={false}
         infiniteScroll={true}
+        apiEndpoint={`${process.env.NEXT_PUBLIC_API_URL}/api/products`}
+        perPage={24}
       />
 
       <CTASection />
@@ -151,3 +137,5 @@ export default function Home() {
     </>
   );
 }
+
+// /api/products?q=&filter=newest&sort=price_desc&category=Phones&subcat=Android&min_price=50000&max_price=350000&rating_min=3&rating_max=5&in_stock=true&stock_status=in_stock&is_variable=true&tags=android,5g&tags_mode=any&ids=1,2,3&exclude_ids=10,11&has_discount=true&has_images=true&code=SKU-1001&created_after=2025-01-01&created_before=2025-12-31&updated_after=&updated_before=&per_page=10&page=2

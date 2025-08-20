@@ -12,6 +12,8 @@ import { Button } from "@/components/ui/Button";
 import { useCart } from "@/context/CartContext";
 import { CouponHelper } from "@/lib/coupons";
 import { useAuth } from "@/contexts/AuthContext";
+import PayForMeDialog from "../checkout/PayForMeDialog";
+import { useVerifiedPromo } from "@/context/PadiCodeContext";
 
 interface CartItem {
   productId: string;
@@ -72,22 +74,20 @@ export default function OrderItems({
   deliveryFee,
   deliveryDuration,
   shippingDetails,
+  deliveryInfo,
 }: OrderItemsProps) {
   const router = useRouter();
   const { cartItems, updateQuantity, removeFromCart, clearCart } = useCart();
   const { getToken } = useAuth();
 
   // UI / local state
-  const [promoCode, setPromoCode] = useState<string>("");
-  const [showPromoInput, setShowPromoInput] = useState<boolean>(false);
+  // const [promoCode, setPromoCode] = useState<string>("");
   const [itemToRemove, setItemToRemove] = useState<string | null>(null);
   const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
-  const [appliedPadiCode, setAppliedPadiCode] = useState<boolean>(false);
-  const [isApplyingCode, setIsApplyingCode] = useState<boolean>(false);
-  const [couponError, setCouponError] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [selectedPayment, setSelectedPayment] = useState<string>("pay_now");
-  const [orderNote, setOrderNote] = useState<string>("");
+  const [payFormeLink, setPayFormeLink] = useState<string>("");
+  const { verifiedPromoCode } = useVerifiedPromo();
 
   // Derived values (memoized)
   const subtotal = useMemo(
@@ -105,9 +105,9 @@ export default function OrderItems({
   // Business decision: Padi code (2% off) takes precedence over appliedCoupon.
   // If you want both to stack, change this logic accordingly.
   const fullTotal = useMemo(() => {
-    if (appliedPadiCode) return Math.round(subtotal * 0.98);
+    if (subtotal >= 100000) return Math.round(subtotal * 0.98);
     return Math.max(0, subtotal - couponDiscount);
-  }, [subtotal, couponDiscount, appliedPadiCode]);
+  }, [subtotal, couponDiscount]);
 
   const deliveryFeeNumber = useMemo(() => {
     // free shipping when subtotal >= threshold
@@ -115,19 +115,6 @@ export default function OrderItems({
     const parsed = parseInt(deliveryFee || "0", 10);
     return Number.isNaN(parsed) ? 0 : parsed;
   }, [deliveryFee, subtotal]);
-
-  // Effects: hydrate referral data & padi code from cookies/localStorage
-  useEffect(() => {
-    const referralCoupon = Cookies.get("referral_coupon");
-    const padiCode = localStorage.getItem("padiCode");
-    if (referralCoupon) {
-      setPromoCode(referralCoupon);
-      setShowPromoInput(true);
-    } else if (padiCode) {
-      setPromoCode(padiCode);
-      setShowPromoInput(true);
-    }
-  }, []);
 
   // Restore applied coupon from localStorage and fetch available coupons (side-effect)
   useEffect(() => {
@@ -144,71 +131,6 @@ export default function OrderItems({
     })();
   }, []);
 
-  // Apply a Padi coupon (2% off)
-  const applyPadiCoupon = useCallback(async (code: string) => {
-    if (!code) return;
-    setIsApplyingCode(true);
-    try {
-      const res = await fetch(
-        `https://steadfast-padi-backend.pxxl.tech/api/payment/${code}/verify-padi-code`,
-        { method: "GET", headers: { "Content-Type": "application/json" } }
-      );
-
-      const data: ApiResponse<Coupon> = await res.json();
-
-      if (data.success && data.statusCode === 200) {
-        // set Padi applied (2% off)
-        setAppliedPadiCode(true);
-        // preserve the code in localStorage so it's applied on reload/checkout
-        localStorage.setItem("padiCode", code);
-        setPromoCode("");
-        setShowPromoInput(false);
-      } else {
-        console.warn("Padi verification failed:", data?.message || data);
-        setCouponError(data?.message || "Invalid Padi code");
-      }
-    } catch (err) {
-      console.error("Error verifying padi code:", err);
-      setCouponError("Failed to verify Padi code");
-    } finally {
-      setIsApplyingCode(false);
-    }
-  }, []);
-
-  // Apply general coupon (percentage or fixed)
-  const handleApplyCoupon = useCallback(async () => {
-    setCouponError("");
-    if (!promoCode) {
-      setCouponError("Please enter a coupon code");
-      return;
-    }
-    try {
-      const verification = await CouponHelper.verifyCoupon(promoCode, subtotal);
-      if (!verification.valid) {
-        setCouponError(verification.message || "Invalid coupon code");
-        return;
-      }
-      if (verification.coupon) {
-        const coupon: Coupon = {
-          code: verification.coupon.code,
-          type: verification.coupon.type as "percentage" | "fixed",
-          value: verification.coupon.value,
-          description: verification.coupon.description,
-          minAmount: null,
-        };
-        setAppliedCoupon(coupon);
-        localStorage.setItem("appliedCoupon", JSON.stringify(coupon));
-        setShowPromoInput(false);
-        setPromoCode("");
-      } else {
-        setCouponError("Coupon verification returned unexpected data");
-      }
-    } catch (err) {
-      console.error("Error verifying coupon:", err);
-      setCouponError("Failed to verify coupon");
-    }
-  }, [promoCode, subtotal]);
-
   const handleRemoveClick = useCallback((productId: string) => {
     setItemToRemove(productId);
   }, []);
@@ -219,8 +141,11 @@ export default function OrderItems({
     setItemToRemove(null);
   }, [itemToRemove, removeFromCart]);
 
+  console.log(selectedCity);
   // Create order and redirect to payment
   const handlePayment = useCallback(async () => {
+    const token = Cookies.get("token");
+
     if (cartItems.length === 0) {
       alert("Cart is empty");
       return;
@@ -233,7 +158,6 @@ export default function OrderItems({
 
     setIsLoading(true);
     try {
-      const token = getToken?.() ?? null;
       const headers: Record<string, string> = {
         "Content-Type": "application/json",
       };
@@ -241,41 +165,52 @@ export default function OrderItems({
 
       const payload = {
         ...(token ? {} : { tempuser: true }),
-        cart: cartItems.map((item) => ({
-          product_id: item.productId,
-          quantity: item.quantity,
-        })),
-        address: shippingDetails?.address || "",
-        name: shippingDetails
-          ? `${shippingDetails.firstName} ${shippingDetails.lastName}`
-          : "",
-        first_name: shippingDetails?.firstName || "",
-        last_name: shippingDetails?.lastName || "",
-        phone_number: shippingDetails?.phone || "",
-        email: shippingDetails?.email || "",
-        total_amount: fullTotal + deliveryFeeNumber,
-        payment_status: "unpaid",
-        notes: orderNote,
-        coupon_id: appliedCoupon?.code || null,
-        pickup_location: {
+        as_guest: token ? false : true,
+        contact: {
+          first_name: shippingDetails?.firstName || "",
+          last_name: shippingDetails?.lastName || "",
+          email: shippingDetails?.email || "",
+          phone: shippingDetails?.phone || "",
+        },
+        shipping: {
           state: selectedState,
-          city: selectedCity,
-          location: pickupLocation,
+          city: selectedCity || deliveryInfo?.city,
+          address: shippingDetails?.address || "",
         },
-        delivery_info: {
-          fee: deliveryFeeNumber,
-          duration: deliveryDuration,
+
+        delivery: {
+          pickup_location: pickupLocation,
+          id: deliveryInfo.id,
         },
+
+        items: cartItems.map(({ productId, quantity, variationId }) => ({
+          product_id: productId,
+          quantity,
+          ...(variationId != null ? { variation_id: variationId } : {}),
+        })),
+        padicode:
+          (verifiedPromoCode.verified && verifiedPromoCode?.code) || null,
+        notes: "Leave at the gate",
+
+        // total_amount: fullTotal + deliveryFeeNumber,
+        // payment_status: "unpaid",
+
+        // delivery_info: {
+        //   fee: deliveryFeeNumber,
+        //   duration: deliveryDuration,
+        // },
       };
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/orders`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify(payload),
-      });
+      console.log(payload);
 
-      // persist padi code (if any) and promo code so we don't lose it
-      if (promoCode) localStorage.setItem("padiCode", promoCode);
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/orders/`,
+        {
+          method: "POST",
+          headers,
+          body: JSON.stringify(payload),
+        }
+      );
 
       if (!res.ok) {
         const text = await res.text().catch(() => "");
@@ -283,10 +218,18 @@ export default function OrderItems({
         throw new Error("Failed to create order");
       }
 
-      const data = await res.json();
+      const { data } = await res.json();
+      console.log(data);
       clearCart();
       localStorage.removeItem("appliedCoupon");
-      router.push(`/payment/${data.order_id}`);
+      if (selectedPayment !== "pay_now") {
+        setPayFormeLink(
+          `${process.env.NEXT_PUBLIC_ROUTE}/payment/pay-for-me/${data?.order_id}?price=${data.amounts?.total}&firstName=${data?.contact?.first_name}`
+        );
+        return;
+      }
+
+      router.push(`/payment/${data?.order_id}`);
     } catch (err) {
       console.error("Payment flow error:", err);
       alert("Failed to process order. Please try again.");
@@ -298,20 +241,18 @@ export default function OrderItems({
     getToken,
     fullTotal,
     deliveryFeeNumber,
-    orderNote,
     appliedCoupon,
     selectedState,
     selectedCity,
     pickupLocation,
     deliveryDuration,
-    promoCode,
     clearCart,
     router,
     shippingDetails,
     selectedPayment,
   ]);
 
-  console.log(cartItems);
+  console.log(deliveryInfo);
 
   // Render: keep your exact UI but wire to the improved logic above
   return (
@@ -359,6 +300,7 @@ export default function OrderItems({
                       onClick={() =>
                         updateQuantity(
                           item.productId,
+                          item.variationId,
                           Math.max(1, item.quantity - 1)
                         )
                       }
@@ -369,7 +311,11 @@ export default function OrderItems({
                     <span className="w-12 text-center">{item.quantity}</span>
                     <button
                       onClick={() =>
-                        updateQuantity(item.productId, item.quantity + 1)
+                        updateQuantity(
+                          item.productId,
+                          item.variationId,
+                          item.quantity + 1
+                        )
                       }
                       className="px-3 py-1.5"
                     >
@@ -393,6 +339,7 @@ export default function OrderItems({
                     onClick={() =>
                       updateQuantity(
                         item.productId,
+                        item?.variationId,
                         Math.max(1, item.quantity - 1)
                       )
                     }
@@ -403,7 +350,11 @@ export default function OrderItems({
                   <span className="w-12 text-center">{item.quantity}</span>
                   <button
                     onClick={() =>
-                      updateQuantity(item.productId, item.quantity + 1)
+                      updateQuantity(
+                        item.productId,
+                        item?.variationId,
+                        item.quantity + 1
+                      )
                     }
                     className="px-3 py-2"
                   >
@@ -446,7 +397,7 @@ export default function OrderItems({
                     <span>-₦{couponDiscount.toLocaleString()}</span>
                   </div>
                 )}
-                {appliedPadiCode && (
+                {subtotal >= 100000 && (
                   <div className="flex py-1 pb-3 justify-between text-gray-500">
                     <span>Savings</span>
                     <span className="text-red-500">
@@ -458,7 +409,7 @@ export default function OrderItems({
                   <span>Shipping:</span>
                   <span className="text-black">
                     {selectedState
-                      ? `₦${deliveryFeeNumber.toLocaleString()} (${deliveryDuration})`
+                      ? `₦${deliveryInfo?.fee?.toLocaleString()} (${deliveryDuration})`
                       : "Select state to calculate"}
                   </span>
                 </div>
@@ -466,7 +417,7 @@ export default function OrderItems({
                 <div className="flex pt-6 justify-between border-t border-[#E0E5EB] font-medium">
                   <span>Estimated total:</span>
                   <span className="text-xl font-semibold ">
-                    ₦{fullTotal.toLocaleString()}
+                    ₦{(fullTotal + deliveryInfo?.fee).toLocaleString()}
                   </span>
                 </div>
               </div>
@@ -540,18 +491,12 @@ export default function OrderItems({
                 {isLoading ? "Processing..." : "Proceed to payment"}
               </Button>
             ) : (
-              <Button
-                onClick={handlePayment}
-                rounded={true}
-                disabled={cartItems.length === 0 || isLoading}
-                className={`w-full py-3 px-4 bg-[#184193] text-white rounded-full mt-4 ${
-                  isLoading || cartItems.length === 0
-                    ? "opacity-50 cursor-not-allowed"
-                    : ""
-                }`}
-              >
-                {isLoading ? "Generating..." : "Generate Payment Link"}
-              </Button>
+              <PayForMeDialog
+                cartItems={cartItems}
+                paymentLink={payFormeLink}
+                isLoading={isLoading}
+                onPaymentClick={handlePayment}
+              />
             )}
           </div>
         </div>
