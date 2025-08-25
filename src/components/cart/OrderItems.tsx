@@ -50,9 +50,11 @@ interface OrderItemsProps {
   deliveryFee: string;
   deliveryDuration: string;
   shippingDetails: any;
+  deliveryInfo?: any; // added to match usage in the component
 }
 
-const FREE_SHIPPING_THRESHOLD = 53000;
+// Free shipping threshold (per your requirement: free shipping when >= ₦100,000)
+const FREE_SHIPPING_THRESHOLD = 100000;
 
 const paymentOptions = [
   {
@@ -80,8 +82,6 @@ export default function OrderItems({
   const { cartItems, updateQuantity, removeFromCart, clearCart } = useCart();
   const { getToken } = useAuth();
 
-  // UI / local state
-  // const [promoCode, setPromoCode] = useState<string>("");
   const [itemToRemove, setItemToRemove] = useState<string | null>(null);
   const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -89,7 +89,7 @@ export default function OrderItems({
   const [payFormeLink, setPayFormeLink] = useState<string>("");
   const { verifiedPromoCode } = useVerifiedPromo();
 
-  // Derived values (memoized)
+  // Derived values
   const subtotal = useMemo(
     () => cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0),
     [cartItems]
@@ -102,25 +102,41 @@ export default function OrderItems({
       : appliedCoupon.value;
   }, [appliedCoupon, subtotal]);
 
-  // Business decision: Padi code (2% off) takes precedence over appliedCoupon.
-  // If you want both to stack, change this logic accordingly.
+  // PADI discount: 2% of subtotal, only when verifiedPromoCode.verified === true
+  const padiDiscount = useMemo(() => {
+    if (!verifiedPromoCode?.verified) return 0;
+    return Math.round(subtotal * 0.02);
+  }, [verifiedPromoCode, subtotal]);
+
+  // Choose which discount to apply: PADI takes precedence over coupon
+  const appliedDiscount = useMemo(() => {
+    return padiDiscount > 0 ? padiDiscount : couponDiscount;
+  }, [padiDiscount, couponDiscount]);
+
+  // Full total before delivery
   const fullTotal = useMemo(() => {
-    if (subtotal >= 100000) return Math.round(subtotal * 0.98);
-    return Math.max(0, subtotal - couponDiscount);
-  }, [subtotal, couponDiscount]);
+    return Math.max(0, subtotal - appliedDiscount);
+  }, [subtotal, appliedDiscount]);
 
+  // Delivery fee numeric: free when subtotal >= FREE_SHIPPING_THRESHOLD
   const deliveryFeeNumber = useMemo(() => {
-    // free shipping when subtotal >= threshold
     if (subtotal >= FREE_SHIPPING_THRESHOLD) return 0;
-    const parsed = parseInt(deliveryFee || "0", 10);
-    return Number.isNaN(parsed) ? 0 : parsed;
-  }, [deliveryFee, subtotal]);
+    // prefer deliveryInfo.fee if available, otherwise fallback to deliveryFee prop (string)
+    const feeFromInfo = deliveryInfo?.fee;
+    if (typeof feeFromInfo === "number") return feeFromInfo;
+    if (typeof feeFromInfo === "string") {
+      const parsed = parseInt(feeFromInfo, 10);
+      if (!Number.isNaN(parsed)) return parsed;
+    }
+    const parsedProp = parseInt(deliveryFee || "0", 10);
+    return Number.isNaN(parsedProp) ? 0 : parsedProp;
+  }, [deliveryInfo, deliveryFee, subtotal]);
 
-  // Restore applied coupon from localStorage and fetch available coupons (side-effect)
+  // Restore applied coupon from localStorage and warm coupon cache
   useEffect(() => {
     (async () => {
       try {
-        await CouponHelper.getAllCoupons(); // we don't use them directly here, but keep the call to warm cache if the helper does
+        await CouponHelper.getAllCoupons();
         const saved = localStorage.getItem("appliedCoupon");
         if (saved) {
           setAppliedCoupon(JSON.parse(saved));
@@ -141,7 +157,6 @@ export default function OrderItems({
     setItemToRemove(null);
   }, [itemToRemove, removeFromCart]);
 
-  console.log(selectedCity);
   // Create order and redirect to payment
   const handlePayment = useCallback(async () => {
     const token = Cookies.get("token");
@@ -179,8 +194,12 @@ export default function OrderItems({
         },
 
         delivery: {
-          pickup_location: pickupLocation,
-          id: deliveryInfo.id,
+          pickup_location:
+            selectedState.toLowerCase() === "lagos"
+              ? "Home Delivery"
+              : pickupLocation,
+          id: deliveryInfo?.id,
+          fee: deliveryFeeNumber,
         },
 
         items: cartItems.map(({ productId, quantity, variationId }) => ({
@@ -189,19 +208,17 @@ export default function OrderItems({
           ...(variationId != null ? { variation_id: variationId } : {}),
         })),
         padicode:
-          (verifiedPromoCode.verified && verifiedPromoCode?.code) || null,
+          (verifiedPromoCode?.verified && verifiedPromoCode?.code) || null,
         notes: "Leave at the gate",
 
-        // total_amount: fullTotal + deliveryFeeNumber,
-        // payment_status: "unpaid",
-
-        // delivery_info: {
-        //   fee: deliveryFeeNumber,
-        //   duration: deliveryDuration,
-        // },
+        // pass totals if you need them on the server side (optional)
+        totals: {
+          subtotal,
+          discount: appliedDiscount,
+          delivery_fee: deliveryFeeNumber,
+          total: fullTotal + deliveryFeeNumber,
+        },
       };
-
-      console.log(payload);
 
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/orders/`,
@@ -219,7 +236,6 @@ export default function OrderItems({
       }
 
       const { data } = await res.json();
-      console.log(data);
       clearCart();
       localStorage.removeItem("appliedCoupon");
       if (selectedPayment !== "pay_now") {
@@ -238,23 +254,22 @@ export default function OrderItems({
     }
   }, [
     cartItems,
-    getToken,
     fullTotal,
     deliveryFeeNumber,
     appliedCoupon,
     selectedState,
     selectedCity,
     pickupLocation,
-    deliveryDuration,
+    deliveryInfo,
     clearCart,
     router,
     shippingDetails,
     selectedPayment,
+    subtotal,
+    appliedDiscount,
+    verifiedPromoCode,
   ]);
 
-  console.log(deliveryInfo);
-
-  // Render: keep your exact UI but wire to the improved logic above
   return (
     <div className="flex flex-col lg:flex-row gap-8">
       <div className="lg:w-2/3">
@@ -391,25 +406,28 @@ export default function OrderItems({
                   <span>Subtotal ({cartItems.length} items):</span>
                   <span>₦{subtotal.toLocaleString()}</span>
                 </div>
-                {appliedCoupon && (
+
+                {appliedCoupon && padiDiscount === 0 && (
                   <div className="flex py-1 justify-between text-green-600">
                     <span>Coupon ({appliedCoupon.code}):</span>
                     <span>-₦{couponDiscount.toLocaleString()}</span>
                   </div>
                 )}
-                {subtotal >= 100000 && (
-                  <div className="flex py-1 pb-3 justify-between text-gray-500">
-                    <span>Savings</span>
-                    <span className="text-red-500">
-                      -₦{Math.round(subtotal * 0.02).toLocaleString()}
-                    </span>
+
+                {padiDiscount > 0 && (
+                  <div className="flex py-1 pb-3 justify-between text-green-600">
+                    <span>PADI Discount (2%):</span>
+                    <span>-₦{padiDiscount.toLocaleString()}</span>
                   </div>
                 )}
+
                 <div className="flex py-1 pb-6 justify-between text-gray-500">
                   <span>Shipping:</span>
                   <span className="text-black">
-                    {selectedState
-                      ? `₦${deliveryInfo?.fee?.toLocaleString()} (${deliveryDuration})`
+                    {subtotal >= FREE_SHIPPING_THRESHOLD
+                      ? `Free (${deliveryDuration})`
+                      : selectedState
+                      ? `₦${deliveryFeeNumber.toLocaleString()} (${deliveryDuration})`
                       : "Select state to calculate"}
                   </span>
                 </div>
@@ -417,11 +435,12 @@ export default function OrderItems({
                 <div className="flex pt-6 justify-between border-t border-[#E0E5EB] font-medium">
                   <span>Estimated total:</span>
                   <span className="text-xl font-semibold ">
-                    ₦{(fullTotal + deliveryInfo?.fee).toLocaleString()}
+                    ₦{(fullTotal + deliveryFeeNumber).toLocaleString()}
                   </span>
                 </div>
               </div>
             </div>
+
             <div className="flex py-4 font-medium bg-[#EDF0F8] rounded-md px-6">
               <span>Payment Method</span>
             </div>
@@ -435,7 +454,6 @@ export default function OrderItems({
                     option.id === "pay_now" ? "border-b" : "border-none"
                   }`}
                 >
-                  {/* Icon + Label */}
                   <div>
                     <div
                       className={`flex ${
@@ -460,7 +478,6 @@ export default function OrderItems({
                     </div>
                   </div>
 
-                  {/* Custom Large Radio */}
                   <div className={`relative flex items-center`}>
                     <input
                       type="radio"
@@ -470,13 +487,13 @@ export default function OrderItems({
                       checked={selectedPayment === option.id}
                       onChange={() => setSelectedPayment(option.id)}
                       aria-checked={selectedPayment === option.id}
-                      className="peer appearance-none w-3 h-3 rounded-full   checked:bg-[#184193] border-none   transition-colors ring-4 ring-gray-600 checked:ring-[#184193] outline-3 outline-white
-"
+                      className="peer appearance-none w-3 h-3 rounded-full checked:bg-[#184193] border-none transition-colors ring-4 ring-gray-600 checked:ring-[#184193] outline-3 outline-white"
                     />
                   </div>
                 </label>
               ))}
             </div>
+
             {selectedPayment === "pay_now" ? (
               <Button
                 onClick={handlePayment}
@@ -501,6 +518,7 @@ export default function OrderItems({
           </div>
         </div>
       </div>
+
       <ConfirmationModal
         isOpen={!!itemToRemove}
         onConfirm={handleRemoveConfirm}

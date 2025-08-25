@@ -149,6 +149,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       return { success: true };
     } catch (error: unknown) {
+      console.log(error);
       if (error instanceof Error) {
         return {
           success: false,
@@ -369,11 +370,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to resend verification code");
+        const errorMessage =
+          data?.error?.message ||
+          data?.message ||
+          "Failed to resend verification code";
+
+        throw new Error(errorMessage);
       }
 
       return { success: true };
     } catch (error: unknown) {
+      console.error("Resend OTP error:", error);
+
       if (error instanceof Error) {
         return {
           success: false,

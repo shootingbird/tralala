@@ -12,7 +12,7 @@ export default function PaymentPage() {
   const { getToken } = useAuth();
   const [isProcessing, setIsProcessing] = useState(true);
   const [error, setError] = useState("");
-  const [paymentReference, setPaymentReference] = useState("");
+  // const [paymentReference, setPaymentReference] = useState("");
   const params = useParams<{ orderId: string }>();
   const orderId = params.orderId;
   const [order, setOrder] = useState<any | null>(null);

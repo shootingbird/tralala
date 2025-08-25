@@ -43,6 +43,7 @@ export default function CartPage() {
     null
   );
   const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
+  // appliedPadiCode tracks whether a verified PADI code is active
   const [appliedPadiCode, setAppliedPadiCode] = useState<boolean>(
     !!verifiedPromoCode?.verified
   );
@@ -57,8 +58,9 @@ export default function CartPage() {
   );
 
   const FREE_SHIPPING_THRESHOLD = 53000;
-  const DISCOUNT_ELIGIBILITY_THRESHOLD = 100000; // ₦100,000 threshold for discounts
-  const AUTO_DISCOUNT_PERCENT = 2; // Automatic discount when eligible (2%)
+  // Kept for coupon eligibility checks
+  const DISCOUNT_ELIGIBILITY_THRESHOLD = 100000; // ₦100,000 threshold for coupons
+  const AUTO_DISCOUNT_PERCENT = 2; // 2% discount when PADI code verified
 
   const progressPercentage = Math.min(
     100,
@@ -109,18 +111,16 @@ export default function CartPage() {
       : appliedCoupon.value;
   }, [appliedCoupon, subtotal]);
 
-  // Automatic discount applies when subtotal >= threshold and no coupon is present.
-  const automaticDiscount = useMemo(() => {
-    if (subtotal < DISCOUNT_ELIGIBILITY_THRESHOLD) return 0;
-    // only apply auto discount when no coupon is applied
-    if (appliedCoupon) return 0;
+  // PADI discount: applies only when PADI code is verified (no subtotal threshold)
+  const padiDiscount = useMemo(() => {
+    if (!appliedPadiCode) return 0;
     return (subtotal * AUTO_DISCOUNT_PERCENT) / 100;
-  }, [subtotal, appliedCoupon]);
+  }, [appliedPadiCode, subtotal]);
 
-  // Final discount (coupon takes precedence, else automatic discount)
+  // Final discount (coupon takes precedence, else PADI discount)
   const totalDiscount = useMemo(() => {
-    return couponDiscount > 0 ? couponDiscount : automaticDiscount;
-  }, [couponDiscount, automaticDiscount]);
+    return couponDiscount > 0 ? couponDiscount : padiDiscount;
+  }, [couponDiscount, padiDiscount]);
 
   const estimatedTotal = useMemo(() => {
     const total = Math.max(0, subtotal - totalDiscount);
@@ -181,7 +181,7 @@ export default function CartPage() {
     }
   };
 
-  // PADI/party verification: only verify and store flag — NO effect on totals
+  // PADI/party verification: only verify and store flag — affects totals via padiDiscount
   const applyPadiCoupon = async (padiCode: string): Promise<void> => {
     setApplyingCode(true);
     setCouponError("");
@@ -417,7 +417,7 @@ export default function CartPage() {
                   <span className="font-bold flex flex-col items-center justify-center">
                     <Percent size={15} />
                   </span>
-                  <span>Verify party code</span>
+                  <span>Verify PADI code</span>
                 </div>
                 <span>{showPromoInput ? "-" : "+"}</span>
               </button>
@@ -473,11 +473,11 @@ export default function CartPage() {
                       </div>
                     )}
 
-                  {/* Automatic discount (applies when subtotal >= threshold and no coupon) */}
-                  {!appliedCoupon && automaticDiscount > 0 && (
+                  {/* PADI discount (applies only if PADI verified and no coupon applied) */}
+                  {!appliedCoupon && appliedPadiCode && padiDiscount > 0 && (
                     <div className="flex py-1 justify-between text-green-600">
-                      <span>Discount:</span>
-                      <span>-₦{automaticDiscount.toLocaleString()}</span>
+                      <span>PADI Discount:</span>
+                      <span>-₦{padiDiscount.toLocaleString()}</span>
                     </div>
                   )}
 

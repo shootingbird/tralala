@@ -135,6 +135,7 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
   const handleResendOtp = async () => {
     setIsResendingOtp(true);
     try {
+      console.log(email);
       const result = await resendVerificationCode(email);
       if (result.success) {
         setShowSuccessModal(true);
@@ -144,6 +145,7 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
         setShowErrorModal(true);
       }
     } catch (error) {
+      console.log(error);
       setErrorMessage("Failed to resend OTP");
       setShowErrorModal(true);
     } finally {
