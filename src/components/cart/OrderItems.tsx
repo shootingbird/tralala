@@ -256,7 +256,6 @@ export default function OrderItems({
     cartItems,
     fullTotal,
     deliveryFeeNumber,
-    appliedCoupon,
     selectedState,
     selectedCity,
     pickupLocation,
