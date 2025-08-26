@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { ShippingAddressSection } from "@/components/checkout/ShippingAddressSection";
@@ -8,8 +8,7 @@ import { PickupSection } from "@/components/checkout/PickupSection";
 import { PaymentSection } from "@/components/checkout/PaymentSection";
 import { TopBanner } from "@/components/layout/TopBanner";
 import { Header } from "@/components/layout/Header";
-import { CouponHelper, type Coupon } from "@/lib/coupons";
-import { useAuth } from "@/contexts/AuthContext";
+import { type Coupon } from "@/lib/coupons";
 
 interface ApiResponse<T = any> {
   success: boolean;
@@ -46,6 +45,7 @@ export default function CheckoutPage() {
     fee: string;
     duration: string;
   }>({ fee: "", duration: "" });
+  const [disableContinue, setDisableContinue] = useState(false);
   // const { user } = useAuth();
 
   // console.log(user);
@@ -107,6 +107,7 @@ export default function CheckoutPage() {
       router.push("/payment");
     }
   };
+  console.log(disableContinue);
 
   return (
     <>
@@ -160,6 +161,7 @@ export default function CheckoutPage() {
                 onStateSelect={setSelectedState}
                 onCitySelect={setSelectedCity}
                 onShippingDetailsChange={setShippingDetails}
+                setDisableContinue={setDisableContinue}
               />
             )}
             {currentStep === 2 && (
@@ -194,12 +196,19 @@ export default function CheckoutPage() {
             )}
 
             {currentStep <= 2 && (
-              <div className=" w-full ">
-                <div className={`${currentStep === 2 && "mx-auto max-w-sm"}`}>
+              <div className="w-full">
+                <div
+                  className={`${currentStep === 2 ? "mx-auto max-w-sm" : ""}`}
+                >
                   <Button
                     onClick={handleContinue}
                     rounded={currentStep === 2}
-                    className="w-full"
+                    disabled={disableContinue}
+                    className={`w-full ${
+                      disableContinue
+                        ? "opacity-60 cursor-not-allowed"
+                        : "cursor-pointer"
+                    }`}
                   >
                     {currentStep === 3
                       ? "Proceed to Payment"

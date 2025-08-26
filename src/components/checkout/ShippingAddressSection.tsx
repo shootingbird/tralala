@@ -9,12 +9,6 @@ import statesAndCities from "@/data/states-and-cities.json";
 
 const STORAGE_KEY = "shipping_details";
 
-type ShippingAddressSectionProps = {
-  onStateSelect: (state: string) => void;
-  onCitySelect: (city: string) => void;
-  onShippingDetailsChange: (details: typeof defaultAddress) => void;
-};
-
 const defaultAddress = {
   firstName: "",
   lastName: "",
@@ -25,20 +19,21 @@ const defaultAddress = {
   address: "",
 };
 
-type StateOption = {
-  value: string;
-  label: string;
+type ShippingAddressSectionProps = {
+  onStateSelect: (state: string) => void;
+  onCitySelect: (city: string) => void;
+  onShippingDetailsChange: (details: typeof defaultAddress) => void;
+  setDisableContinue: (disabled: boolean) => void;
 };
 
-type CityOption = {
-  value: string;
-  label: string;
-};
+type StateOption = { value: string; label: string };
+type CityOption = { value: string; label: string };
 
 export const ShippingAddressSection = ({
   onStateSelect,
   onCitySelect,
   onShippingDetailsChange,
+  setDisableContinue,
 }: ShippingAddressSectionProps) => {
   const { user, isAuthenticated } = useAuth();
   const [isEditing, setIsEditing] = useState(!isAuthenticated);
@@ -46,6 +41,7 @@ export const ShippingAddressSection = ({
   const [selectedState, setSelectedState] = useState<StateOption | null>(null);
   const [selectedCity, setSelectedCity] = useState<CityOption | null>(null);
   const [availableCities, setAvailableCities] = useState<CityOption[]>([]);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const stateOptions: StateOption[] = statesAndCities.map((state) => ({
     value: state.name,
@@ -56,8 +52,9 @@ export const ShippingAddressSection = ({
     const savedDetails = localStorage.getItem(STORAGE_KEY);
     if (savedDetails) {
       const parsedDetails = JSON.parse(savedDetails);
-      onShippingDetailsChange(parsedDetails);
       setShippingDetails(parsedDetails);
+      onShippingDetailsChange(parsedDetails);
+
       if (parsedDetails.state) {
         const stateOption = {
           value: parsedDetails.state,
@@ -85,7 +82,6 @@ export const ShippingAddressSection = ({
       };
       setShippingDetails(userDetails);
       onShippingDetailsChange(userDetails);
-
       localStorage.setItem(STORAGE_KEY, JSON.stringify(userDetails));
 
       if (user.state) {
@@ -98,6 +94,7 @@ export const ShippingAddressSection = ({
         setSelectedCity({ value: user.city, label: user.city });
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, onStateSelect]);
 
   const updateShippingDetails = (newDetails: typeof shippingDetails) => {
@@ -105,19 +102,103 @@ export const ShippingAddressSection = ({
     localStorage.setItem(STORAGE_KEY, JSON.stringify(newDetails));
     onShippingDetailsChange(newDetails);
   };
+
   const updateCities = (stateName: string) => {
     const selectedStateData = statesAndCities.find(
       (state) => state.name === stateName
     );
     if (selectedStateData) {
-      const cityOptions = selectedStateData.cities.map((city) => ({
-        value: city,
-        label: city,
-      }));
-      setAvailableCities(cityOptions);
+      setAvailableCities(
+        selectedStateData.cities.map((city) => ({ value: city, label: city }))
+      );
     } else {
       setAvailableCities([]);
     }
+  };
+
+  const normalizeName = (value: string) => {
+    if (!value) return "";
+    return value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
+  };
+
+  const validateField = (name: string, value: string) => {
+    let error = "";
+    switch (name) {
+      case "firstName":
+      case "lastName":
+        if (!value.trim()) error = "Required";
+        break;
+      case "email":
+        if (!value) error = "Required";
+        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value))
+          error = "Invalid email";
+        break;
+      case "phone":
+        if (!value) error = "Required";
+        else if (!/^\d{11}$/.test(value)) {
+          error = "Phone number must be exactly 11 digits (e.g. 08012345678)";
+        }
+        break;
+      case "address":
+        if (!value.trim()) error = "Required";
+        break;
+      case "state":
+        if (!value) error = "Required";
+        break;
+      case "city":
+        if (!value) error = "Required";
+        break;
+    }
+    setErrors((prev) => ({ ...prev, [name]: error }));
+    return error === "";
+  };
+
+  // Check overall validity without mutating errors object (used to control the parent button)
+  const isFormValid = () => {
+    const { firstName, lastName, email, phone, address, state, city } =
+      shippingDetails;
+
+    if (!firstName || !firstName.trim()) return false;
+    if (!lastName || !lastName.trim()) return false;
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return false;
+    if (!phone || !/^\d{11}$/.test(phone)) return false;
+    if (!address || !address.trim()) return false;
+    if (!state || !state.trim()) return false;
+    if (!city || !city.trim()) return false;
+
+    return true;
+  };
+
+  // Whenever shipping details change, update parent's disable flag
+  useEffect(() => {
+    const valid = isFormValid();
+    // if form is valid => disableContinue = false
+    setDisableContinue(!valid);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shippingDetails, selectedState, selectedCity, isEditing]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const isValid = Object.entries(shippingDetails).every(([key, value]) =>
+      validateField(key, value as string)
+    );
+    if (!isValid) {
+      console.log("Form invalid", errors);
+      return;
+    }
+    console.log("Form valid → shipping details saved", shippingDetails);
+    setIsEditing(false);
+  };
+
+  const handleChange = (field: keyof typeof shippingDetails, value: string) => {
+    let newValue = value;
+
+    if (field === "firstName" || field === "lastName") {
+      newValue = normalizeName(value);
+    }
+
+    updateShippingDetails({ ...shippingDetails, [field]: newValue });
+    validateField(field, newValue);
   };
 
   const handleStateChange = (option: StateOption | null) => {
@@ -129,18 +210,17 @@ export const ShippingAddressSection = ({
       city: "",
     };
     updateShippingDetails(newDetails);
+    validateField("state", option?.value || "");
     onStateSelect(option?.value || "");
-    if (option) {
-      updateCities(option.value);
-    } else {
-      setAvailableCities([]);
-    }
+    if (option) updateCities(option.value);
+    else setAvailableCities([]);
   };
 
   const handleCityChange = (option: CityOption | null) => {
     setSelectedCity(option);
     const newDetails = { ...shippingDetails, city: option?.value || "" };
     updateShippingDetails(newDetails);
+    validateField("city", option?.value || "");
     onCitySelect(option?.value || "");
   };
 
@@ -153,106 +233,120 @@ export const ShippingAddressSection = ({
             onClick={() => setIsEditing(!isEditing)}
             className="text-[#184193] flex items-center text-sm"
           >
-            <Pen size={14} className="mr-1" />
-            Edit
+            <Pen size={14} className="mr-1" /> Edit
           </button>
         )}
       </div>
 
       {isEditing ? (
-        <div className="p-2 md:p-0">
-          <form className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <form className="space-y-4 p-2 md:p-0" onSubmit={handleSubmit}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
               <Input
                 label="First Name"
                 value={shippingDetails.firstName}
-                onChange={(e) =>
-                  updateShippingDetails({
-                    ...shippingDetails,
-                    firstName: e.target.value,
-                  })
-                }
+                onChange={(e) => handleChange("firstName", e.target.value)}
               />
+              {errors.firstName && (
+                <p className="text-red-500 text-xs">{errors.firstName}</p>
+              )}
+            </div>
+            <div>
               <Input
                 label="Last Name"
                 value={shippingDetails.lastName}
-                onChange={(e) =>
-                  updateShippingDetails({
-                    ...shippingDetails,
-                    lastName: e.target.value,
-                  })
-                }
+                onChange={(e) => handleChange("lastName", e.target.value)}
               />
+              {errors.lastName && (
+                <p className="text-red-500 text-xs">{errors.lastName}</p>
+              )}
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
               <Input
                 label="Email Address"
                 type="email"
                 value={shippingDetails.email}
-                onChange={(e) =>
-                  updateShippingDetails({
-                    ...shippingDetails,
-                    email: e.target.value,
-                  })
-                }
+                onChange={(e) => handleChange("email", e.target.value)}
               />
+              {errors.email && (
+                <p className="text-red-500 text-xs">{errors.email}</p>
+              )}
+            </div>
+            <div>
               <Input
                 label="Mobile Number"
                 type="tel"
+                placeholder="08012345678"
                 value={shippingDetails.phone}
-                onChange={(e) =>
-                  updateShippingDetails({
-                    ...shippingDetails,
-                    phone: e.target.value,
-                  })
-                }
+                onChange={(e) => handleChange("phone", e.target.value)}
               />
+              {errors.phone && (
+                <p className="text-red-500 text-xs">{errors.phone}</p>
+              )}
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  State
-                </label>
-                <Select
-                  value={selectedState}
-                  onChange={handleStateChange}
-                  options={stateOptions}
-                  isClearable
-                  isSearchable
-                  placeholder="Select State"
-                  className="react-select-container"
-                  classNamePrefix="react-select"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  City
-                </label>
-                <Select
-                  value={selectedCity}
-                  onChange={handleCityChange}
-                  options={availableCities}
-                  isClearable
-                  isSearchable
-                  placeholder="Select City"
-                  isDisabled={!selectedState}
-                  className="react-select-container"
-                  classNamePrefix="react-select"
-                />
-              </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                State
+              </label>
+              <Select
+                value={selectedState}
+                onChange={handleStateChange}
+                options={stateOptions}
+                isClearable
+                isSearchable
+                placeholder="Select State"
+                className="react-select-container"
+                classNamePrefix="react-select"
+              />
+              {errors.state && (
+                <p className="text-red-500 text-xs">{errors.state}</p>
+              )}
             </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                City
+              </label>
+              <Select
+                value={selectedCity}
+                onChange={handleCityChange}
+                options={availableCities}
+                isClearable
+                isSearchable
+                placeholder="Select City"
+                isDisabled={!selectedState}
+                className="react-select-container"
+                classNamePrefix="react-select"
+              />
+              {errors.city && (
+                <p className="text-red-500 text-xs">{errors.city}</p>
+              )}
+            </div>
+          </div>
+
+          <div>
             <Input
               label="Apartment Number and Street Address"
               value={shippingDetails.address}
-              onChange={(e) =>
-                updateShippingDetails({
-                  ...shippingDetails,
-                  address: e.target.value,
-                })
-              }
+              onChange={(e) => handleChange("address", e.target.value)}
             />
-          </form>
-        </div>
+            {errors.address && (
+              <p className="text-red-500 text-xs">{errors.address}</p>
+            )}
+          </div>
+
+          <button
+            type="submit"
+            className="bg-[#184193] text-white px-4 py-2 rounded-md mt-4"
+          >
+            Save Address
+          </button>
+        </form>
       ) : (
         <div className="p-2 md:p-0 grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="bg-[#18419310] py-2 px-5 rounded-lg">
