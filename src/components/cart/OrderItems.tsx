@@ -203,9 +203,9 @@ export default function OrderItems({
         },
 
         items: cartItems.map(({ productId, quantity, variationId }) => ({
-          product_id: productId,
+          product_id: Number(productId),
           quantity,
-          ...(variationId != null ? { variation_id: variationId } : {}),
+          ...(variationId != null ? { variation_id: Number(variationId) } : {}),
         })),
         padicode:
           (verifiedPromoCode?.verified && verifiedPromoCode?.code) || null,

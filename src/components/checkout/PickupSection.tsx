@@ -302,10 +302,11 @@ export const PickupSection = ({
                   <input
                     aria-label="Lagos pickup location"
                     type="text"
-                    value={lagosPickupPoint}
+                    value={"Home Delivery"}
                     onChange={(e) => handleLagosPickupChange(e.target.value)}
                     placeholder="Enter your pickup location"
                     className="w-full px-4 py-3 text-gray-700 bg-white border border-gray-200 rounded-lg text-center appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                    disabled
                   />
                 ) : (
                   <Select

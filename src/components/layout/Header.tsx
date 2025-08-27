@@ -187,7 +187,7 @@ export const Header = ({ showSearch = false }) => {
   }, []);
 
   return (
-    <header className="bg-white  top-0 w-full z-10 md:shadow-sm">
+    <header className="bg-white  top-0 w-full z-10 md:shadow-sm sticky top-0 z-50">
       <div className="hidden md:block">
         <div className="container mx-auto  px-4 pt-4  ">
           <div className="flex items-center justify-between">

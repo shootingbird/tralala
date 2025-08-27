@@ -11,6 +11,7 @@ import { InstallPWAPrompt } from "@/components/pwa/InstallPWAPrompt";
 // import { DealOfMonth } from "@/components/sections/DealOfMonth";
 import { Hero } from "@/components/sections/Hero";
 import { WhyShopWithUs } from "@/components/sections/WhyShopWithUs";
+import ScrollToTopButton from "@/components/common/ScrollToTopButton";
 
 interface Product {
   productId: string;
@@ -134,6 +135,7 @@ export default function Home() {
       <CTASection />
       {/* <Footer /> */}
       <InstallPWAPrompt />
+      <ScrollToTopButton />
     </>
   );
 }
