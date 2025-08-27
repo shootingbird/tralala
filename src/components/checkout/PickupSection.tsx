@@ -45,6 +45,7 @@ export const PickupSection = ({
   selectedState,
   onPickupSelect,
   onDeliveryInfoChange,
+  shippingDetails,
 }: PickupSectionProps) => {
   const [deliveryInfo, setDeliveryInfo] = useState<{
     fee: string;
@@ -139,6 +140,21 @@ export const PickupSection = ({
     return () => controller.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedState]);
+
+  useEffect(() => {
+    if (isLagos) {
+      persistPickup("Home Delivery");
+      onPickupSelect({
+        pickup: "Home Delivery",
+        fee: deliveryInfo?.fee || "",
+        duration: deliveryInfo?.duration || "",
+        zone: currentZone ?? null,
+      });
+      onDeliveryInfoChange(currentZone);
+    }
+  }, [shippingDetails, onPickupSelect, isLagos]);
+
+  console.log(deliveryInfo);
 
   // Restore saved pickup from localStorage once deliveryInfo/currentZone available
   useEffect(() => {
@@ -251,7 +267,7 @@ export const PickupSection = ({
     if (val) {
       persistPickup(val);
       onPickupSelect({
-        pickup: val,
+        pickup: "",
         fee: deliveryInfo?.fee || "",
         duration: deliveryInfo?.duration || "",
         zone: currentZone ?? null,

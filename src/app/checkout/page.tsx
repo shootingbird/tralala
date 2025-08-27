@@ -107,8 +107,9 @@ export default function CheckoutPage() {
       router.push("/payment");
     }
   };
-  console.log(disableContinue);
+  console.log(pickupData);
 
+  console.log(selectedCity, deliveryInfo, shippingDetails, pickupData);
   return (
     <>
       <TopBanner theme="dark" />
@@ -169,6 +170,7 @@ export default function CheckoutPage() {
                 selectedState={selectedState}
                 onPickupSelect={setPickupData}
                 onDeliveryInfoChange={setDeliveryInfo}
+                shippingDetails={shippingDetails}
               />
             )}
             {currentStep === 3 && (
