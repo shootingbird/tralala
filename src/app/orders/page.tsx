@@ -1,161 +1,518 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import Image from 'next/image';
-import { TopBanner } from '@/components/layout/TopBanner';
-import { Header } from '@/components/layout/Header';
-import { Footer } from '@/components/layout/Footer';
-import { Breadcrumb } from '@/components/ui/Breadcrumb';
-import Link from 'next/link';
-import { useAuth } from '@/contexts/AuthContext';
+import React, { useEffect, useState, useMemo, useCallback } from "react";
+import Image from "next/image";
+import Cookies from "js-cookie";
+import { format } from "date-fns";
+import {
+  ChevronDown,
+  Dot,
+  EllipsisVertical,
+  SlidersHorizontal,
+} from "lucide-react";
 
-interface OrderItem {
-    id: string;
-    user_id: string;
-    cart: any;
-    status: string;
-    address: string;
-    name: string;
-    phone_number: string;
-    total_amount: number;
-    payment_status: string;
-    notes: string;
-    created_at: string;
-    updated_at: string;
-}
+import { TopBanner } from "@/components/layout/TopBanner";
+import { Header } from "@/components/layout/Header";
+import { Footer } from "@/components/layout/Footer";
+import { Breadcrumb } from "@/components/ui/Breadcrumb";
+import { Pagination } from "@/components/common/Pagination";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useRouter } from "next/navigation";
 
-export default function OrdersPage() {
-    const { getToken } = useAuth();
-    const [orders, setOrders] = useState<OrderItem[]>([]);
-    const [loading, setLoading] = useState(true);
+type Order = {
+  image: string;
+  orderId: string;
+  product_qty: number;
+  createdAt: string; // ISO
+  status: string;
+  placedDate: string; // ISO
+  raw?: any; // original payload if needed
+};
 
-    useEffect(() => {
-        const fetchOrders = async () => {
-            try {
-                const token = await getToken();
+type APIOrder = {
+  order_id: string;
+  created_at: string;
+  status: string;
+  is_paid?: boolean;
+  id?: number;
+  contact?: { email?: string; name?: string };
+  items_count?: number;
+  updated_at?: string;
+  // plus other fields from the response...
+  [key: string]: any;
+};
 
+const PLACEHOLDER_IMAGE = "/404.png";
 
-                const orderRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/orders/user`, {
-                    method: 'GET',
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                });
+const getStatusColor = (status: string) => {
+  const s = (status || "").toLowerCase();
+  return (
+    {
+      processing: "text-yellow-500",
+      placed: "text-blue-500",
+      shipped: "text-gray-500",
+      delivered: "text-green-600",
+      cancelled: "text-red-500",
+    }[s] || "text-gray-500"
+  );
+};
 
-                if (!orderRes.ok) return;
+const mapApiToOrder = (a: APIOrder): Order => ({
+  image: PLACEHOLDER_IMAGE,
+  orderId: a.order_id || `#${a.id ?? Math.floor(Math.random() * 100000)}`,
+  product_qty: a.items_count ?? 1,
+  createdAt: a.created_at || new Date().toISOString(),
+  status: a.status || "unknown",
+  placedDate: a.updated_at || a.created_at || new Date().toISOString(),
+  raw: a,
+});
 
-                const orderData = await orderRes.json();
-                console.log(orderData);
+const capitalize = (s?: string) =>
+  s ? s.charAt(0).toUpperCase() + s.slice(1) : "";
 
-                setOrders(orderData.orders);
-            } catch (err) {
-                console.error(err);
-            } finally {
-                setLoading(false);
-            }
-        };
+// Small loading skeleton that keeps the same general layout/styling
+const LoadingSkeleton: React.FC<{ count?: number }> = ({ count = 3 }) => {
+  return (
+    <div className="flex flex-col gap-4">
+      {Array.from({ length: count }).map((_, i) => (
+        <div
+          key={i}
+          className="flex justify-between items-start gap-4 md:gap-6 group rounded-xl py-3 md:p-4"
+        >
+          <div className="flex gap-4 md:gap-6 w-full">
+            <div className="w-24 h-24 md:w-52 md:h-44 flex-shrink-0 rounded-md overflow-hidden bg-gray-200 animate-pulse" />
 
-        fetchOrders();
-    }, [getToken]);
+            <div className="flex flex-col justify-between gap-3 text-sm md:text-base text-gray-700 w-full">
+              <div className="space-y-2">
+                <div className="h-4 md:h-5 bg-gray-200 rounded w-1/3 animate-pulse" />
+                <div className="h-3 bg-gray-200 rounded w-1/4 animate-pulse" />
+              </div>
 
-    const breadcrumbItems = [
-        { label: 'Home', href: '/' },
-        { label: 'Profile', href: '/profile' },
-        { label: 'Order History' }
-    ];
+              <div className="flex items-center gap-2 font-medium">
+                <div className="w-3 h-3 rounded-full bg-gray-200 animate-pulse" />
+                <div className="h-3 bg-gray-200 rounded w-1/2 animate-pulse" />
+              </div>
+            </div>
+          </div>
 
-    const getStatusColor = (status: string) => {
-        if (status.includes('Delivered')) return 'text-[#037847]';
-        if (status.includes('Shipped')) return 'text-gray-700';
-        if (status.includes('Cancelled')) return 'text-[#FF4B4B]';
-        return 'text-gray-700';
+          <div className="flex-shrink-0">
+            <div className="h-6 w-20 bg-gray-200 rounded animate-pulse" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+const ErrorBanner: React.FC<{
+  error: { code?: string; message?: string } | null;
+  onRetry?: () => void;
+}> = ({ error, onRetry }) => {
+  const router = useRouter();
+  if (!error) return null;
+
+  const isTokenInvalid = error.code === "TOKEN_INVALID";
+
+  return (
+    <div className="w-full bg-red-50 border border-red-100 text-red-700 px-4 py-3 rounded-md">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="font-medium">
+            {error.message || "Something went wrong."}
+          </p>
+          {isTokenInvalid && (
+            <p className="text-xs mt-1">
+              Your session is invalid. Please sign in again.
+            </p>
+          )}
+        </div>
+
+        <div className="flex gap-2">
+          <button
+            onClick={() => {
+              if (isTokenInvalid) {
+                Cookies.remove("token");
+                Cookies.remove("access_token");
+                Cookies.remove("auth_token");
+                localStorage.removeItem("token");
+                router.push("/login");
+              } else {
+                onRetry?.();
+              }
+            }}
+            className="px-3 py-1 rounded bg-white border text-sm"
+          >
+            {isTokenInvalid ? "Sign in" : "Retry"}
+          </button>
+
+          {!isTokenInvalid && (
+            <button
+              onClick={onRetry}
+              className="px-3 py-1 rounded bg-white border text-sm"
+            >
+              Dismiss
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const OrderCard = ({ order }: { order: Order }) => {
+  const { orderId, product_qty, createdAt, status } = order;
+  const router = useRouter();
+  const [imgSrc, setImgSrc] = useState(order.image || PLACEHOLDER_IMAGE);
+
+  return (
+    <div className="flex justify-between items-start gap-4 md:gap-6 group transition-all duration-200 hover:bg-gray-50 rounded-xl py-3 md:p-4">
+      <div className="flex gap-4 md:gap-6 w-full">
+        <div className="w-24 h-24 md:w-52 md:h-44 flex-shrink-0 rounded-md overflow-hidden">
+          <Image
+            src={imgSrc}
+            alt={`Product(s) for Order ${orderId}`}
+            width={208}
+            height={176}
+            priority
+            className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-[1.02]"
+            onError={() => setImgSrc(PLACEHOLDER_IMAGE)}
+          />
+        </div>
+
+        <div className="flex flex-col justify-between gap-3 text-sm md:text-base text-gray-700 w-full">
+          <div className="space-y-1">
+            <p className="text-sm md:text-lg font-semibold">
+              Order {orderId} ({product_qty}{" "}
+              {product_qty > 1 ? "Products" : "Product"})
+            </p>
+            <p className="text-xs md:text-sm text-gray-500">
+              Placed on {format(new Date(createdAt), "MMMM d, yyyy h:mmaaa")}
+            </p>
+          </div>
+
+          <div
+            className={`flex items-center gap-1 font-medium ${getStatusColor(
+              status
+            )}`}
+          >
+            <Dot className="w-5 h-5" />
+            <p className="text-xs md:text-base">{capitalize(status)}</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex-shrink-0">
+        <button
+          className="hidden md:inline-block text-[#184193] text-sm font-medium hover:underline"
+          aria-label="Return and Refund"
+          onClick={() => router.push(`/orders/${encodeURIComponent(orderId)}`)}
+        >
+          View Details
+        </button>
+
+        <button
+          className="md:hidden p-1 text-gray-600 hover:text-[#184193] transition"
+          aria-label="Order options"
+        >
+          <EllipsisVertical className="w-5 h-5" />
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default function OrderHistory() {
+  // UI / pagination
+  const [page, setPage] = useState<number>(1);
+  const [perPage, setPerPage] = useState<number>(10);
+
+  // data
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<{
+    code?: string;
+    message?: string;
+  } | null>(null);
+
+  // server pagination info
+  const [totalPages, setTotalPages] = useState<number>(1);
+  const [totalOrders, setTotalOrders] = useState<number>(0);
+
+  // filters + sort
+  const [statusFilter, setStatusFilter] = useState<string>("All");
+  const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
+  const [query, setQuery] = useState<string>("");
+
+  const breadcrumbItems = [
+    { label: "Home", href: "/" },
+    { label: "Profile", href: "/profile" },
+    { label: "Order History" },
+  ];
+
+  // get token from cookies (tries several common cookie names)
+  const getToken = useCallback(() => {
+    if (typeof window === "undefined") return null;
+    const names = ["token", "access_token", "auth_token", "jwt"];
+    for (const n of names) {
+      const v = Cookies.get(n);
+      if (v) return v;
+    }
+    // fallback to localStorage for backward compatibility
+    return localStorage.getItem("token") || null;
+  }, []);
+
+  const fetchOrders = useCallback(
+    async (opts?: {
+      page?: number;
+      perPage?: number;
+      signal?: AbortSignal;
+    }) => {
+      const pageToFetch = opts?.page ?? page;
+      const perPageToFetch = opts?.perPage ?? perPage;
+      const signal = opts?.signal;
+
+      setLoading(true);
+      setError(null);
+
+      try {
+        const token = getToken();
+        const base = process.env.NEXT_PUBLIC_API_URL;
+        const params = new URLSearchParams();
+        params.set("page", String(pageToFetch));
+        params.set("per_page", String(perPageToFetch));
+        params.set("email", "");
+        params.set("user_id", "");
+        params.set("created_after", "");
+        params.set("created_before", "");
+        params.set("q", query);
+        params.set("has_customer_read", "1");
+
+        const url = `${base}/api/orders?${params.toString()}`;
+
+        const headers: Record<string, string> = { Accept: "application/json" };
+        if (token) headers["Authorization"] = `Bearer ${token}`;
+
+        const res = await fetch(url, { method: "GET", headers, signal });
+
+        if (!res.ok) {
+          // try to parse structured error response
+          let parsed: any = null;
+          try {
+            parsed = await res.json();
+          } catch (e) {
+            // fallthrough
+          }
+
+          const errCode = parsed?.error?.code;
+          const errMsg =
+            parsed?.error?.message ||
+            parsed?.message ||
+            `Failed fetching orders (${res.status})`;
+
+          const errObj = { code: errCode, message: errMsg };
+          setError(errObj);
+
+          // if token invalid, do not throw to avoid double-handling; just return
+          if (errCode === "TOKEN_INVALID") {
+            return;
+          }
+
+          throw new Error(errMsg);
+        }
+
+        const json = await res.json();
+
+        const payload: APIOrder[] = Array.isArray(json.data)
+          ? json.data
+          : Array.isArray(json.orders)
+          ? json.orders
+          : Array.isArray(json)
+          ? (json as any)
+          : [];
+
+        const mapped = payload.map(mapApiToOrder);
+
+        // server pagination
+        const pagination = json.pagination || {};
+        const total = pagination.total ?? mapped.length ?? 0;
+        const tPages =
+          pagination.total_pages ??
+          Math.max(1, Math.ceil(total / perPageToFetch));
+
+        setTotalPages(tPages);
+        setTotalOrders(total);
+
+        setOrders(mapped);
+      } catch (err: any) {
+        if (err.name === "AbortError") {
+          // aborted, don't set an error state
+          return;
+        }
+        console.error("Fetch orders error:", err);
+        setError({ message: err?.message ?? "Unknown error" });
+      } finally {
+        setLoading(false);
+      }
+    },
+    [getToken, page, perPage, query]
+  );
+
+  // fetch when page/perPage/query changes, with abort support
+  useEffect(() => {
+    let mounted = true;
+    const ac = new AbortController();
+
+    if (!mounted) return;
+
+    fetchOrders({ page, perPage, signal: ac.signal });
+
+    return () => {
+      mounted = false;
+      ac.abort();
     };
+  }, [fetchOrders, page, perPage]);
 
-    return (
-        <>
-            <TopBanner theme="dark" />
-            <Header />
-            <main className="container mx-auto px-4 py-8">
-                <Breadcrumb items={breadcrumbItems} className="mb-6" />
+  // client-side filtered + sorted list
+  const filteredSorted = useMemo(() => {
+    let list = [...orders];
 
-                {loading ? (
-                    <div className="text-center text-gray-500 py-20">Loading orders...</div>
-                ) : orders.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-16 px-4">
-                        <div className="relative w-[200px] h-[200px] mb-6">
-                            <Image
-                                src="/404.png"
-                                alt="Empty Orders"
-                                fill
-                                priority
-                                className="object-contain"
-                            />
-                        </div>
-                        <h2 className="text-2xl font-medium text-gray-900 mb-2">No orders yet</h2>
-                        <p className="text-gray-500 mb-6">Browse our products and start shopping</p>
-                    </div>
-                ) : (
-                    <>
-                        <div className="flex items-center justify-between mb-8">
-                            <h1 className="text-2xl font-medium">Orders</h1>
-                            <div className="flex items-center gap-2">
-                                <span className="text-sm text-gray-600">Showing {orders.length} Result{orders.length > 1 ? 's' : ''}</span>
-                                <select className="border border-gray-200 rounded-lg px-4 py-2 text-sm bg-white">
-                                    <option>All</option>
-                                </select>
-                            </div>
-                        </div>
+    if (statusFilter && statusFilter !== "All") {
+      list = list.filter(
+        (o) => o.status?.toLowerCase() === statusFilter.toLowerCase()
+      );
+    }
 
-                        <div className="space-y-6">
-                            {orders.map((order) => {
-                                const imageUrl = (() => {
-                                    const raw = order.cart[0]?.product?.image_urls;
-                                    try {
-                                        const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
-                                        return parsed?.[0] || "/404.png";
-                                    } catch {
-                                        return "/404.png";
-                                    }
-                                })();
-                                console.log(imageUrl);
-                                return (
-                                    <div key={order.id} className="bg-white py-5 border-b border-[#E8ECEF] flex gap-6">
-                                        <div className="relative w-[166px] h-[166px] shrink-0">
-                                            <Image
-                                                src={imageUrl}
-                                                alt={`Order ${order.id}`}
-                                                fill
-                                                className="object-cover rounded-lg"
-                                                priority
-                                            />
-                                        </div>
-                                        <div className="flex-1 flex flex-col justify-between pb-[1rem]">
-                                            <div className="flex justify-between items-start">
-                                                <div>
-                                                    <h3 className="text-lg font-semibold">
-                                                        Order ID #{order.id} ({order.cart.length} Products)
-                                                    </h3>
-                                                    <p className="text-sm text-[#15151570] mt-2">
-                                                        Placed on {new Date(order.created_at).toLocaleString()}
-                                                    </p>
-                                                </div>
-                                                <Link
-                                                    href={`/orders/${order.id}`}
-                                                    className="text-[#184193] hover:text-blue-700 font-semibold text-sm"
-                                                >
-                                                    View Details
-                                                </Link>
-                                            </div>
-                                            <p className={`mt-6 text-sm font-medium ${getStatusColor(order.status)}`}>• {order.status}</p>
-                                        </div>
-                                    </div>
-                                )
-                            })}
-                        </div>
-                    </>
-                )}
-            </main>
-            <Footer />
-        </>
-    );
+    list.sort((a, b) => {
+      const ta = new Date(a.createdAt).getTime();
+      const tb = new Date(b.createdAt).getTime();
+      return sortOrder === "newest" ? tb - ta : ta - tb;
+    });
+
+    return list;
+  }, [orders, statusFilter, sortOrder]);
+
+  // when user changes page using pagination component
+  const handlePageChange = (p: number) => {
+    setPage(p);
+  };
+
+  const handleRetry = () => fetchOrders({ page, perPage });
+
+  return (
+    <>
+      <TopBanner theme="dark" />
+      <Header />
+      <main className="min-h-screen">
+        <div className="container mx-auto px-4 py-10">
+          <Breadcrumb items={breadcrumbItems} className="mb-6" />
+
+          <section className="bg-white px-4 md:px-6 py-6 flex flex-col gap-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl md:text-2xl text-black font-semibold">
+                Orders
+              </h2>
+
+              <div className="flex justify-between items-center gap-4">
+                <p className="hidden md:inline-block text-sm text-gray-700 font-medium">
+                  Showing {filteredSorted.length} Result
+                  {filteredSorted.length !== 1 && "s"} from total {totalOrders}
+                </p>
+
+                <div className="flex items-center gap-3">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger className="rounded-full border-none">
+                      <div className="hidden md:flex gap-2 border px-2 py-1 rounded-full">
+                        {statusFilter} <ChevronDown className="text-gray-600" />
+                      </div>
+                      <div className="md:hidden">
+                        <SlidersHorizontal className="text-gray-800" />
+                      </div>
+                    </DropdownMenuTrigger>
+
+                    <DropdownMenuContent>
+                      {[
+                        "All",
+                        "processing",
+                        "delivered",
+                        "cancelled",
+                        "shipped",
+                        "placed",
+                      ].map((s) => (
+                        <DropdownMenuItem
+                          key={s}
+                          onClick={() =>
+                            setStatusFilter(s === "All" ? "All" : s)
+                          }
+                          className="capitalize"
+                        >
+                          {s}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
+                  <DropdownMenu>
+                    <DropdownMenuTrigger className="rounded-full border-none">
+                      <div className="hidden md:flex gap-2 border px-2 py-1 rounded-full">
+                        Sort <ChevronDown className="text-gray-600" />
+                      </div>
+                      <div className="md:hidden">
+                        <ChevronDown className="text-gray-800" />
+                      </div>
+                    </DropdownMenuTrigger>
+
+                    <DropdownMenuContent>
+                      <DropdownMenuItem onClick={() => setSortOrder("newest")}>
+                        Newest first
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setSortOrder("oldest")}>
+                        Oldest first
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </div>
+            </div>
+
+            {error && <ErrorBanner error={error} onRetry={handleRetry} />}
+
+            <div className="flex flex-col gap-4">
+              {loading && orders.length === 0 && <LoadingSkeleton />}
+
+              {!loading && orders.length === 0 && (
+                <p className="text-sm text-gray-500">No orders found.</p>
+              )}
+
+              {!loading &&
+                filteredSorted.length > 0 &&
+                filteredSorted.map((order) => (
+                  <div key={order.orderId} className="mb:pb-4 md:border-b">
+                    <OrderCard order={order} />
+                  </div>
+                ))}
+
+              {loading && orders.length > 0 && (
+                // show a lightweight loader when refreshing (keeps existing list visible)
+                <p className="text-sm text-gray-500">Refreshing orders...</p>
+              )}
+            </div>
+
+            <div className="flex justify-end">
+              <Pagination
+                currentPage={page}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+              />
+            </div>
+          </section>
+        </div>
+      </main>
+      <Footer />
+    </>
+  );
 }
