@@ -62,15 +62,24 @@ const getStatusColor = (status: string) => {
   );
 };
 
-const mapApiToOrder = (a: APIOrder): Order => ({
-  image: PLACEHOLDER_IMAGE,
-  orderId: a.order_id || `#${a.id ?? Math.floor(Math.random() * 100000)}`,
-  product_qty: a.items_count ?? 1,
-  createdAt: a.created_at || new Date().toISOString(),
-  status: a.status || "unknown",
-  placedDate: a.updated_at || a.created_at || new Date().toISOString(),
-  raw: a,
-});
+const mapApiToOrder = (a: APIOrder): Order => {
+  // Try to find the first item with a non-empty image_url
+  const validImage =
+    a.items?.find(
+      (item) =>
+        typeof item.image_url === "string" && item.image_url.trim() !== ""
+    )?.image_url ?? PLACEHOLDER_IMAGE;
+
+  return {
+    image: validImage,
+    orderId: a.order_id || `#${a.id ?? Math.floor(Math.random() * 100000)}`,
+    product_qty: a.items_count ?? 1,
+    createdAt: a.created_at || new Date().toISOString(),
+    status: a.status || "unknown",
+    placedDate: a.updated_at || a.created_at || new Date().toISOString(),
+    raw: a,
+  };
+};
 
 const capitalize = (s?: string) =>
   s ? s.charAt(0).toUpperCase() + s.slice(1) : "";
@@ -168,10 +177,12 @@ const OrderCard = ({ order }: { order: Order }) => {
   const { orderId, product_qty, createdAt, status } = order;
   const router = useRouter();
   const [imgSrc, setImgSrc] = useState(order.image || PLACEHOLDER_IMAGE);
-
   return (
     <div className="flex justify-between items-start gap-4 md:gap-6 group transition-all duration-200 hover:bg-gray-50 rounded-xl py-3 md:p-4">
-      <div className="flex gap-4 md:gap-6 w-full">
+      <div
+        className="flex gap-4 md:gap-6 w-full"
+        onClick={() => router.push(`/orders/${encodeURIComponent(orderId)}`)}
+      >
         <div className="w-24 h-24 md:w-52 md:h-44 flex-shrink-0 rounded-md overflow-hidden">
           <Image
             src={imgSrc}
@@ -292,7 +303,7 @@ export default function OrderHistory() {
         params.set("q", query);
         params.set("has_customer_read", "1");
 
-        const url = `${base}/api/orders?${params.toString()}`;
+        const url = `${base}/api/orders?include_items=true&${params.toString()}`;
 
         const headers: Record<string, string> = { Accept: "application/json" };
         if (token) headers["Authorization"] = `Bearer ${token}`;
@@ -336,6 +347,7 @@ export default function OrderHistory() {
           : [];
 
         const mapped = payload.map(mapApiToOrder);
+        console.log(mapped);
 
         // server pagination
         const pagination = json.pagination || {};
@@ -502,7 +514,7 @@ export default function OrderHistory() {
               )}
             </div>
 
-            <div className="flex justify-end">
+            <div className="flex justify-center">
               <Pagination
                 currentPage={page}
                 totalPages={totalPages}

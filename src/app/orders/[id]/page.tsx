@@ -22,6 +22,7 @@ export type OrderStatus =
   | "delivered";
 interface OrderItem {
   line_total: number;
+  image_url: string;
   product_id: number;
   product_name: string;
   quantity: number;
@@ -122,31 +123,31 @@ export default function OrderDetailsPage({
   ];
 
   // Map order status to stages (kept original labels / UI behavior)
-  const getOrderStages = (status: string) => {
-    const allStages = [
-      { label: "Order Placed", status: "upcoming" },
-      { label: "Processing", status: "upcoming" },
-      { label: "Shipped", status: "upcoming" },
-      { label: "Arrived", status: "upcoming" },
-      { label: "Delivered", status: "upcoming" },
-    ];
+  //   const getOrderStages = (status: string) => {
+  //     const allStages = [
+  //       { label: "Order Placed", status: "upcoming" },
+  //       { label: "Processing", status: "upcoming" },
+  //       { label: "Shipped", status: "upcoming" },
+  //       { label: "Arrived", status: "upcoming" },
+  //       { label: "Delivered", status: "upcoming" },
+  //     ];
 
-    const stageMap: { [key: string]: number } = {
-      placed: 0,
-      processing: 1,
-      shipped: 2,
-      arrived: 3,
-      delivered: 4,
-    };
+  //     const stageMap: { [key: string]: number } = {
+  //       placed: 0,
+  //       processing: 1,
+  //       shipped: 2,
+  //       arrived: 3,
+  //       delivered: 4,
+  //     };
 
-    const idx = stageMap[status?.toLowerCase?.()] ?? 0;
+  //     const idx = stageMap[status?.toLowerCase?.()] ?? 0;
 
-    return allStages.map((stage, i) => {
-      if (i < idx) return { ...stage, status: "completed" as const };
-      if (i === idx) return { ...stage, status: "current" as const };
-      return { ...stage, status: "upcoming" as const };
-    });
-  };
+  //     return allStages.map((stage, i) => {
+  //       if (i < idx) return { ...stage, status: "completed" as const };
+  //       if (i === idx) return { ...stage, status: "current" as const };
+  //       return { ...stage, status: "upcoming" as const };
+  //     });
+  //   };
 
   // Build reasonable activities using the timestamps we have (kept messaging similar)
   const getOrderActivities = (o: Order) => {
@@ -299,7 +300,6 @@ export default function OrderDetailsPage({
     );
   }
 
-  const orderStages = getOrderStages(order.status);
   const orderActivities = getOrderActivities(order);
   const formattedCreatedDate = formatDateTime(new Date(order.created_at));
   const expectedArrivalDate = new Date(
@@ -415,7 +415,9 @@ export default function OrderDetailsPage({
                       item.product_name || `Product ${item.product_id}`;
                     const productPrice = item.unit_price ?? 0;
                     // API doesn't return product images in the provided response; keep fallback
-                    const imageUrl = "/404.png";
+                    const imageUrl = item?.image_url
+                      ? item?.image_url
+                      : "/404.png";
 
                     return (
                       <tr key={item.product_id} className="border-b">
