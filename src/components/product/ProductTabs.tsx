@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ProductReviews } from "./ProductReviews";
-
+import { IoIosCheckmark } from "react-icons/io";
 interface Product {
   productId: string;
   name: string;
@@ -33,6 +33,8 @@ export const ProductTabs = ({ product }: ProductTabsProps) => {
   const [activeTab, setActiveTab] = useState<"description" | "reviews">(
     "description"
   );
+
+  console.log(product);
 
   return (
     <div className="mt-16">
@@ -74,10 +76,14 @@ export const ProductTabs = ({ product }: ProductTabsProps) => {
                 <h3 className="font-medium mb-4">Specifications</h3>
                 <div className="space-y-4">
                   {product.specifications.map((spec, index) => (
-                    <div key={index} className="flex gap-5">
-                      <span className="font-medium">{spec.key}</span>
-                      <span className="text-gray-600">-</span>
-                      <span className="text-gray-600">{spec.value}</span>
+                    <div key={index} className="flex items-center gap-5">
+                      <div className="bg-[#E7F4FC] rounded-full flex justify-center items-center h-5 w-5">
+                        <IoIosCheckmark color="#164C96" className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <span className="font-medium">{spec.key}: </span>
+                        <span className="text-gray-600">{spec.value}</span>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -94,13 +100,19 @@ export const ProductTabs = ({ product }: ProductTabsProps) => {
                     return (
                       <div key={index} className="flex gap-2">
                         {parts ? (
-                          <>
+                          <div className="flex gap-3 items-center">
+                            <div className="bg-[#E7F4FC] rounded-full flex justify-center items-center h-5 w-5">
+                              <IoIosCheckmark
+                                color="#164C96"
+                                className="h-5 w-5"
+                              />
+                            </div>
                             <span className="font-medium">
                               {parts[1] + parts[2]}
                             </span>
                             {/* normal remainder */}
                             <span className="text-gray-600">{parts[3]}</span>
-                          </>
+                          </div>
                         ) : (
                           <span className="text-gray-800">{highlight}</span>
                         )}
@@ -116,8 +128,15 @@ export const ProductTabs = ({ product }: ProductTabsProps) => {
                 <h3 className="font-medium mb-4">What&apos;s in the Box</h3>
                 <ul className="list-disc list-inside space-y-2">
                   {product.whats_in_box.map((item, index) => (
-                    <li key={index} className="text-gray-600 font-medium">
-                      {item}
+                    <li
+                      key={index}
+                      className="text-gray-600 font-medium flex gap-3 items-center"
+                    >
+                      <div className="bg-[#E7F4FC] rounded-full flex justify-center items-center h-5 w-5">
+                        <IoIosCheckmark color="#164C96" className="h-5 w-5" />
+                      </div>
+
+                      <span> {item}</span>
                     </li>
                   ))}
                 </ul>
