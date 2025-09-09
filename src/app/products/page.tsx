@@ -39,8 +39,8 @@ interface QueryParams {
   q?: string;
   filter?: string;
   sort?: string;
-  category?: string;
-  subcat?: string;
+  category?: string | string[];
+  subcat?: string | string[];
   min_price?: number;
   max_price?: number;
   rating_min?: number;
@@ -84,7 +84,7 @@ class QueryBuilder {
 
   setParams(newParams: Partial<QueryParams>): QueryBuilder {
     Object.entries(newParams).forEach(([key, value]) => {
-      this.setParam(key as keyof QueryParams, value);
+      this.setParam(key as keyof QueryParams, value as any);
     });
     return this;
   }
@@ -97,7 +97,12 @@ class QueryBuilder {
 
       if (Array.isArray(value)) {
         if (value.length > 0) {
-          searchParams.set(key, value.join(","));
+          // Use repeated key[] entries instead of comma-joining
+          value.forEach((v) => {
+            if (v !== undefined && v !== null && String(v).trim() !== "") {
+              searchParams.append(`${key}[]`, String(v));
+            }
+          });
         }
       } else {
         searchParams.set(key, String(value));
@@ -137,6 +142,24 @@ const debounce = <T extends (...args: unknown[]) => void>(
     if (timer) clearTimeout(timer);
     timer = setTimeout(() => fn(...args), delay);
   };
+};
+
+// Helper: prefer repeated key[] entries, fallback to comma-separated single key
+const getArrayFromSearchParams = (
+  searchParams: URLSearchParams,
+  key: string
+): string[] => {
+  // Prefer repeated key[] values
+  const arr = searchParams.getAll(`${key}[]`).filter(Boolean);
+  if (arr.length > 0) return arr.map((v) => v.trim());
+
+  // Fall back to comma-separated single "key" value (legacy)
+  const raw = searchParams.get(key);
+  if (!raw) return [];
+  return raw
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
 };
 
 // Convert UI filters to query parameters
@@ -195,7 +218,8 @@ const convertFiltersToQuery = (
       case "category":
       case "subcat":
         if (Array.isArray(value) && value.length > 0) {
-          queryParams[key] = value.filter(Boolean).join(",");
+          // keep as array so QueryBuilder will serialize as key[] entries
+          queryParams[key] = value.map(String).filter(Boolean);
         } else if (typeof value === "string" && value.trim()) {
           queryParams[key] = value.trim();
         }
@@ -249,22 +273,12 @@ const parseUrlToFilters = (
     }
   });
 
-  // Category (comma-separated to array)
-  const category = searchParams.get("category");
-  if (category) {
-    filters.category = category
-      .split(",")
-      .map((c) => c.trim())
-      .filter((c) => c);
-  }
+  // Category (supports category[] or CSV) -> array
+  const categoryArr = getArrayFromSearchParams(searchParams, "category");
+  if (categoryArr.length) filters.category = categoryArr;
 
-  const subcat = searchParams.get("subcat");
-  if (subcat) {
-    filters.subcat = subcat
-      .split(",")
-      .map((c) => c.trim())
-      .filter((c) => c);
-  }
+  const subcatArr = getArrayFromSearchParams(searchParams, "subcat");
+  if (subcatArr.length) filters.subcat = subcatArr;
 
   // Price range
   const minPrice = searchParams.get("min_price");
@@ -284,7 +298,7 @@ const parseUrlToFilters = (
   const ratingMin = searchParams.get("rating_min");
   const ratingMax = searchParams.get("rating_max");
   if (ratingMin || ratingMax) {
-    const ratings = [];
+    const ratings: number[] = [];
     if (ratingMin && !isNaN(Number(ratingMin))) ratings.push(Number(ratingMin));
     if (ratingMax && !isNaN(Number(ratingMax)) && ratingMax !== ratingMin) {
       ratings.push(Number(ratingMax));
@@ -292,14 +306,9 @@ const parseUrlToFilters = (
     if (ratings.length) filters.rating = ratings;
   }
 
-  // Tags (comma-separated to array)
-  const tags = searchParams.get("tags");
-  if (tags) {
-    filters.tags = tags
-      .split(",")
-      .map((t) => t.trim())
-      .filter((t) => t);
-  }
+  // Tags (supports tags[] or CSV)
+  const tagsArr = getArrayFromSearchParams(searchParams, "tags");
+  if (tagsArr.length) filters.tags = tagsArr;
 
   // Boolean filters
   const boolParams = ["in_stock", "is_variable", "has_discount", "has_images"];
@@ -310,22 +319,12 @@ const parseUrlToFilters = (
     }
   });
 
-  // ID arrays
-  const ids = searchParams.get("ids");
-  if (ids) {
-    filters.ids = ids
-      .split(",")
-      .map((id) => id.trim())
-      .filter((id) => id);
-  }
+  // ID arrays (supports ids[] or CSV)
+  const idsArr = getArrayFromSearchParams(searchParams, "ids");
+  if (idsArr.length) filters.ids = idsArr;
 
-  const excludeIds = searchParams.get("exclude_ids");
-  if (excludeIds) {
-    filters.exclude_ids = excludeIds
-      .split(",")
-      .map((id) => id.trim())
-      .filter((id) => id);
-  }
+  const excludeIdsArr = getArrayFromSearchParams(searchParams, "exclude_ids");
+  if (excludeIdsArr.length) filters.exclude_ids = excludeIdsArr;
 
   return filters;
 };
@@ -407,47 +406,62 @@ function ProductList(): JSX.Element {
       page: 1,
     };
 
-    // Parse all URL search params
-    searchParams.forEach((value, key) => {
-      switch (key) {
-        case "q":
-        case "filter":
-        case "sort":
-        case "code":
-        case "created_after":
-        case "created_before":
-        case "updated_after":
-        case "updated_before":
-        case "tags_mode":
-        case "stock_status":
-        case "category":
-        case "subcat":
-          initialParams[key] = value;
-          break;
-        case "min_price":
-        case "max_price":
-        case "rating_min":
-        case "rating_max":
-        case "per_page":
-        case "page":
-          const numValue = Number(value);
-          if (!isNaN(numValue)) {
-            initialParams[key] = numValue;
-          }
-          break;
-        case "in_stock":
-        case "is_variable":
-        case "has_discount":
-        case "has_images":
-          initialParams[key] = value === "true";
-          break;
-        case "tags":
-        case "ids":
-        case "exclude_ids":
-          initialParams[key] = value.split(",").filter(Boolean);
-          break;
+    // simple string keys
+    const simpleParams = [
+      "q",
+      "filter",
+      "sort",
+      "code",
+      "created_after",
+      "created_before",
+      "updated_after",
+      "updated_before",
+      "tags_mode",
+      "stock_status",
+    ];
+    simpleParams.forEach((p) => {
+      const val = searchParams.get(p);
+      if (val && val.trim()) initialParams[p as keyof QueryParams] = val;
+    });
+
+    // numbers (only if param exists and not empty)
+    [
+      "min_price",
+      "max_price",
+      "rating_min",
+      "rating_max",
+      "per_page",
+      "page",
+    ].forEach((p) => {
+      const val = searchParams.get(p);
+      if (val !== null && val.trim() !== "") {
+        const n = Number(val);
+        if (!isNaN(n)) initialParams[p as keyof QueryParams] = n as any;
       }
     });
+
+    // booleans
+    ["in_stock", "is_variable", "has_discount", "has_images"].forEach((p) => {
+      const val = searchParams.get(p);
+      if (val !== null && val.trim() !== "")
+        initialParams[p as keyof QueryParams] = val === ("true" as any);
+    });
+
+    // arrays (category[], subcat[], tags[], ids[], exclude_ids[] OR CSV fallback)
+    const catArr = getArrayFromSearchParams(searchParams, "category");
+    if (catArr.length) initialParams.category = catArr;
+
+    const subcatArr = getArrayFromSearchParams(searchParams, "subcat");
+    if (subcatArr.length) initialParams.subcat = subcatArr;
+
+    const tagsArr = getArrayFromSearchParams(searchParams, "tags");
+    if (tagsArr.length) initialParams.tags = tagsArr;
+
+    const idsArr = getArrayFromSearchParams(searchParams, "ids");
+    if (idsArr.length) initialParams.ids = idsArr;
+
+    const excludeArr = getArrayFromSearchParams(searchParams, "exclude_ids");
+    if (excludeArr.length) initialParams.exclude_ids = excludeArr;
 
     // Update query builder and generate query string
     queryBuilderRef.current = new QueryBuilder(initialParams);
@@ -473,12 +487,11 @@ function ProductList(): JSX.Element {
         if (Array.isArray(json)) {
           cats = json;
         } else if (json && typeof json === "object" && "categories" in json) {
-          cats = json.categories;
+          cats = (json as any).categories;
         }
 
         if (cats.length > 0) {
           setCategories(cats);
-          updateCategoryFilters(cats);
         }
       } catch (err) {
         console.error("Failed to load categories:", err);
@@ -488,24 +501,41 @@ function ProductList(): JSX.Element {
     loadCategories();
   }, []);
 
-  // Update category filter options
-  const updateCategoryFilters = (cats: Category[]) => {
+  // Update category filter options and mark selected ones based on activeFilters
+  const updateCategoryFilters = (
+    cats: Category[],
+    active?: Record<string, FilterValue>
+  ) => {
+    const selectedCategories: string[] =
+      active?.category && Array.isArray(active.category)
+        ? (active.category as string[])
+        : [];
     setFiltersConfig((prev) =>
       prev.map((filter) => {
         if (filter.id === "category") {
           return {
             ...filter,
             options: cats.map((cat) => ({
+              // keep original fields and add a checked flag for UI initialization
               value: cat.id,
               label: cat.name,
               amount: 0,
-            })),
+              checked: selectedCategories.includes(cat.id), // added flag
+            })) as any,
           };
         }
         return filter;
       })
     );
   };
+
+  // Ensure filtersConfig updates when categories or activeFilters change
+  useEffect(() => {
+    if (categories.length > 0) {
+      updateCategoryFilters(categories, activeFilters);
+    }
+    // also update subcat UI if you add subcat options in filtersConfig later
+  }, [categories, activeFilters]);
 
   // ===== QUERY MANAGEMENT =====
   const updateQuery = useCallback(
@@ -539,14 +569,11 @@ function ProductList(): JSX.Element {
   // ===== FILTER HANDLERS =====
   const handleFilterChange = useCallback(
     (filters: Record<string, FilterValue>) => {
-      console.log("Filter change received:", filters);
-
       // Update active filters state
       setActiveFilters(filters);
 
       // Convert to query params and update URL
       const queryParams = convertFiltersToQuery(filters);
-      console.log("Converted to query params:", queryParams);
 
       debouncedUpdateQuery(queryParams);
     },
@@ -557,8 +584,6 @@ function ProductList(): JSX.Element {
   const apiEndpoint = `${API_BASE}/api/products${
     currentQueryString ? `?${currentQueryString}` : ""
   }`;
-
-  console.log("Current API Endpoint:", apiEndpoint);
 
   // Get initial search query for title
   const initialQ = searchParams.get("q") || "";
@@ -609,6 +634,8 @@ function ProductList(): JSX.Element {
             perPage={DEFAULT_PER_PAGE}
             scrollonmobile={true}
             resetKey={queryChangeKey} // This tells ProductGrid when to reset and
+            // Pass initialFilters so ProductGrid / ProductFilter can initialize if supported
+            initialFilters={activeFilters as any}
           />
         </div>
       </div>

@@ -99,6 +99,21 @@ export function Header({ showSearch = false }: { showSearch?: boolean }) {
   // Data-dropdown attribute is used to identify both desktop and mobile dropdown containers
   const dropdownContainerAttr = "data-dropdown-container";
 
+  // --- Helper: build canonical products URL with category[] / subcat[] ---
+  const buildProductsUrl = (opts: {
+    categories?: string[]; // category ids
+    subcats?: string[]; // subcategory ids
+    perPage?: number;
+    page?: number;
+  }) => {
+    const params = new URLSearchParams();
+    params.set("per_page", String(opts.perPage ?? 24));
+    params.set("page", String(opts.page ?? 1));
+    (opts.categories ?? []).forEach((id) => params.append("category", id));
+    (opts.subcats ?? []).forEach((id) => params.append("subcat", id));
+    return `/products?${params.toString()}`;
+  };
+
   // Fetch categories and cache in localStorage
   useEffect(() => {
     const cached =
@@ -179,6 +194,7 @@ export function Header({ showSearch = false }: { showSearch?: boolean }) {
     return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
   }
 
+  // When category has subcategories: open modal (mobile). For desktop clicking the category name navigates to products as well.
   const handleCategoryClick = (categoryId: string) => {
     setActiveCategory(categoryId);
     setShowSubcategoryModal(true);
@@ -200,8 +216,6 @@ export function Header({ showSearch = false }: { showSearch?: boolean }) {
       router.push("/");
     }
   };
-
-  console.log(user);
 
   return (
     <header className="bg-white sticky top-0 w-full z-50 md:shadow-sm">
@@ -351,7 +365,9 @@ export function Header({ showSearch = false }: { showSearch?: boolean }) {
                     : categories.slice(0, 4).map((category) => (
                         <li key={category.id}>
                           <Link
-                            href={`/products/category/${category.id}`}
+                            href={buildProductsUrl({
+                              categories: [category.id],
+                            })}
                             className="text-sm line-clamp-1 py-1.5 px-4"
                           >
                             {category.name}
@@ -388,7 +404,9 @@ export function Header({ showSearch = false }: { showSearch?: boolean }) {
                           <div key={category.id} className="space-y-2">
                             <div className="pb-2">
                               <Link
-                                href={`/products/category/${category.id}`}
+                                href={buildProductsUrl({
+                                  categories: [category.id],
+                                })}
                                 className="text-sm font-bold"
                                 onClick={() => setShowCategories(false)}
                               >
@@ -401,7 +419,9 @@ export function Header({ showSearch = false }: { showSearch?: boolean }) {
                                 .map((subcategory) => (
                                   <Link
                                     key={subcategory.id}
-                                    href={`/products/category/sub_category/${subcategory.id}`}
+                                    href={buildProductsUrl({
+                                      subcats: [subcategory.id],
+                                    })}
                                     className="text-[.8rem] text-[#2f2e2e] font-medium line-clamp-1"
                                     onClick={() => setShowCategories(false)}
                                   >
@@ -509,7 +529,7 @@ export function Header({ showSearch = false }: { showSearch?: boolean }) {
 
         {/* Mobile sliding menu */}
         {isMenuOpen && (
-          <div className="fixed inset-0 bg-white z-50 flex flex-col w-2/3">
+          <div className="fixed inset-0 bg-white z-50 flex flex-col w-3/5">
             <div className="flex justify-between items-center p-4 border-b">
               <h2 className="text-base font-bold">Categories</h2>
               <button
@@ -555,12 +575,13 @@ export function Header({ showSearch = false }: { showSearch?: boolean }) {
                                 className="text-sm w-full line-clamp-1 font-semibold text-left flex items-center py-3 pl-4 justify-between rounded-lg hover:text-white hover:bg-[#FF5722] transition-all duration-300 capitalize"
                               >
                                 {capitalizeWord(category.name)}
-                                <ChevronRightIcon />
                               </button>
                             </>
                           ) : (
                             <Link
-                              href={`/products/category/${category.id}`}
+                              href={buildProductsUrl({
+                                categories: [category.id],
+                              })}
                               className="text-sm line-clamp-1 font-semibold text-left flex items-center py-3 px-4 justify-between rounded-lg hover:text-white hover:bg-[#FF5722] transition-all duration-300 w-full capitalize"
                               onClick={() => setIsMenuOpen(false)}
                             >
@@ -628,7 +649,7 @@ export function Header({ showSearch = false }: { showSearch?: boolean }) {
                     ?.subcategories.map((subcategory) => (
                       <Link
                         key={subcategory.id}
-                        href={`/products/category/sub_category/${subcategory.id}`}
+                        href={buildProductsUrl({ subcats: [subcategory.id] })}
                         className="block py-3 text-gray-600 border-b border-[#60606020] hover:text-[#184193]"
                         onClick={() => {
                           setIsMenuOpen(false);
