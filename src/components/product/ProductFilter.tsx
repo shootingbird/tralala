@@ -38,6 +38,8 @@ export const ProductFilter = ({
     {}
   );
 
+  console.log(localFilters);
+
   // Sync with external activeFilters when they change
   // useEffect(() => {
   //   setLocalFilters(activeFilters);
@@ -373,10 +375,41 @@ export const ProductFilter = ({
               let displayValue = "";
 
               if (Array.isArray(value)) {
-                displayValue =
-                  value.length > 1
-                    ? `${value.length} selected`
-                    : String(value[0]);
+                if (key === "category") {
+                  // For categories, show names instead of IDs
+                  const categoryFilter = filters.find(
+                    (f) => f.id === "category"
+                  );
+                  if (categoryFilter?.options) {
+                    const selectedNames = value.map(
+                      (v) =>
+                        categoryFilter.options?.find(
+                          (opt) => opt.value === String(v)
+                        )?.label || String(v)
+                    );
+                    displayValue =
+                      selectedNames.length > 1
+                        ? `${selectedNames.length} selected`
+                        : selectedNames[0] || String(value[0]);
+                  } else {
+                    displayValue =
+                      value.length > 1
+                        ? `${value.length} selected`
+                        : String(value[0]);
+                  }
+                } else if (key === "subcat") {
+                  // For subcategories, show IDs for now since they're not in filter options
+                  // This could be improved by passing subcategory data to the filter component
+                  displayValue =
+                    value.length > 1
+                      ? `${value.length} selected`
+                      : String(value[0]);
+                } else {
+                  displayValue =
+                    value.length > 1
+                      ? `${value.length} selected`
+                      : String(value[0]);
+                }
               } else if (isRangeFilter(value)) {
                 const range = value as { min?: number; max?: number };
                 if (range.min !== undefined && range.max !== undefined) {

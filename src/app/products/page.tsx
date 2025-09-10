@@ -97,10 +97,10 @@ class QueryBuilder {
 
       if (Array.isArray(value)) {
         if (value.length > 0) {
-          // Use repeated key[] entries instead of comma-joining
+          // Use repeated key entries (no square brackets) e.g. &category=cat1&category=cat2
           value.forEach((v) => {
             if (v !== undefined && v !== null && String(v).trim() !== "") {
-              searchParams.append(`${key}[]`, String(v));
+              searchParams.append(key, String(v));
             }
           });
         }
@@ -144,14 +144,14 @@ const debounce = <T extends (...args: unknown[]) => void>(
   };
 };
 
-// Helper: prefer repeated key[] entries, fallback to comma-separated single key
+// Helper: prefer repeated key entries (key=value&key=value), fallback to comma-separated single key
 const getArrayFromSearchParams = (
   searchParams: URLSearchParams,
   key: string
 ): string[] => {
-  // Prefer repeated key[] values
-  const arr = searchParams.getAll(`${key}[]`).filter(Boolean);
-  if (arr.length > 0) return arr.map((v) => v.trim());
+  // Prefer repeated key values (no brackets)
+  const repeated = searchParams.getAll(key).filter(Boolean);
+  if (repeated.length > 0) return repeated.map((v) => v.trim());
 
   // Fall back to comma-separated single "key" value (legacy)
   const raw = searchParams.get(key);
@@ -218,7 +218,7 @@ const convertFiltersToQuery = (
       case "category":
       case "subcat":
         if (Array.isArray(value) && value.length > 0) {
-          // keep as array so QueryBuilder will serialize as key[] entries
+          // keep as array so QueryBuilder will serialize as repeated key entries
           queryParams[key] = value.map(String).filter(Boolean);
         } else if (typeof value === "string" && value.trim()) {
           queryParams[key] = value.trim();
@@ -273,7 +273,7 @@ const parseUrlToFilters = (
     }
   });
 
-  // Category (supports category[] or CSV) -> array
+  // Category (supports repeated category= or CSV) -> array
   const categoryArr = getArrayFromSearchParams(searchParams, "category");
   if (categoryArr.length) filters.category = categoryArr;
 
@@ -306,7 +306,7 @@ const parseUrlToFilters = (
     if (ratings.length) filters.rating = ratings;
   }
 
-  // Tags (supports tags[] or CSV)
+  // Tags (supports repeated tags= or CSV)
   const tagsArr = getArrayFromSearchParams(searchParams, "tags");
   if (tagsArr.length) filters.tags = tagsArr;
 
@@ -319,7 +319,7 @@ const parseUrlToFilters = (
     }
   });
 
-  // ID arrays (supports ids[] or CSV)
+  // ID arrays (supports ids= repeated or CSV)
   const idsArr = getArrayFromSearchParams(searchParams, "ids");
   if (idsArr.length) filters.ids = idsArr;
 
@@ -348,7 +348,7 @@ export default function ProductsPage() {
   );
 }
 
-function ProductList(): JSX.Element {
+function ProductList(): React.JSX.Element {
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -447,7 +447,7 @@ function ProductList(): JSX.Element {
         initialParams[p as keyof QueryParams] = val === ("true" as any);
     });
 
-    // arrays (category[], subcat[], tags[], ids[], exclude_ids[] OR CSV fallback)
+    // arrays (category, subcat, tags, ids, exclude_ids OR CSV fallback)
     const catArr = getArrayFromSearchParams(searchParams, "category");
     if (catArr.length) initialParams.category = catArr;
 
@@ -588,6 +588,89 @@ function ProductList(): JSX.Element {
   // Get initial search query for title
   const initialQ = searchParams.get("q") || "";
 
+  // Determine dynamic title and subtitle based on filters
+  const getDynamicTitle = () => {
+    if (initialQ) {
+      return `Search results for "${initialQ}"`;
+    }
+
+    // Check for subcategory first (more specific)
+    const selectedSubcats = activeFilters.subcat;
+    if (
+      selectedSubcats &&
+      Array.isArray(selectedSubcats) &&
+      selectedSubcats.length > 0
+    ) {
+      const subcatId = selectedSubcats[0];
+      // Search through all categories' subcategories
+      for (const category of categories) {
+        const subcategory = category.subcategories?.find(
+          (sub) => sub.id === subcatId
+        );
+        if (subcategory) {
+          return subcategory.name;
+        }
+      }
+    }
+
+    // Check for category
+    const selectedCategories = activeFilters.category;
+    if (
+      selectedCategories &&
+      Array.isArray(selectedCategories) &&
+      selectedCategories.length > 0
+    ) {
+      const categoryId = selectedCategories[0];
+      const category = categories.find((cat) => cat.id === categoryId);
+      if (category) {
+        return category.name;
+      }
+    }
+
+    return "All Products";
+  };
+
+  const getDynamicSubtitle = () => {
+    if (initialQ) {
+      return "Browse our collection";
+    }
+
+    // Check for subcategory first (more specific)
+    const selectedSubcats = activeFilters.subcat;
+    if (
+      selectedSubcats &&
+      Array.isArray(selectedSubcats) &&
+      selectedSubcats.length > 0
+    ) {
+      const subcatId = selectedSubcats[0];
+      // Search through all categories' subcategories
+      for (const category of categories) {
+        const subcategory = category.subcategories?.find(
+          (sub) => sub.id === subcatId
+        );
+        if (subcategory?.description) {
+          return subcategory.description;
+        }
+      }
+    }
+
+    // Check for category
+    const selectedCategories = activeFilters.category;
+    if (
+      selectedCategories &&
+      Array.isArray(selectedCategories) &&
+      selectedCategories.length > 0
+    ) {
+      const categoryId = selectedCategories[0];
+      const category = categories.find((cat) => cat.id === categoryId);
+      if (category?.description) {
+        return category.description;
+      }
+    }
+
+    return "Browse our collection";
+  };
+
   return (
     <div className="min-h-[60vh]">
       {/* Debug info (remove in production) */}
@@ -617,12 +700,8 @@ function ProductList(): JSX.Element {
       <div className="container mx-auto px-3 md:pt-0 py-6 flex gap-6">
         <div className="flex-1">
           <ProductGrid
-            title="All Products"
-            subtitle={
-              initialQ
-                ? `Search results for "${initialQ}"`
-                : "Browse our collection"
-            }
+            title={getDynamicTitle()}
+            subtitle={getDynamicSubtitle()}
             products={[]} // Empty - using server-driven mode
             filters={filtersConfig as any}
             onFilterChange={handleFilterChange}
