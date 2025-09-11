@@ -245,10 +245,10 @@ export default function OrderItems({
         return;
       }
 
-      router.push(`/payment/verify/${data?.order_id}`);
+      router.push(`/payment/${data?.order_id}`);
     } catch (err) {
       console.error("Payment flow error:", err);
-      alert("Failed to process order. Please try again.");
+      alert(err.message || "Failed to process order. Please try again.");
     } finally {
       setIsLoading(false);
     }
