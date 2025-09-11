@@ -24,11 +24,11 @@ type FilterValue = string[] | number[] | { min?: number; max?: number };
 interface Product {
   productId: string;
   title: string;
-  brand?: string;
+  brand: string;
   price: number;
   rating: number;
-  category?: string;
-  image?: string;
+  category: string;
+  image: string;
   images: string[];
   isNew?: boolean;
   discount?: {
@@ -360,7 +360,7 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
     };
   }, []);
 
-  // -------------- Filter UI forwarding --------------
+  // -------------- Filter UI forwarding -------------f-
   // ProductGrid will render ProductFilter if `filters` prop is provided,
   // but it will *not* perform client-side filtering — only forward the event to the parent.
   const handleFilterChange = (filtersObj: Record<string, FilterValue>) => {
@@ -372,60 +372,70 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
   const renderList =
     infiniteScroll && apiEndpoint ? items : displayedProductsFromProp;
 
+  console.log(renderList);
+
   // -------------- Render --------------
   return (
-    <section className="space-y-4 md:py-[2rem] relative">
-      <div className="container mx-auto px-3 md:pt-0">
+    <section className="space-y-4 md:space-y-6 py-4 md:py-[2rem] relative">
+      <div className="container mx-auto px-4 sm:px-3 md:px-4 lg:px-6">
         {breadCrumb && <Breadcrumb items={breadCrumb} />}
 
         {(title || subtitle || filters) && (
-          <div className="flex justify-between mb-5 items-center">
-            <div>
-              {title && <h2 className="text-lg font-semibold">{title}</h2>}
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 sm:mb-5 gap-3 sm:gap-0">
+            <div className="flex-1 min-w-0">
+              {title && (
+                <h2 className="text-xl sm:text-lg font-bold sm:font-semibold text-gray-900 leading-tight">
+                  {title}
+                </h2>
+              )}
               {subtitle && (
-                <p className="text-sm max-w-sm line-clamp-2 text-gray-600 mt-1">
+                <p className="text-sm sm:text-sm text-gray-600 mt-1 sm:mt-1 line-clamp-2 max-w-none sm:max-w-sm">
                   {subtitle}
                 </p>
               )}
             </div>
 
             {filters && (
-              <button
-                onClick={() => setIsFilterOpen((s) => !s)}
-                className="flex items-center gap-2 text-sm py-2 px-2 md:py-2 md:px-4 rounded-full bg-[#EDF0F8] md:bg-transparent border border-[#EDF0F8] hover:border-gray-300"
-              >
-                <div className="hidden md:flex">
-                  <span className="hidden md:flex">Filters</span>
-                  <svg
-                    className="w-4 h-4 ml-1"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 9l-7 7-7-7"
-                    />
-                  </svg>
-                </div>
+              <div className="flex justify-end sm:justify-start">
+                <button
+                  onClick={() => setIsFilterOpen((s) => !s)}
+                  className="flex items-center justify-center gap-2 text-sm py-2.5 px-4 sm:py-2 sm:px-4 rounded-full bg-[#EDF0F8] md:bg-transparent border border-[#EDF0F8] hover:border-gray-300 transition-colors min-h-[44px] sm:min-h-0"
+                  aria-label="Open filters"
+                >
+                  <div className="hidden md:flex items-center">
+                    <span>Filters</span>
+                    <svg
+                      className="w-4 h-4 ml-1"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 9l-7 7-7-7"
+                      />
+                    </svg>
+                  </div>
 
-                <span className="md:hidden">
-                  <svg
-                    width="18"
-                    height="18"
-                    viewBox="0 0 16 16"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M8.75 7.75V13.5C8.75 13.6989 8.67098 13.8897 8.53033 14.0303C8.38968 14.171 8.19891 14.25 8 14.25C7.80109 14.25 7.61032 14.171 7.46967 14.0303C7.32902 13.8897 7.25 13.6989 7.25 13.5V7.75C7.25 7.55109 7.32902 7.36032 7.46967 7.21967C7.61032 7.07902 7.80109 7 8 7C8.19891 7 8.38968 7.07902 8.53033 7.21967C8.67098 7.36032 8.75 7.55109 8.75 7.75ZM12.5 12C12.3011 12 12.1103 12.079 11.9697 12.2197C11.829 12.3603 11.75 12.5511 11.75 12.75V13.5C11.75 13.6989 11.829 13.8897 11.9697 14.0303C12.1103 14.171 12.3011 14.25 12.5 14.25C12.6989 14.25 12.8897 14.171 13.0303 14.0303C13.171 13.8897 13.25 13.6989 13.25 13.5V12.75C13.25 12.5511 13.171 12.3603 13.0303 12.2197C12.8897 12.079 12.6989 12 12.5 12ZM14 9.5H13.25V2.5C13.25 2.30109 13.171 2.11032 13.0303 1.96967C12.8897 1.82902 12.6989 1.75 12.5 1.75C12.3011 1.75 12.1103 1.82902 11.9697 1.96967C11.829 2.11032 11.75 2.30109 11.75 2.5V9.5H11C10.8011 9.5 10.6103 9.57902 10.4697 9.71967C10.329 9.86032 10.25 10.0511 10.25 10.25C10.25 10.4489 10.329 10.6397 10.4697 10.7803C10.6103 10.921 10.8011 11 11 11H14C14.1989 11 14.3897 10.921 14.5303 10.7803C14.671 10.6397 14.75 10.4489 14.75 10.25C14.75 10.05109 14.671 9.86032 14.5303 9.71967C14.3897 9.57902 14.1989 9.5 14 9.5Z"
-                      fill="black"
-                    />
-                  </svg>
-                </span>
-              </button>
+                  <div className="md:hidden flex items-center">
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 16 16"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M8.75 7.75V13.5C8.75 13.6989 8.67098 13.8897 8.53033 14.0303C8.38968 14.171 8.19891 14.25 8 14.25C7.80109 14.25 7.61032 14.171 7.46967 14.0303C7.32902 13.8897 7.25 13.6989 7.25 13.5V7.75C7.25 7.55109 7.32902 7.36032 7.46967 7.21967C7.61032 7.07902 7.80109 7 8 7C8.19891 7 8.38968 7.07902 8.53033 7.21967C8.67098 7.36032 8.75 7.55109 8.75 7.75ZM12.5 12C12.3011 12 12.1103 12.079 11.9697 12.2197C11.829 12.3603 11.75 12.5511 11.75 12.75V13.5C11.75 13.6989 11.829 13.8897 11.9697 14.0303C12.1103 14.171 12.3011 14.25 12.5 14.25C12.6989 14.25 12.8897 14.171 13.0303 14.0303C13.171 13.8897 13.25 13.6989 13.25 13.5V12.75C13.25 12.5511 13.171 12.3603 13.0303 12.2197C12.8897 12.079 12.6989 12 12.5 12ZM14 9.5H13.25V2.5C13.25 2.30109 13.171 2.11032 13.0303 1.96967C12.8897 1.82902 12.6989 1.75 12.5 1.75C12.3011 1.75 12.1103 1.82902 11.9697 1.96967C11.829 2.11032 11.75 2.30109 11.75 2.5V9.5H11C10.8011 9.5 10.6103 9.57902 10.4697 9.71967C10.329 9.86032 10.25 10.0511 10.25 10.25C10.25 10.4489 10.329 10.6397 10.4697 10.7803C10.6103 10.921 10.8011 11 11 11H14C14.1989 11 14.3897 10.921 14.5303 10.7803C14.671 10.6397 14.75 10.4489 14.75 10.25C14.75 10.05109 14.671 9.86032 14.5303 9.71967C14.3897 9.57902 14.1989 9.5 14 9.5Z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                    <span className="ml-2 font-medium">Filters</span>
+                  </div>
+                </button>
+              </div>
             )}
             {viewAllLink && (
               <a
@@ -451,9 +461,9 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
           </div>
         )}
 
-        <div className="flex gap-6">
+        <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
           {filters && isFilterOpen && (
-            <div className="hidden md:block w-64 flex-shrink-0">
+            <div className="hidden md:block w-full md:w-64 flex-shrink-0">
               <ProductFilter
                 filters={filters}
                 onFilterChange={handleFilterChange}
@@ -463,64 +473,94 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
           )}
 
           {filters && isFilterOpen && (
-            <div className="md:hidden fixed inset-0 bg-white z-50 overflow-y-auto">
-              <div className="p-4">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-semibold">Filters</h3>
+            <>
+              {/* Backdrop */}
+              <div
+                className="md:hidden fixed inset-0 bg-black/50 bg-opacity-50 z-40"
+                onClick={() => setIsFilterOpen(false)}
+              />
+              {/* Mobile Filter Sidebar */}
+              <div className="md:hidden fixed top-0 left-0 h-full w-80 bg-white z-50 overflow-y-auto shadow-lg">
+                <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 flex justify-between items-center">
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    Filters
+                  </h3>
                   <button
                     onClick={() => setIsFilterOpen(false)}
-                    className="p-2 hover:bg-gray-100 rounded-full"
+                    className="p-2 hover:bg-gray-100 rounded-full transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+                    aria-label="Close filters"
                   >
                     <X size={24} />
                   </button>
                 </div>
-                <ProductFilter
-                  filters={filters}
-                  onFilterChange={handleFilterChange}
-                  activeFilters={{}}
-                />
+                <div className="p-4 pb-6">
+                  <ProductFilter
+                    filters={filters}
+                    onFilterChange={handleFilterChange}
+                    activeFilters={{}}
+                    onApply={() => setIsFilterOpen(false)}
+                  />
+                </div>
               </div>
-            </div>
+            </>
           )}
 
-          <div className="block w-full flex-1">
+          <div className="block w-full flex-1 min-w-0">
             {(!loading && renderList.length === 0) ||
             (!infiniteScroll && products.length === 0 && !isLoading) ? (
               <NoProducts />
             ) : (
               <>
-                {scrollonmobile && (
-                  <div className="md:hidden">
-                    <Swiper
-                      modules={[SwiperPagination]}
-                      spaceBetween={13}
-                      slidesPerView={2.5}
-                      pagination={{ clickable: true, dynamicBullets: true }}
-                      className="mySwiper pb-10"
-                    >
-                      {loading && renderList.length === 0
-                        ? Array.from({ length: 3 }).map((_, index) => (
-                            <SwiperSlide key={index}>
-                              <div className="animate-pulse bg-gray-200 rounded-lg h-[300px] w-full" />
-                            </SwiperSlide>
-                          ))
-                        : renderList.map((product, index) => (
-                            <SwiperSlide key={product.productId ?? index}>
-                              <ProductCard {...product} />
-                            </SwiperSlide>
-                          ))}
-                    </Swiper>
+                {/* Mobile Swiper - Always show on mobile when scrollonmobile is true */}
+                {/* {scrollonmobile && (
+                  <div className="block md:hidden">
+                    {loading && renderList.length === 0 ? (
+                      <div className="grid grid-cols-2 gap-3">
+                        {Array.from({ length: 4 }).map((_, index) => (
+                          <div
+                            key={index}
+                            className="animate-pulse bg-gray-200 rounded-lg h-[280px] w-full"
+                          />
+                        ))}
+                      </div>
+                    ) : renderList.length > 0 ? (
+                      <Swiper
+                        modules={[SwiperPagination]}
+                        spaceBetween={12}
+                        slidesPerView={2.2}
+                        pagination={{ clickable: true, dynamicBullets: true }}
+                        className="mySwiper pb-8"
+                      >
+                        {renderList.map((product, index) => (
+                          <SwiperSlide key={product.productId ?? index}>
+                            <ProductCard
+                              {...product}
+                              brand={product.brand || "Unknown Brand"}
+                              category={product.category || "General"}
+                              image={
+                                product.image ||
+                                product.images?.[0] ||
+                                "/logo.png"
+                              }
+                            />
+                          </SwiperSlide>
+                        ))}
+                      </Swiper>
+                    ) : (
+                      <NoProducts />
+                    )}
                   </div>
-                )}
+                )} */}
 
+                {/* Desktop Grid - Show on desktop, or on mobile if scrollonmobile is false */}
                 <div
                   className={`${
-                    scrollonmobile ? "hidden md:grid" : "grid"
-                  } grid-cols-2 ${
+                    scrollonmobile ? "block" : "block"
+                  } grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 ${
                     isFilterOpen
-                      ? "md:grid-cols-3"
-                      : "md:grid-cols-3 lg:grid-cols-6"
-                  } gap-3 space-y-2 md:space-y-0 md:gap-6`}
+                      ? "md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+                      : "md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"
+                  } gap-3 sm:gap-4 md:gap-6`}
                 >
                   {loading && renderList.length === 0
                     ? Array.from({ length: perPage }).map((_, index) => (
@@ -534,6 +574,11 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
                           key={product.productId ?? index}
                           enableSales={enableSales}
                           {...product}
+                          brand={product.category || "Unknown Brand"}
+                          category={product.category || "General"}
+                          image={
+                            product.image || product.images?.[0] || "/logo.png"
+                          }
                         />
                       ))}
                 </div>

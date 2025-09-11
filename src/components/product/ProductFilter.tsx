@@ -18,6 +18,7 @@ interface ProductFilterProps {
   filters: FilterOption[];
   onFilterChange: (filters: Record<string, FilterValue>) => void;
   activeFilters?: Record<string, FilterValue>;
+  onApply?: () => void;
 }
 
 const isArrayFilter = (value: any): value is string[] | number[] => {
@@ -32,6 +33,7 @@ export const ProductFilter = ({
   filters,
   onFilterChange,
   activeFilters = {},
+  onApply,
 }: ProductFilterProps) => {
   // Internal filter state (UI only)
   const [localFilters, setLocalFilters] = useState<Record<string, FilterValue>>(
@@ -152,7 +154,7 @@ export const ProductFilter = ({
                   </span>
                   <button
                     onClick={() => handleFilterChange(filter.id, [])}
-                    className="text-xs text-gray-400 hover:text-gray-600"
+                    className="text-xs text-gray-400 hover:text-gray-600 min-h-[32px] min-w-[32px] flex items-center justify-center rounded"
                     aria-label={`Clear ${filter.label} filter`}
                   >
                     ✕
@@ -172,7 +174,7 @@ export const ProductFilter = ({
                   return (
                     <label
                       key={option.value}
-                      className="flex items-center justify-between group cursor-pointer hover:bg-gray-50 p-2 -m-2 rounded transition-colors"
+                      className="flex items-center justify-between group cursor-pointer hover:bg-gray-50 p-3 -m-3 rounded transition-colors min-h-[44px]"
                     >
                       <div className="flex items-center">
                         <input
@@ -213,7 +215,7 @@ export const ProductFilter = ({
                   return (
                     <label
                       key={option.value}
-                      className="flex items-center justify-between group cursor-pointer hover:bg-gray-50 p-2 -m-2 rounded transition-colors"
+                      className="flex items-center justify-between group cursor-pointer hover:bg-gray-50 p-3 -m-3 rounded transition-colors min-h-[44px]"
                     >
                       <div className="flex items-center">
                         <input
@@ -256,7 +258,7 @@ export const ProductFilter = ({
                   return (
                     <label
                       key={rating.value}
-                      className="flex items-center justify-between group cursor-pointer hover:bg-gray-50 p-2 -m-2 rounded transition-colors"
+                      className="flex items-center justify-between group cursor-pointer hover:bg-gray-50 p-3 -m-3 rounded transition-colors min-h-[44px]"
                     >
                       <div className="flex items-center">
                         <input
@@ -432,11 +434,11 @@ export const ProductFilter = ({
                   <span>{displayValue}</span>
                   <button
                     onClick={() => handleFilterChange(key, [])}
-                    className="ml-1 hover:bg-blue-200 rounded-full p-0.5 transition-colors"
+                    className="ml-1 hover:bg-blue-200 rounded-full p-1 transition-colors min-h-[32px] min-w-[32px] flex items-center justify-center"
                     aria-label={`Remove ${key} filter`}
                   >
                     <svg
-                      className="w-3 h-3"
+                      className="w-4 h-4"
                       fill="currentColor"
                       viewBox="0 0 20 20"
                     >
@@ -451,6 +453,21 @@ export const ProductFilter = ({
               );
             })}
           </div>
+        </div>
+      )}
+
+      {/* Apply Filters Button - Only show on mobile */}
+      {onApply && (
+        <div className="mt-6 pt-4 border-t border-gray-200">
+          <button
+            onClick={() => {
+              onFilterChange(localFilters);
+              onApply();
+            }}
+            className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+          >
+            Apply Filters
+          </button>
         </div>
       )}
     </div>

@@ -32,6 +32,12 @@ interface Category {
   slug?: string;
   description?: string;
   image_url?: string;
+  subcategories?: {
+    id: string;
+    name: string;
+    slug: string;
+    description?: string;
+  }[];
 }
 
 // ===== QUERY BUILDER SYSTEM =====
@@ -672,10 +678,10 @@ function ProductList(): React.JSX.Element {
   };
 
   return (
-    <div className="min-h-[60vh]">
+    <div className="min-h-[60vh] bg-gray-50 md:bg-white">
       {/* Debug info (remove in production) */}
       {process.env.NODE_ENV === "development" && (
-        <div className="container mx-auto px-3 mb-4">
+        <div className="container mx-auto px-4 sm:px-3 mb-4">
           <details className="bg-gray-100 p-4 rounded text-xs">
             <summary className="cursor-pointer font-mono">Debug Info</summary>
             <div className="mt-2 space-y-1">
@@ -697,8 +703,8 @@ function ProductList(): React.JSX.Element {
         </div>
       )}
 
-      <div className="container mx-auto px-3 md:pt-0 py-6 flex gap-6">
-        <div className="flex-1">
+      <div className="container mx-auto px-4 sm:px-3 md:px-4 lg:px-6 py-4 md:py-6">
+        <div className="w-full">
           <ProductGrid
             title={getDynamicTitle()}
             subtitle={getDynamicSubtitle()}
