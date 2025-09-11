@@ -209,7 +209,7 @@ export default function OrderItems({
         })),
         padicode:
           (verifiedPromoCode?.verified && verifiedPromoCode?.code) || null,
-        notes: "Leave at the gate",
+        notes: "",
 
         // pass totals if you need them on the server side (optional)
         totals: {
@@ -245,7 +245,7 @@ export default function OrderItems({
         return;
       }
 
-      router.push(`/payment/${data?.order_id}`);
+      router.push(`/payment/verify/${data?.order_id}`);
     } catch (err) {
       console.error("Payment flow error:", err);
       alert("Failed to process order. Please try again.");

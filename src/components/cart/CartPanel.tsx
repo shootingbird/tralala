@@ -34,7 +34,7 @@ export const CartPanel = ({ isOpen, onClose }: CartPanelProps) => {
       0
     );
   };
-
+  console.log(cartItems);
   return (
     <>
       <div className="fixed inset-0 bg-black/30 z-40" onClick={onClose} />
@@ -71,7 +71,12 @@ export const CartPanel = ({ isOpen, onClose }: CartPanelProps) => {
                   {/* Info */}
                   <div className="flex-1">
                     <div className="flex text-sm gap-5 mb-2 justify-between">
-                      <h3 className="font-medium">{item.title}</h3>
+                      <h3 className="font-medium">
+                        {item.title}{" "}
+                        <span className="font-semibold text-xs">
+                          {item.variationName ? `(${item.variationName})` : ""}
+                        </span>
+                      </h3>
                       <span className="font-medium">
                         ₦{item.price.toLocaleString()}
                       </span>
