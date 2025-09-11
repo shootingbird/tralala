@@ -512,7 +512,7 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
             ) : (
               <>
                 {/* Mobile Swiper - Always show on mobile when scrollonmobile is true */}
-                {/* {scrollonmobile && (
+                {scrollonmobile && (
                   <div className="block md:hidden">
                     {loading && renderList.length === 0 ? (
                       <div className="grid grid-cols-2 gap-3">
@@ -550,12 +550,12 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
                       <NoProducts />
                     )}
                   </div>
-                )} */}
+                )}
 
                 {/* Desktop Grid - Show on desktop, or on mobile if scrollonmobile is false */}
                 <div
                   className={`${
-                    scrollonmobile ? "block" : "block"
+                    scrollonmobile ? "hidden md:grid" : "grid"
                   } grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 ${
                     isFilterOpen
                       ? "md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"

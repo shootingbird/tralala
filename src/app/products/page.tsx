@@ -717,7 +717,7 @@ function ProductList(): React.JSX.Element {
             infiniteScroll={true}
             apiEndpoint={apiEndpoint}
             perPage={DEFAULT_PER_PAGE}
-            scrollonmobile={true}
+            // scrollonmobile={true}
             resetKey={queryChangeKey} // This tells ProductGrid when to reset and
             // Pass initialFilters so ProductGrid / ProductFilter can initialize if supported
             initialFilters={activeFilters as any}
