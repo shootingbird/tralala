@@ -18,7 +18,7 @@ export const CategoryCard = ({
 }: CategoryCardProps) => {
   return (
     <Link
-      href={"/products/category/" + id}
+      href={"/products?" + id}
       className={`flex  flex-col items-center justify-center relative  ${className}`}
     >
       <div className="relative w-full aspect-square rounded-[2rem] overflow-hidden mb-3 bg-[#F5F5F5]">
