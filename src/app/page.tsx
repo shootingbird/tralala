@@ -108,29 +108,33 @@ export default function Home() {
         infiniteScroll={false}
         scrollonmobile={true}
       />
-      <ProductGrid
-        title="Top Picks"
-        subtitle=""
-        viewAllLink="/products"
-        products={deals}
-        enablePagination={false}
-        infiniteScroll={false}
-        scrollonmobile={true}
-      />
+      <div className="-mt-12 md:mt-0">
+        <ProductGrid
+          title="Top Picks"
+          subtitle=""
+          viewAllLink="/products"
+          products={deals}
+          enablePagination={false}
+          infiniteScroll={false}
+          scrollonmobile={true}
+        />
+      </div>
 
       <WhyShopWithUs />
 
       {/* Explore Products - now backend-driven infinite scroll */}
-      <ProductGrid
-        title="Explore Products"
-        subtitle=""
-        viewAllLink="/products"
-        products={[]} // no client-side full list
-        enablePagination={false}
-        infiniteScroll={true}
-        apiEndpoint={`${process.env.NEXT_PUBLIC_API_URL}/api/products`}
-        perPage={24}
-      />
+      <div className="-mt-12 md:mt-0">
+        <ProductGrid
+          title="Explore Products"
+          subtitle=""
+          viewAllLink="/products"
+          products={[]} // no client-side full list
+          enablePagination={false}
+          infiniteScroll={true}
+          apiEndpoint={`${process.env.NEXT_PUBLIC_API_URL}/api/products`}
+          perPage={24}
+        />
+      </div>
 
       <CTASection />
       {/* <Footer /> */}

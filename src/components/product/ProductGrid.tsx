@@ -16,8 +16,10 @@ import { Breadcrumb } from "../ui/Breadcrumb";
 import { NoProducts } from "../ui/NoProducts";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Pagination as SwiperPagination } from "swiper/modules";
+import { Navigation } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/pagination";
+import "swiper/css/navigation";
 
 type FilterValue = string[] | number[] | { min?: number; max?: number };
 
@@ -99,6 +101,9 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
   const [items, setItems] = useState<Product[]>([]);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [hasMore, setHasMore] = useState<boolean>(true);
+
+  const prevRef = useRef(null);
+  const nextRef = useRef(null);
 
   // sentinel & abort refs
   const sentinelRef = useRef<HTMLDivElement | null>(null);
@@ -525,11 +530,14 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
                       </div>
                     ) : renderList.length > 0 ? (
                       <Swiper
-                        modules={[SwiperPagination]}
+                        modules={[Navigation, SwiperPagination]}
                         spaceBetween={12}
-                        slidesPerView={2.2}
-                        pagination={{ clickable: true, dynamicBullets: true }}
-                        className="mySwiper pb-8"
+                        slidesPerView={2.6}
+                        navigation={{
+                          nextEl: ".custom-next",
+                          prevEl: ".custom-prev",
+                        }}
+                        className="relative mySwiper"
                       >
                         {renderList.map((product, index) => (
                           <SwiperSlide key={product.productId ?? index}>
@@ -545,6 +553,41 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
                             />
                           </SwiperSlide>
                         ))}
+
+                        {/* Custom Navigation Buttons */}
+                        <button className="custom-prev absolute top-1/2 left-2 z-10 -translate-y-1/2 rounded-full bg-white p-3 shadow-md hover:bg-gray-100">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-5 w-5 text-gray-700"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M15 19l-7-7 7-7"
+                            />
+                          </svg>
+                        </button>
+
+                        <button className="custom-next absolute top-1/2 right-2 z-10 -translate-y-1/2 rounded-full bg-white p-3 shadow-md hover:bg-gray-100">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-5 w-5 text-gray-700"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M9 5l7 7-7 7"
+                            />
+                          </svg>
+                        </button>
                       </Swiper>
                     ) : (
                       <NoProducts />
