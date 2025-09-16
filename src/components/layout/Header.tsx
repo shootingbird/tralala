@@ -667,11 +667,7 @@ export function HeaderComponent({
 
 // keep both named and default exports so both import styles work
 
-export default function Header({
-  showSearch = false,
-}: {
-  showSearch?: boolean;
-}) {
+export function Header({ showSearch = false }: { showSearch?: boolean }) {
   return (
     <>
       <HeaderComponent showSearch={showSearch} />
@@ -689,3 +685,5 @@ export default function Header({
     </>
   );
 }
+
+export default Header;

@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import ShopByCategory from "@/components/category/ShopByCategory";
 import { CTASection } from "@/components/home/CTASection";
-import { Footer } from "@/components/layout/Footer";
 import { TopBanner } from "@/components/layout/TopBanner";
 import { ProductGrid } from "@/components/product/ProductGrid";
 import { InstallPWAPrompt } from "@/components/pwa/InstallPWAPrompt";
