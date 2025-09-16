@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import ShopByCategory from "@/components/category/ShopByCategory";
 import { CTASection } from "@/components/home/CTASection";
 import { Footer } from "@/components/layout/Footer";
-import { Header } from "@/components/layout/Header";
 import { TopBanner } from "@/components/layout/TopBanner";
 import { ProductGrid } from "@/components/product/ProductGrid";
 import { InstallPWAPrompt } from "@/components/pwa/InstallPWAPrompt";
@@ -12,6 +11,7 @@ import { InstallPWAPrompt } from "@/components/pwa/InstallPWAPrompt";
 import { Hero } from "@/components/sections/Hero";
 import { WhyShopWithUs } from "@/components/sections/WhyShopWithUs";
 import ScrollToTopButton from "@/components/common/ScrollToTopButton";
+import Header from "@/components/layout/Header";
 
 interface Product {
   productId: string;

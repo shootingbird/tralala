@@ -47,7 +47,7 @@ const ShopByCategory = () => {
   }, []);
 
   return (
-    <section className="py-4 ">
+    <section className="py-2 md:py-4 ">
       <div className="container mx-auto px-3 md:px-4">
         <h2 className="text-lg font-semibold mb-3 ">Shop by Categories</h2>
         <div className="">

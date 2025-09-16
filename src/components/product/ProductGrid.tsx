@@ -382,7 +382,7 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
   // -------------- Render --------------
   return (
     <section className="space-y-4 md:space-y-6 py-4 md:py-[2rem] relative">
-      <div className="container mx-auto px-4 sm:px-3 md:px-4 lg:px-6">
+      <div className="container mx-auto px-2 sm:px-2 md:px-4 lg:px-6">
         {breadCrumb && <Breadcrumb items={breadCrumb} />}
 
         {(title || subtitle || filters) && (
@@ -531,8 +531,8 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
                     ) : renderList.length > 0 ? (
                       <Swiper
                         modules={[Navigation, SwiperPagination]}
-                        spaceBetween={12}
-                        slidesPerView={2.6}
+                        spaceBetween={5}
+                        slidesPerView={3}
                         navigation={{
                           nextEl: ".custom-next",
                           prevEl: ".custom-prev",
@@ -603,7 +603,7 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
                     isFilterOpen
                       ? "md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
                       : "md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"
-                  } gap-3 sm:gap-4 md:gap-6`}
+                  } gap-1 sm:gap-2 md:gap-6`}
                 >
                   {loading && renderList.length === 0
                     ? Array.from({ length: perPage }).map((_, index) => (

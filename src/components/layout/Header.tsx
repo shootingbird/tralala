@@ -79,7 +79,11 @@ interface Category {
   }[];
 }
 
-export function Header({ showSearch = false }: { showSearch?: boolean }) {
+export function HeaderComponent({
+  showSearch = false,
+}: {
+  showSearch?: boolean;
+}) {
   const router = useRouter();
   const pathname = usePathname();
   const { user, logout } = useAuth();
@@ -441,27 +445,27 @@ export function Header({ showSearch = false }: { showSearch?: boolean }) {
 
       {/* MOBILE */}
       <div className="md:hidden">
-        <div className="flex items-center justify-between px-4 pt-3 pb-1">
+        <div className="flex items-center justify-between px-4">
           <div className="flex items-center sm:gap-2">
             <button
               onClick={() => setIsMenuOpen((s) => !s)}
-              className="p-2"
+              className="px-2"
               aria-label="Toggle menu"
             >
               <Menu size={24} />
             </button>
-            <Link href="/" className="flex-shrink-0" aria-label="Home">
+            <Link href="/" className="flex-shrink-0 " aria-label="Home">
               <Image src="/logo.png" alt="Steadfast" width={120} height={32} />
             </Link>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-x-2">
             <div {...{ [dropdownContainerAttr]: true }}>
               {user ? (
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setIsDropdownOpen((s) => !s)}
-                    className="flex items-center gap-2 text-sm font-semibold hover:text-[#184193] p-2"
+                    className="flex items-center gap-2 text-sm font-semibold hover:text-[#184193] px-2"
                     aria-expanded={isDropdownOpen}
                     aria-haspopup="menu"
                   >
@@ -496,8 +500,8 @@ export function Header({ showSearch = false }: { showSearch?: boolean }) {
                   )}
                 </div>
               ) : (
-                <Link href="/auth/login" className="p-2">
-                  <User size={24} />
+                <Link href="/auth/login" className="px-2">
+                  <User size={24} className="-my-2" />
                 </Link>
               )}
             </div>
@@ -514,18 +518,6 @@ export function Header({ showSearch = false }: { showSearch?: boolean }) {
             </button>
           </div>
         </div>
-
-        {showSearch && (
-          <div className="px-4 pb-2 pt-2">
-            <Suspense
-              fallback={
-                <div className="w-full h-10 bg-gray-100 animate-pulse rounded-full" />
-              }
-            >
-              <SearchComponent />
-            </Suspense>
-          </div>
-        )}
 
         {/* Mobile sliding menu */}
         {isMenuOpen && (
@@ -674,4 +666,26 @@ export function Header({ showSearch = false }: { showSearch?: boolean }) {
 }
 
 // keep both named and default exports so both import styles work
-export default Header;
+
+export default function Header({
+  showSearch = false,
+}: {
+  showSearch?: boolean;
+}) {
+  return (
+    <>
+      <HeaderComponent showSearch={showSearch} />
+      {showSearch && (
+        <div className="md:hidden px-4">
+          <Suspense
+            fallback={
+              <div className="w-full h-10 bg-gray-100 animate-pulse rounded-full" />
+            }
+          >
+            <SearchComponent />
+          </Suspense>
+        </div>
+      )}
+    </>
+  );
+}
