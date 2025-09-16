@@ -603,7 +603,7 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
                     isFilterOpen
                       ? "md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
                       : "md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"
-                  } gap-x-1 gap-y-3 sm:gap-x-2 sm:gap-y-3 md:gap-x-6 md:gap-y-6`}
+                  } gap-x-1 gap-y-3 sm:gap-x-2 sm:gap-y-3 md:gap-6`}
                 >
                   {loading && renderList.length === 0
                     ? Array.from({ length: perPage }).map((_, index) => (
