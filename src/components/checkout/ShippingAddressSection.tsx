@@ -17,6 +17,7 @@ const defaultAddress = {
   city: "",
   state: "",
   address: "",
+  note: "",
 };
 
 type ShippingAddressSectionProps = {
@@ -52,8 +53,9 @@ export const ShippingAddressSection = ({
     const savedDetails = localStorage.getItem(STORAGE_KEY);
     if (savedDetails) {
       const parsedDetails = JSON.parse(savedDetails);
-      setShippingDetails(parsedDetails);
-      onShippingDetailsChange(parsedDetails);
+      const detailsWithNote = { ...defaultAddress, ...parsedDetails };
+      setShippingDetails(detailsWithNote);
+      onShippingDetailsChange(detailsWithNote);
 
       if (parsedDetails.state) {
         const stateOption = {
@@ -79,6 +81,7 @@ export const ShippingAddressSection = ({
         city: user.city || "",
         state: user.state || "",
         address: user.address || "",
+        note: "",
       };
       setShippingDetails(userDetails);
       onShippingDetailsChange(userDetails);
@@ -340,6 +343,14 @@ export const ShippingAddressSection = ({
             )}
           </div>
 
+          <div>
+            <Input
+              label="Note (Optional)"
+              value={shippingDetails.note}
+              onChange={(e) => handleChange("note", e.target.value)}
+            />
+          </div>
+
           <button
             type="submit"
             className="bg-[#184193] text-white px-4 py-2 rounded-md mt-4"
@@ -385,6 +396,12 @@ export const ShippingAddressSection = ({
             <label className="block text-sm text-gray-500 mb-1">Address</label>
             <p className="text-gray-900">{shippingDetails.address}</p>
           </div>
+          {shippingDetails.note && (
+            <div className="bg-[#18419310] col-span-1 md:col-span-2 py-2 px-5 rounded-lg">
+              <label className="block text-sm text-gray-500 mb-1">Note</label>
+              <p className="text-gray-900">{shippingDetails.note}</p>
+            </div>
+          )}
         </div>
       )}
     </div>

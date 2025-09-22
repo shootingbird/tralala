@@ -1,7 +1,7 @@
 "use client";
 
 import Cookies from "js-cookie";
-import { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 
 import {
   User,
@@ -11,88 +11,139 @@ import {
   VerifyEmailCredentials,
 } from "@/types/user";
 
+/* -----------------------------
+   Types
+   ----------------------------- */
+
+interface ApiErrorIssue {
+  code: string;
+  message: string;
+  path?: string;
+}
+
+interface ApiErrorBody {
+  error: {
+    code: string;
+    message?: string;
+    issues?: ApiErrorIssue[];
+  };
+}
+
+type SimpleResult = { success: true } | { success: false; error: string };
+
 interface AuthContextType {
   user: User | null;
-  login: (
-    credentials: LoginCredentials
-  ) => Promise<{ success: boolean; error?: string }>;
-  signup: (
-    credentials: SignupCredentials
-  ) => Promise<{ success: boolean; error?: string }>;
-  verifyEmail: (
-    credentials: VerifyEmailCredentials
-  ) => Promise<{ success: boolean; error?: string }>;
-  updateProfile: (
-    profileData: Partial<User>
-  ) => Promise<{ success: boolean; error?: string }>;
+  login: (credentials: LoginCredentials) => Promise<SimpleResult>;
+  signup: (credentials: SignupCredentials) => Promise<SimpleResult>;
+  verifyEmail: (credentials: VerifyEmailCredentials) => Promise<SimpleResult>;
+  updateProfile: (profileData: Partial<User>) => Promise<SimpleResult>;
   logout: () => void;
   isAuthenticated: boolean;
   isLoading: boolean;
   changePassword: (passwords: {
     oldPassword: string;
     newPassword: string;
-  }) => Promise<{ success: boolean; error?: string }>;
-  forgotPassword: (
-    email: string
-  ) => Promise<{ success: boolean; error?: string }>;
-  checkVerificationCode: (
-    code: string,
-    email: string
-  ) => Promise<{ success: boolean; error?: string }>;
-  resendVerificationCode: (
-    email: string
-  ) => Promise<{ success: boolean; error?: string }>;
+  }) => Promise<SimpleResult>;
+  forgotPassword: (email: string) => Promise<SimpleResult>;
+  checkVerificationCode: (code: string, email: string) => Promise<SimpleResult>;
+  resendVerificationCode: (email: string) => Promise<SimpleResult>;
   resetPasswordNow: (
     email: string,
     new_password: string
-  ) => Promise<{ success: boolean; error?: string }>;
+  ) => Promise<SimpleResult>;
   getToken: () => string | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+/* -----------------------------
+   Helpers
+   ----------------------------- */
+
+const isApiErrorBody = (obj: unknown): obj is ApiErrorBody =>
+  typeof obj === "object" &&
+  obj !== null &&
+  "error" in obj &&
+  typeof (obj as Record<string, unknown>).error === "object";
+
+const parseApiError = (
+  payload: unknown
+): { message: string; code?: string; details?: unknown } => {
+  const defaultMsg = "An unexpected error occurred.";
+
+  if (typeof payload === "string") {
+    return { message: payload, details: payload };
+  }
+
+  if (!isApiErrorBody(payload)) {
+    return { message: defaultMsg, details: payload };
+  }
+
+  const { error } = payload;
+  const code = typeof error.code === "string" ? error.code : undefined;
+
+  if (Array.isArray(error.issues) && error.issues.length > 0) {
+    const issueMessages = error.issues
+      .filter((i) => typeof i?.message === "string")
+      .map((i) => i.message);
+    if (issueMessages.length > 0) {
+      return { message: issueMessages.join(" "), code, details: payload };
+    }
+  }
+
+  if (typeof error.message === "string") {
+    return { message: error.message, code, details: payload };
+  }
+
+  return { message: defaultMsg, code, details: payload };
+};
+
+const fetchAndParse = async (input: string, init?: RequestInit) => {
+  const response = await fetch(input, init);
+  let parsed: unknown;
+  try {
+    parsed = await response.json();
+  } catch {
+    // fallback to text if the response is not JSON
+    parsed = await response.text();
+  }
+  return { response, parsed } as const;
+};
+
+/* -----------------------------
+   Provider
+   ----------------------------- */
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchAndUpdateUser = async () => {
+  const getToken = () => Cookies.get("token") || null;
+
+  const setUserFromPayload = (payload: unknown) => {
     try {
-      const token = Cookies.get("token");
-      if (!token) return null;
-
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/auth/get-user`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
+      if (
+        typeof payload === "object" &&
+        payload !== null &&
+        "user" in payload
+      ) {
+        const u = (payload as { user: unknown }).user;
+        // basic run-time check for minimal shape
+        if (typeof u === "object" && u !== null && "email" in u) {
+          setUser(u as User);
+          Cookies.set("user", JSON.stringify(u), { expires: 70000 });
         }
-      );
-
-      console.log(token);
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to fetch user");
       }
-
-      setUser(data.user);
-      Cookies.set("user", JSON.stringify(data.user), { expires: 70000 });
-      return data.user;
-    } catch (error) {
-      console.error("Error fetching user:", error);
-      return null;
+    } catch (err) {
+      // ignore malformed user payload
+      console.error("Failed to set user from payload:", err);
     }
   };
 
-  const fetchInitialUser = async ({ token }: { token: string }) => {
+  const fetchUserWithToken = async (token: string | null) => {
+    if (!token) return null;
     try {
-      if (!token) return null;
-
-      const response = await fetch(
+      const { response, parsed } = await fetchAndParse(
         `${process.env.NEXT_PUBLIC_API_URL}/api/auth/get-user`,
         {
           method: "POST",
@@ -103,31 +154,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       );
 
-      console.log(token);
-
-      const data = await response.json();
-
       if (!response.ok) {
-        throw new Error(data.error || "Failed to fetch user");
+        const parsedErr = parseApiError(parsed);
+        console.error("fetchUserWithToken failed:", parsedErr.details);
+        return null;
       }
 
-      setUser(data.user);
-      Cookies.set("user", JSON.stringify(data.user), { expires: 70000 });
-      return data.user;
-    } catch (error) {
-      console.error("Error fetching user:", error);
+      setUserFromPayload(parsed);
+      return parsed;
+    } catch (err) {
+      console.error("Error fetching user:", err);
       return null;
+    } finally {
+      setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchAndUpdateUser();
+    const token = getToken();
+    fetchUserWithToken(token);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const login = async (credentials: LoginCredentials) => {
-    console.log(credentials);
+  /* -----------------------------
+     Auth actions - consistent, simple return shape
+     ----------------------------- */
+
+  const login = async (
+    credentials: LoginCredentials
+  ): Promise<SimpleResult> => {
     try {
-      const response = await fetch(
+      const { response, parsed } = await fetchAndParse(
         `${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`,
         {
           method: "POST",
@@ -136,44 +193,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       );
 
-      const data: AuthResponse = await response.json();
-      console.log(data);
-
       if (!response.ok) {
-        throw new Error((data as { error?: string }).error || "Login failed");
+        const parsedErr = parseApiError(parsed);
+        console.error("login failed:", parsedErr.details);
+        return { success: false, error: parsedErr.message };
       }
 
-      Cookies.set("token", data.token, { expires: 70000 });
-      Cookies.set("user", JSON.stringify(data.user), { expires: 70000 });
-      fetchInitialUser({ token: data.token });
+      // parsed should match AuthResponse
+      const auth = parsed as AuthResponse;
+      Cookies.set("token", auth.token, { expires: 70000 });
+      setUser(auth.user);
+      Cookies.set("user", JSON.stringify(auth.user), { expires: 70000 });
 
       return { success: true };
-    } catch (error: unknown) {
-      console.log(error);
-      if (error instanceof Error) {
-        return {
-          success: false,
-          error: error.message || "Failed to send reset email",
-        };
-      } else {
-        return {
-          success: false,
-          error: "Failed to send reset email",
-        };
-      }
+    } catch (err) {
+      console.error("Network error during login:", err);
+      return { success: false, error: "Network error" };
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    Cookies.remove("token");
-    Cookies.remove("user");
-    localStorage.clear();
-  };
-
-  const signup = async (credentials: SignupCredentials) => {
+  const signup = async (
+    credentials: SignupCredentials
+  ): Promise<SimpleResult> => {
     try {
-      const response = await fetch(
+      const { response, parsed } = await fetchAndParse(
         `${process.env.NEXT_PUBLIC_API_URL}/api/auth/signup`,
         {
           method: "POST",
@@ -182,31 +225,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       );
 
-      const data = await response.json();
-
       if (!response.ok) {
-        throw new Error(data.error || "Signup failed");
+        const parsedErr = parseApiError(parsed);
+        console.error("signup failed:", parsedErr.details);
+        return { success: false, error: parsedErr.message };
       }
 
       return { success: true };
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        return {
-          success: false,
-          error: error.message || "Failed to send reset email",
-        };
-      } else {
-        return {
-          success: false,
-          error: "Failed to send reset email",
-        };
-      }
+    } catch (err) {
+      console.error("Network error during signup:", err);
+      return { success: false, error: "Network error" };
     }
   };
 
-  const verifyEmail = async (credentials: VerifyEmailCredentials) => {
+  const verifyEmail = async (
+    credentials: VerifyEmailCredentials
+  ): Promise<SimpleResult> => {
     try {
-      const response = await fetch(
+      const { response, parsed } = await fetchAndParse(
         `${process.env.NEXT_PUBLIC_API_URL}/api/auth/verify-email`,
         {
           method: "POST",
@@ -215,84 +251,113 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       );
 
-      const data = await response.json();
-
       if (!response.ok) {
-        throw new Error(data.error || "Verification failed");
+        const parsedErr = parseApiError(parsed);
+        console.error("verifyEmail failed:", parsedErr.details);
+        return { success: false, error: parsedErr.message };
       }
 
       return { success: true };
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        return {
-          success: false,
-          error: error.message || "Failed to send reset email",
-        };
-      } else {
-        return {
-          success: false,
-          error: "Failed to send reset email",
-        };
-      }
+    } catch (err) {
+      console.error("Network error during verifyEmail:", err);
+      return { success: false, error: "Network error" };
     }
   };
 
-  const updateProfile = async (profileData: Partial<User>) => {
+  const checkVerificationCode = async (
+    code: string,
+    email: string
+  ): Promise<SimpleResult> => {
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/user/profile`,
+      const { response, parsed } = await fetchAndParse(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/auth/verify-otp`,
         {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${Cookies.get("token")}`,
-          },
-          body: JSON.stringify(profileData),
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ otp: code, email }),
         }
       );
 
-      const data = await response.json();
-
       if (!response.ok) {
-        throw new Error(data.error || "Failed to update profile");
+        const parsedErr = parseApiError(parsed);
+        console.error("verify-otp failed:", parsedErr.details);
+        return { success: false, error: parsedErr.message };
       }
-
-      // Update local user state and cookie
-      const updatedUser = { ...user, ...profileData };
-      setUser(updatedUser as User);
-      Cookies.set("user", JSON.stringify(updatedUser), { expires: 70000 });
 
       return { success: true };
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        return {
-          success: false,
-          error: error.message || "Failed to send reset email",
-        };
-      } else {
-        return {
-          success: false,
-          error: "Failed to send reset email",
-        };
+    } catch (err) {
+      console.error("Network error during verify-otp:", err);
+      return { success: false, error: "Network error" };
+    }
+  };
+
+  const resendVerificationCode = async (
+    email: string
+  ): Promise<SimpleResult> => {
+    try {
+      const { response, parsed } = await fetchAndParse(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/auth/resend-otp`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        }
+      );
+
+      if (!response.ok) {
+        const parsedErr = parseApiError(parsed);
+        console.error("resend-otp failed:", parsedErr.details);
+        return { success: false, error: parsedErr.message };
       }
+
+      return { success: true };
+    } catch (err) {
+      console.error("Network error during resend-otp:", err);
+      return { success: false, error: "Network error" };
+    }
+  };
+
+  const forgotPassword = async (email: string): Promise<SimpleResult> => {
+    try {
+      const { response, parsed } = await fetchAndParse(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/auth/forgot-password`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        }
+      );
+
+      if (!response.ok) {
+        const parsedErr = parseApiError(parsed);
+        console.error("forgot-password failed:", parsedErr.details);
+        return { success: false, error: parsedErr.message };
+      }
+
+      return { success: true };
+    } catch (err) {
+      console.error("Network error during forgot-password:", err);
+      return { success: false, error: "Network error" };
     }
   };
 
   const changePassword = async (passwords: {
     oldPassword: string;
     newPassword: string;
-  }) => {
+  }): Promise<SimpleResult> => {
     try {
       const cookieUser = Cookies.get("user");
-      const userData = cookieUser ? JSON.parse(cookieUser) : null;
+      const userData = cookieUser
+        ? (JSON.parse(cookieUser) as { email?: string })
+        : null;
 
-      const response = await fetch(
+      const { response, parsed } = await fetchAndParse(
         `${process.env.NEXT_PUBLIC_API_URL}/api/auth/change-password`,
         {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${Cookies.get("token")}`,
+            Authorization: `Bearer ${getToken()}`,
           },
           body: JSON.stringify({
             email: userData?.email,
@@ -302,169 +367,85 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       );
 
-      const data = await response.json();
-
       if (!response.ok) {
-        throw new Error(data.error || "Failed to update password");
+        const parsedErr = parseApiError(parsed);
+        console.error("change-password failed:", parsedErr.details);
+        return { success: false, error: parsedErr.message };
       }
 
       return { success: true };
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        return {
-          success: false,
-          error: error.message || "Failed to send reset email",
-        };
-      } else {
-        return {
-          success: false,
-          error: "Failed to send reset email",
-        };
-      }
+    } catch (err) {
+      console.error("Network error during change-password:", err);
+      return { success: false, error: "Network error" };
     }
   };
 
-  const forgotPassword = async (email: string) => {
+  const resetPasswordNow = async (
+    email: string,
+    new_password: string
+  ): Promise<SimpleResult> => {
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/auth/forgot-password`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email }),
-        }
-      );
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to send reset email");
-      }
-
-      return { success: true };
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        return {
-          success: false,
-          error: error.message || "Failed to send reset email",
-        };
-      } else {
-        return {
-          success: false,
-          error: "Failed to send reset email",
-        };
-      }
-    }
-  };
-
-  const resendVerificationCode = async (email: string) => {
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/auth/resend-otp`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email }),
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        const errorMessage =
-          data?.error?.message ||
-          data?.message ||
-          "Failed to resend verification code";
-
-        throw new Error(errorMessage);
-      }
-
-      return { success: true };
-    } catch (error: unknown) {
-      console.error("Resend OTP error:", error);
-
-      if (error instanceof Error) {
-        return {
-          success: false,
-          error: error.message,
-        };
-      } else {
-        return {
-          success: false,
-          error: "Failed to resend verification code",
-        };
-      }
-    }
-  };
-
-  const getToken = () => {
-    return Cookies.get("token") || null;
-  };
-
-  const checkVerificationCode = async (code: string, email: string) => {
-    try {
-      console.log("Code: ", code, email);
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/auth/verify-otp`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ otp: code, email: email }),
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to verify OTP");
-      }
-
-      return { success: true };
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        return {
-          success: false,
-          error: error.message,
-        };
-      } else {
-        return {
-          success: false,
-          error: "Failed to verify OTP",
-        };
-      }
-    }
-  };
-
-  const resetPasswordNow = async (email: string, new_password: string) => {
-    try {
-      const response = await fetch(
+      const { response, parsed } = await fetchAndParse(
         `${process.env.NEXT_PUBLIC_API_URL}/api/auth/reset-now`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: email, new_password: new_password }),
+          body: JSON.stringify({ email, new_password }),
         }
       );
 
-      const data = await response.json();
-
       if (!response.ok) {
-        throw new Error(data.error || "Failed to reset password");
+        const parsedErr = parseApiError(parsed);
+        console.error("reset-now failed:", parsedErr.details);
+        return { success: false, error: parsedErr.message };
       }
 
       return { success: true };
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        return {
-          success: false,
-          error: error.message,
-        };
-      } else {
-        return {
-          success: false,
-          error: "Failed to reset password",
-        };
-      }
+    } catch (err) {
+      console.error("Network error during reset-now:", err);
+      return { success: false, error: "Network error" };
     }
+  };
+
+  const updateProfile = async (
+    profileData: Partial<User>
+  ): Promise<SimpleResult> => {
+    try {
+      const { response, parsed } = await fetchAndParse(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/user/profile`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${getToken()}`,
+          },
+          body: JSON.stringify(profileData),
+        }
+      );
+
+      if (!response.ok) {
+        const parsedErr = parseApiError(parsed);
+        console.error("update-profile failed:", parsedErr.details);
+        return { success: false, error: parsedErr.message };
+      }
+
+      // update local cache
+      const updatedUser = { ...user, ...profileData } as User;
+      setUser(updatedUser);
+      Cookies.set("user", JSON.stringify(updatedUser), { expires: 70000 });
+
+      return { success: true };
+    } catch (err) {
+      console.error("Network error during update-profile:", err);
+      return { success: false, error: "Network error" };
+    }
+  };
+
+  const logout = () => {
+    setUser(null);
+    Cookies.remove("token");
+    Cookies.remove("user");
+    localStorage.clear();
   };
 
   return (

@@ -209,7 +209,7 @@ export default function OrderItems({
         })),
         padicode:
           (verifiedPromoCode?.verified && verifiedPromoCode?.code) || null,
-        notes: "",
+        notes: shippingDetails?.note || "",
 
         // pass totals if you need them on the server side (optional)
         totals: {

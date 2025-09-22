@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState } from "react";
 
 interface VerifiedPromoState {
   verified: boolean;
@@ -29,29 +29,6 @@ export function VerifiedPromoProvider({
       verified: false,
       code: "",
     });
-
-  // ✅ Make it persistent with localStorage
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem("verifiedPromoCode");
-      if (saved) {
-        setVerifiedPromoCode(JSON.parse(saved));
-      }
-    } catch (err) {
-      console.error("Failed to load verifiedPromoCode:", err);
-    }
-  }, []);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(
-        "verifiedPromoCode",
-        JSON.stringify(verifiedPromoCode)
-      );
-    } catch (err) {
-      console.error("Failed to save verifiedPromoCode:", err);
-    }
-  }, [verifiedPromoCode]);
 
   // ✅ Undo/reset function
   const resetVerifiedPromoCode = () => {
