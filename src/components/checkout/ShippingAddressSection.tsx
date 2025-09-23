@@ -121,7 +121,7 @@ export const ShippingAddressSection = ({
 
   const normalizeName = (value: string) => {
     if (!value) return "";
-    return value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
+    return value.toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase());
   };
 
   const validateField = (name: string, value: string) => {
@@ -194,14 +194,19 @@ export const ShippingAddressSection = ({
   };
 
   const handleChange = (field: keyof typeof shippingDetails, value: string) => {
-    let newValue = value;
+    updateShippingDetails({ ...shippingDetails, [field]: value });
+    validateField(field, value);
+  };
 
+  const handleBlur = (field: keyof typeof shippingDetails) => {
     if (field === "firstName" || field === "lastName") {
-      newValue = normalizeName(value);
+      const currentValue = shippingDetails[field];
+      const normalized = normalizeName(currentValue);
+      if (normalized !== currentValue) {
+        updateShippingDetails({ ...shippingDetails, [field]: normalized });
+        validateField(field, normalized);
+      }
     }
-
-    updateShippingDetails({ ...shippingDetails, [field]: newValue });
-    validateField(field, newValue);
   };
 
   const handleStateChange = (option: StateOption | null) => {
@@ -249,6 +254,7 @@ export const ShippingAddressSection = ({
                 label="First Name"
                 value={shippingDetails.firstName}
                 onChange={(e) => handleChange("firstName", e.target.value)}
+                onBlur={() => handleBlur("firstName")}
               />
               {errors.firstName && (
                 <p className="text-red-500 text-xs">{errors.firstName}</p>
@@ -259,6 +265,7 @@ export const ShippingAddressSection = ({
                 label="Last Name"
                 value={shippingDetails.lastName}
                 onChange={(e) => handleChange("lastName", e.target.value)}
+                onBlur={() => handleBlur("lastName")}
               />
               {errors.lastName && (
                 <p className="text-red-500 text-xs">{errors.lastName}</p>
