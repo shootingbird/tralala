@@ -47,11 +47,17 @@ interface AuthContextType {
   forgotPassword: (email: string) => Promise<SimpleResult>;
   checkVerificationCode: (code: string, email: string) => Promise<SimpleResult>;
   resendVerificationCode: (email: string) => Promise<SimpleResult>;
-  resetPasswordNow: (
+  resetPasswordOtp: (
     email: string,
+    otp: string,
     new_password: string
   ) => Promise<SimpleResult>;
   getToken: () => string | null;
+
+  resetData: { email: string; otp: string } | null;
+  setResetData: React.Dispatch<
+    React.SetStateAction<{ email: string; otp: string } | null>
+  >;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -117,6 +123,11 @@ const fetchAndParse = async (input: string, init?: RequestInit) => {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  const [resetData, setResetData] = useState<{
+    email: string;
+    otp: string;
+  } | null>(null);
 
   const getToken = () => Cookies.get("token") || null;
 
@@ -380,17 +391,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const resetPasswordNow = async (
+  const resetPasswordOtp = async (
     email: string,
+    otp: string,
     new_password: string
   ): Promise<SimpleResult> => {
     try {
       const { response, parsed } = await fetchAndParse(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/auth/reset-now`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/auth/reset-password`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, new_password }),
+          body: JSON.stringify({ email, otp, new_password }),
         }
       );
 
@@ -463,8 +475,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         checkVerificationCode,
         isAuthenticated: !!user,
         isLoading,
-        resetPasswordNow,
+        resetPasswordOtp,
         getToken,
+
+        resetData,
+        setResetData,
       }}
     >
       {children}
