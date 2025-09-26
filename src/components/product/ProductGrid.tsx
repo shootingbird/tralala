@@ -32,6 +32,7 @@ interface Product {
   category: string;
   image: string;
   images: string[];
+  stock: number;
   isNew?: boolean;
   discount?: {
     amount: number;

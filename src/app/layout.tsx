@@ -22,7 +22,7 @@ export const metadata = {
   title: "Steadfast International",
   description: "Your trusted source for quality products",
   keywords: "ecommerce, online shopping, PWA, affiliate marketing",
-  authors: [{ name: "Robinson Honour" }],
+  authors: [{ name: "Efemiaya Favour Oghenetega" }],
   icons: {
     icon: "/icon.png",
     shortcut: "/icon.png",
@@ -32,6 +32,9 @@ export const metadata = {
     capable: true,
     statusBarStyle: "default",
     title: "Steadfast Store",
+  },
+  verification: {
+    google: "5QCc5EI3MesY5BBxvV_6w_abP_hGMQO44HVvgSOAHSc",
   },
 };
 
@@ -51,6 +54,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${inter.variable} ${montserrat.variable}`}>
+      <head>
+        <meta
+          name="google-site-verification"
+          content="5QCc5EI3MesY5BBxvV_6w_abP_hGMQO44HVvgSOAHSc"
+        />
+      </head>
       <body className={`${montserrat.className}`}>
         <Suspense fallback={<div>Loading...</div>}>
           <AuthProvider>

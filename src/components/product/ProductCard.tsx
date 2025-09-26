@@ -20,6 +20,7 @@ interface ProductCardProps {
   rating: number | 0;
   image: string;
   images: string[];
+  stock: number;
   enableSales?: boolean;
   isNew?: boolean;
   discount?: {
@@ -38,6 +39,7 @@ export const ProductCard = ({
   price,
   category,
   rating,
+  stock,
   enableSales = true,
   images,
   isNew,
@@ -123,6 +125,11 @@ export const ProductCard = ({
             className="object-cover transition-transform duration-600 ease-out group-hover:scale-150"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           />
+          {stock <= 0 && (
+            <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+              <span className="text-white font-bold text-lg">Out of Stock</span>
+            </div>
+          )}
         </div>
 
         {isNew && (
@@ -209,9 +216,14 @@ export const ProductCard = ({
               isCart
               onClick={() => router.push(`/products/v/${productId}`)}
               className="text-sm"
+              disabled={stock <= 0}
             >
               <span className="text-xs">
-                {isAdded ? "ADDED TO CART" : "SEE OPTIONS"}
+                {stock <= 0
+                  ? "OUT OF STOCK"
+                  : isAdded
+                  ? "ADDED TO CART"
+                  : "SEE OPTIONS"}
               </span>
             </ActionButton>
           ) : (
@@ -221,9 +233,14 @@ export const ProductCard = ({
               isCart
               onClick={handleAddToCart}
               className="text-xs"
+              disabled={stock <= 0}
             >
               <span className="text-xs">
-                {isAdded ? "ADDED TO CART" : "ADD TO CART"}
+                {stock <= 0
+                  ? "OUT OF STOCK"
+                  : isAdded
+                  ? "ADDED TO CART"
+                  : "ADD TO CART"}
               </span>
             </ActionButton>
           )}
