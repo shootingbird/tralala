@@ -107,7 +107,7 @@ export default function Home() {
         infiniteScroll={false}
         scrollonmobile={true}
       />
-      <div className="-mt-12 md:mt-0">
+      <div className="-mt-16 md:mt-0">
         <ProductGrid
           title="Top Picks"
           subtitle=""
@@ -122,7 +122,7 @@ export default function Home() {
       <WhyShopWithUs />
 
       {/* Explore Products - now backend-driven infinite scroll */}
-      <div className="-mt-12 md:mt-0">
+      <div className="-mt-16 md:mt-0">
         <ProductGrid
           title="Explore Products"
           subtitle=""

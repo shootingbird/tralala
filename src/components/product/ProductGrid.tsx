@@ -387,7 +387,7 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
         {breadCrumb && <Breadcrumb items={breadCrumb} />}
 
         {(title || subtitle || filters) && (
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 sm:mb-5 gap-3 sm:gap-0">
+          <div className="flex flex-row justify-between items-center mb-4 sm:mb-5 gap-3 sm:gap-0">
             <div className="flex-1 min-w-0">
               {title && (
                 <h2 className="text-xl sm:text-lg font-bold sm:font-semibold text-gray-900 leading-tight">

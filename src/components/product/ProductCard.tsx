@@ -21,6 +21,8 @@ interface ProductCardProps {
   image: string;
   images: string[];
   stock: number;
+  computed_stock_status: "in_stock" | "out_of_stock";
+  computed_total_stock: number;
   enableSales?: boolean;
   isNew?: boolean;
   discount?: {
@@ -46,6 +48,8 @@ export const ProductCard = ({
   discount,
   variations = [],
   padButton = false,
+  computed_stock_status,
+  computed_total_stock,
   titleHeight = false,
 }: ProductCardProps) => {
   const router = useRouter();
@@ -125,7 +129,7 @@ export const ProductCard = ({
             className="object-cover transition-transform duration-600 ease-out group-hover:scale-150"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           />
-          {stock <= 0 && (
+          {computed_stock_status != "in_stock" && computed_total_stock <= 0 && (
             <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
               <span className="text-white font-bold text-lg">Out of Stock</span>
             </div>
@@ -140,7 +144,7 @@ export const ProductCard = ({
       </div>
 
       <div className="mt-2 md:mt-4 md:space-y-2">
-        <div className="flex justify-between px-1">
+        {/* <div className="flex justify-between px-1">
           <StarRating rating={rating} />
           <button
             className={`p-2 rounded-full hover:bg-gray-100/80 transition-colors ${
@@ -155,7 +159,7 @@ export const ProductCard = ({
               isFilled={isWishlisted}
             />
           </button>
-        </div>
+        </div> */}
         <div
           className={`space-y-1 ${
             titleHeight ? "md:h-5" : "md:h-8"
@@ -208,7 +212,7 @@ export const ProductCard = ({
             </div>
           )}
         </div>
-        <div className={` px-1 md:px-1 text-sm`}>
+        {/* <div className={` px-1 md:px-1 text-sm`}>
           {variations.length > 0 ? (
             <ActionButton
               variant={isAdded ? "outline" : "primary"}
@@ -244,7 +248,7 @@ export const ProductCard = ({
               </span>
             </ActionButton>
           )}
-        </div>
+        </div> */}
       </div>
     </div>
   );
