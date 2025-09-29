@@ -132,6 +132,7 @@ export default function Home() {
           infiniteScroll={true}
           apiEndpoint={`${process.env.NEXT_PUBLIC_API_URL}/api/products`}
           perPage={24}
+          showViewAll={false}
         />
       </div>
 

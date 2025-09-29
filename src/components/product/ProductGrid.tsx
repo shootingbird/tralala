@@ -66,6 +66,8 @@ interface ProductGridProps {
   apiEndpoint?: string; // full endpoint (may include query string)
   perPage?: number; // per_page to use (overrides any existing per_page in apiEndpoint)
   resetKey?: unknown; // when this changes, reset to page 1
+
+  showViewAll?: boolean;
 }
 
 export const ProductGrid: React.FC<ProductGridProps> = ({
@@ -85,6 +87,7 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
   apiEndpoint,
   perPage = 12,
   resetKey,
+  showViewAll = true,
 }) => {
   // UI filter drawer state (only for rendering ProductFilter if provided)
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -443,7 +446,7 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
                 </button>
               </div>
             )}
-            {viewAllLink && (
+            {viewAllLink && showViewAll && (
               <a
                 href={viewAllLink}
                 className="text-sm text-gray-600 hover:text-gray-900 flex items-center"
