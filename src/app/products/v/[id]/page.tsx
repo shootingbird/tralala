@@ -42,17 +42,18 @@ interface Product {
   price: number;
   is_variable_product?: boolean;
   rating: number | 0;
-  image?: string;
+  image: string;
   image_urls: string[];
+  images: string[];
   isNew?: boolean;
-  dateCreated?: string;
-  dateUpdated?: string;
-  stock?: number;
+  dateCreated: string;
+  dateUpdated: string;
+  stock: number;
   review_count?: number;
-  category?: string;
-  totalSold?: number;
+  category: string;
+  totalSold: number;
   specifications?: Array<{ key: string; value: string }>;
-  highlights?: Array<{ key: string; value: string }>;
+  highlights?: string[];
   whats_in_box?: string[];
   description?: string;
   discount?: { amount: number; percentage: number };
@@ -191,6 +192,7 @@ export default function ProductDetailPage() {
       rating: raw.rating ?? 0,
       image: raw.image_urls?.[0] ?? "",
       image_urls: raw.image_urls ?? [],
+      images: raw.image_urls ?? [],
       dateCreated: raw.created_at,
       dateUpdated: raw.updated_at,
       stock: Number(raw.stock ?? raw.stock_quantity ?? 0),
@@ -303,6 +305,14 @@ export default function ProductDetailPage() {
     return null;
   }, [product]);
 
+  const totalStock = useMemo(() => {
+    if (product?.is_variable_product) {
+      return product.variations.reduce((sum, v) => sum + v.quantity, 0);
+    } else {
+      return product?.stock_quantity || 0;
+    }
+  }, [product]);
+
   // ---------- UI helpers ----------
   const handleMouseEnter = () => {
     if (leaveTimeout.current) clearTimeout(leaveTimeout.current);
@@ -387,6 +397,10 @@ export default function ProductDetailPage() {
 
   const handleAddToCart = () => {
     if (!product || product.is_variable_product) return;
+    if (totalStock <= 0) {
+      toast.error(`${product.name} is out of stock`);
+      return;
+    }
     const inCart = cartItems.find(
       (ci) => ci.productId === product.productId && !ci.variationId
     );
@@ -449,6 +463,10 @@ export default function ProductDetailPage() {
   const handleAddAllVariationsToCart = async () => {
     if (!product) return;
     if (isProcessing) return;
+    if (totalStock <= 0) {
+      toast.error(`${product.name} is out of stock`);
+      return;
+    }
     setIsProcessing(true);
 
     try {
@@ -860,7 +878,7 @@ export default function ProductDetailPage() {
                       : handleAddAllVariationsToCart
                   }
                   className="w-full md:max-w-96"
-                  disabled={isProcessing}
+                  disabled={isProcessing || totalStock <= 0}
                 >
                   {isAdded ? "CLEAR CART" : "ADD TO CART"}
                 </ActionButton>
@@ -870,6 +888,7 @@ export default function ProductDetailPage() {
                     <button
                       onClick={() => handleQuantityChange(false)}
                       className="px-4 py-3 text-2xl"
+                      disabled={totalStock <= 0}
                     >
                       -
                     </button>
@@ -877,6 +896,7 @@ export default function ProductDetailPage() {
                     <button
                       onClick={() => handleQuantityChange(true)}
                       className="px-4 py-3 text-2xl"
+                      disabled={totalStock <= 0}
                     >
                       +
                     </button>
@@ -887,6 +907,7 @@ export default function ProductDetailPage() {
                     isCart
                     onClick={handleAddToCart}
                     className="max-w-96"
+                    disabled={totalStock <= 0}
                   >
                     {isAdded ? "CLEAR CART" : "ADD TO CART"}
                   </ActionButton>
