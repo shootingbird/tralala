@@ -144,6 +144,35 @@ export const ShippingAddressSection = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, onStateSelect, zonesData]);
 
+  // Fetch zone details by ID when state and city are selected
+  useEffect(() => {
+    const fetchZoneById = async () => {
+      if (!selectedState || !selectedCity) return;
+
+      const zone = currentZonesData.find(
+        (z) => z.state === selectedState.value && z.city === selectedCity.value
+      );
+
+      if (zone?.id) {
+        try {
+          const response = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/api/delivery/zones/${zone.id}`
+          );
+          if (response.ok) {
+            const data = await response.json();
+            const fetchedZone = data.zone;
+            setSelectedZone(fetchedZone);
+            onZoneSelect?.(fetchedZone);
+          }
+        } catch (error) {
+          console.error("Failed to fetch zone details:", error);
+        }
+      }
+    };
+
+    fetchZoneById();
+  }, [selectedState, selectedCity, currentZonesData, onZoneSelect]);
+
   const updateShippingDetails = (newDetails: typeof shippingDetails) => {
     setShippingDetails(newDetails);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(newDetails));
