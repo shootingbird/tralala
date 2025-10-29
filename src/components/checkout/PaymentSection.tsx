@@ -12,13 +12,16 @@ type PaymentSectionProps = {
   deliveryInfo: {
     fee: string;
     duration: string;
+    id?: number;
   };
+  zonesData?: any[];
 };
 
 export const PaymentSection = ({
   pickupLocation,
   deliveryInfo,
   shippingDetails,
+  zonesData,
 }: PaymentSectionProps) => {
   const pickupLocationValue =
     typeof pickupLocation.location === "string"
@@ -35,6 +38,7 @@ export const PaymentSection = ({
         deliveryDuration={deliveryInfo.duration}
         deliveryInfo={deliveryInfo}
         shippingDetails={shippingDetails}
+        zonesData={zonesData}
       />
     </>
   );

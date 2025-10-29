@@ -8,6 +8,7 @@ type PickupSectionProps = {
   onPickupSelect: (pickupData: SelectedPickup) => void;
   // NOW: parent expects the full zone object (or null)
   onDeliveryInfoChange: (zone: ApiZone | null) => void;
+  selectedZone?: ApiZone | null;
 };
 
 type PickupOption = {
@@ -46,28 +47,29 @@ export const PickupSection = ({
   onPickupSelect,
   onDeliveryInfoChange,
   shippingDetails,
+  selectedZone,
 }: PickupSectionProps) => {
   const [deliveryInfo, setDeliveryInfo] = useState<{
     fee: string;
     duration: string;
     pickups: string[];
   } | null>(null);
+  console.log(deliveryInfo);
 
   const [currentZone, setCurrentZone] = useState<ApiZone | null>(null);
   const [selectedPickupPoint, setSelectedPickupPoint] =
     useState<PickupOption | null>(null);
-  const [lagosPickupPoint, setLagosPickupPoint] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
   const isLagos = selectedState?.toUpperCase() === "LAGOS";
 
-  // Fetch zone for selected state and notify parent with full zone
+  // Fetch zone details using zone_id if available, otherwise use state query
   useEffect(() => {
     const controller = new AbortController();
 
     const fetchDeliveryInfo = async () => {
-      if (!selectedState) {
+      if (!selectedZone && !selectedState) {
         setDeliveryInfo(null);
         setCurrentZone(null);
         setError(null);
@@ -78,50 +80,79 @@ export const PickupSection = ({
       setLoading(true);
       setError(null);
 
+      // Check if API URL is defined
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      if (!apiUrl) {
+        console.error(
+          "NEXT_PUBLIC_API_URL is not defined in environment variables"
+        );
+        setError("API configuration error. Please contact support.");
+        setLoading(false);
+        return;
+      }
+
       try {
-        const url = `${
-          process.env.NEXT_PUBLIC_API_URL
-        }/api/delivery/zones?state=${encodeURIComponent(
-          selectedState
-        )}&active=true&per_page=1`;
+        let url: string;
+
+        if (selectedZone?.id) {
+          // Use zone_id endpoint if we have a selected zone
+          url = `${apiUrl}/api/delivery/zones/${selectedZone.id}`;
+          console.log("Fetching zone details from:", url);
+        } else {
+          // Fallback to state query
+          url = `${apiUrl}/api/delivery/zones?state=${encodeURIComponent(
+            selectedState
+          )}&active=true&per_page=1`;
+          console.log("Fetching delivery info from:", url);
+        }
 
         const res = await fetch(url, { signal: controller.signal });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        console.log("Fetch response status:", res.status);
+
+        if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
 
         const data = await res.json();
+        console.log("API response data:", data);
 
-        if (data?.zones?.length > 0) {
-          const zone: ApiZone = data.zones[0];
+        let zone: ApiZone;
 
-          const normalized = {
-            fee: String(zone.fee ?? ""),
-            duration: zone.duration ?? "",
-            pickups: Array.isArray(zone.pickups) ? zone.pickups : [],
-          };
-
-          // store both normalized values for the UI and the full zone for parent
-          setDeliveryInfo(normalized);
-          setCurrentZone(zone);
-
-          // Notify parent with full zone immediately (so they have access)
-          onDeliveryInfoChange(zone);
-
-          // Clear previous pickup selection while we may restore from storage next
-          setSelectedPickupPoint(null);
-          setLagosPickupPoint("");
-          onPickupSelect({
-            pickup: null,
-            fee: normalized.fee,
-            duration: normalized.duration,
-            zone,
-          });
+        if (selectedZone?.id) {
+          // Response format: { "zone": {...} }
+          zone = data.zone;
         } else {
-          setDeliveryInfo(null);
-          setCurrentZone(null);
-          setError("No delivery info available for the selected state.");
-          onDeliveryInfoChange(null);
-          onPickupSelect({ pickup: null, fee: "", duration: "", zone: null });
+          // Response format: { "zones": [...] }
+          if (data?.zones?.length > 0) {
+            zone = data.zones[0];
+          } else {
+            throw new Error(
+              "No delivery info available for the selected state."
+            );
+          }
         }
+
+        const normalized = {
+          fee: String(zone.fee ?? 0),
+          duration: zone.duration ?? "",
+          pickups: Array.isArray(zone.pickups) ? zone.pickups : [],
+        };
+
+        console.log("Normalized delivery info:", normalized);
+
+        // store both normalized values for the UI and the full zone for parent
+        setDeliveryInfo(normalized);
+        setCurrentZone(zone);
+
+        // Notify parent with full zone immediately (so they have access)
+        onDeliveryInfoChange(zone);
+
+        // Clear previous pickup selection while we may restore from storage next
+        setSelectedPickupPoint(null);
+        onPickupSelect({
+          pickup: null,
+          fee: normalized.fee,
+          duration: normalized.duration,
+          zone,
+        });
       } catch (err: any) {
         if (err.name === "AbortError") return;
         console.error("Error fetching delivery info", err);
@@ -129,7 +160,7 @@ export const PickupSection = ({
         setCurrentZone(null);
         setError("Unable to load delivery information. Please try again.");
         onDeliveryInfoChange(null);
-        onPickupSelect({ pickup: null, fee: "", duration: "", zone: null });
+        onPickupSelect({ pickup: null, fee: "0", duration: "", zone: null });
       } finally {
         setLoading(false);
       }
@@ -139,20 +170,9 @@ export const PickupSection = ({
 
     return () => controller.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedState]);
+  }, [selectedZone, selectedState]);
 
-  useEffect(() => {
-    if (isLagos) {
-      persistPickup("Home Delivery");
-      onPickupSelect({
-        pickup: "Home Delivery",
-        fee: deliveryInfo?.fee || "",
-        duration: deliveryInfo?.duration || "",
-        zone: currentZone ?? null,
-      });
-      onDeliveryInfoChange(currentZone);
-    }
-  }, [shippingDetails, onPickupSelect, isLagos]);
+  // Removed Lagos special handling
 
   console.log(deliveryInfo);
 
@@ -167,14 +187,9 @@ export const PickupSection = ({
       if (parsed.state !== selectedState) return;
 
       if (isLagos) {
-        const pickupStr =
-          typeof parsed.pickup === "string"
-            ? parsed.pickup
-            : (parsed.pickup as PickupOption).value ?? "";
-        setLagosPickupPoint(pickupStr);
-        // When restoring, set parent delivery info to the full zone as requested
+        // For Lagos, always set to "Home Delivery"
         onPickupSelect({
-          pickup: pickupStr || null,
+          pickup: "Home Delivery",
           fee: deliveryInfo.fee,
           duration: deliveryInfo.duration,
           zone: currentZone,
@@ -195,7 +210,7 @@ export const PickupSection = ({
           setSelectedPickupPoint(option);
           onPickupSelect({
             pickup: option,
-            fee: deliveryInfo.fee,
+            fee: deliveryInfo.fee || "0",
             duration: deliveryInfo.duration,
             zone: currentZone,
           });
@@ -206,7 +221,7 @@ export const PickupSection = ({
           localStorage.removeItem(STORAGE_KEY);
           onPickupSelect({
             pickup: null,
-            fee: deliveryInfo.fee,
+            fee: deliveryInfo.fee || "0",
             duration: deliveryInfo.duration,
             zone: currentZone,
           });
@@ -243,7 +258,7 @@ export const PickupSection = ({
       persistPickup(value);
       onPickupSelect({
         pickup: value,
-        fee: deliveryInfo?.fee || "",
+        fee: deliveryInfo?.fee || "0",
         duration: deliveryInfo?.duration || "",
         zone: currentZone ?? null,
       });
@@ -253,31 +268,7 @@ export const PickupSection = ({
       persistPickup(null);
       onPickupSelect({
         pickup: null,
-        fee: "",
-        duration: "",
-        zone: currentZone ?? null,
-      });
-      onDeliveryInfoChange(currentZone);
-    }
-  };
-
-  // For Lagos free-text input: also send full zone on change
-  const handleLagosPickupChange = (val: string) => {
-    setLagosPickupPoint(val);
-    if (val) {
-      persistPickup(val);
-      onPickupSelect({
-        pickup: "",
-        fee: deliveryInfo?.fee || "",
-        duration: deliveryInfo?.duration || "",
-        zone: currentZone ?? null,
-      });
-      onDeliveryInfoChange(currentZone);
-    } else {
-      persistPickup(null);
-      onPickupSelect({
-        pickup: null,
-        fee: "",
+        fee: "0",
         duration: "",
         zone: currentZone ?? null,
       });
@@ -314,33 +305,35 @@ export const PickupSection = ({
                   loading ? "opacity-0" : "opacity-100"
                 }`}
               >
-                {isLagos ? (
-                  <input
-                    aria-label="Lagos pickup location"
-                    type="text"
-                    value={"Home Delivery"}
-                    onChange={(e) => handleLagosPickupChange(e.target.value)}
-                    placeholder="Enter your pickup location"
-                    className="w-full px-4 py-3 text-gray-700 bg-white border border-gray-200 rounded-lg text-center appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-200"
-                    disabled
-                  />
-                ) : (
+                {/* {isLagos ? (
                   <Select
-                    value={selectedPickupPoint}
-                    onChange={handlePickupChange}
-                    options={pickupOptions}
-                    placeholder={
-                      pickupOptions.length
-                        ? "Select your pick up point"
-                        : "No pickups available"
-                    }
+                    value={{ value: "Home Delivery", label: "Home Delivery" }}
+                    options={[
+                      { value: "Home Delivery", label: "Home Delivery" },
+                    ]}
+                    placeholder="Select pickup point"
                     className="react-select-container"
                     classNamePrefix="react-select"
-                    isClearable
-                    isDisabled={pickupOptions.length === 0}
-                    aria-label="Pickup point select"
+                    isDisabled
+                    aria-label="Lagos pickup point"
                   />
-                )}
+                ) : ( */}
+                <Select
+                  value={selectedPickupPoint}
+                  onChange={handlePickupChange}
+                  options={pickupOptions}
+                  placeholder={
+                    pickupOptions.length
+                      ? "Select your pick up point"
+                      : "No pickups available"
+                  }
+                  className="react-select-container"
+                  classNamePrefix="react-select"
+                  isClearable
+                  isDisabled={pickupOptions.length === 0}
+                  aria-label="Pickup point select"
+                />
+                {/* )} */}
               </div>
             ) : (
               <div className="text-center text-gray-500">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { ShippingAddressSection } from "@/components/checkout/ShippingAddressSection";
@@ -31,6 +31,17 @@ export type ApiZone = {
   [key: string]: any;
 };
 
+interface Zone {
+  city: string;
+  duration: string;
+  fee: number;
+  id: number;
+  is_active: boolean;
+  lga: string | null;
+  pickups: string[];
+  state: string;
+}
+
 export default function CheckoutPage() {
   const router = useRouter();
   const [applyingCode, setapplyingCode] = useState<boolean>(false);
@@ -40,13 +51,39 @@ export default function CheckoutPage() {
   let subtotal = 0;
   const [selectedCity, setSelectedCity] = useState("");
   const [shippingDetails, setShippingDetails] = useState<any>(null);
-  const [pickupData, setPickupData] = useState<ApiZone | null>(null);
+  const [pickupData, setPickupData] = useState<any>(null);
   const [deliveryInfo, setDeliveryInfo] = useState<{
     fee: string;
     duration: string;
+    id?: number;
   }>({ fee: "", duration: "" });
   const [disableContinue, setDisableContinue] = useState(false);
+  const [zonesData, setZonesData] = useState<Zone[]>([]);
+  const [isLoadingZones, setIsLoadingZones] = useState(false);
+  const [selectedZone, setSelectedZone] = useState<Zone | null>(null);
   // const { user } = useAuth();
+
+  useEffect(() => {
+    const fetchZones = async () => {
+      setIsLoadingZones(true);
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/delivery/zones?active=true&page=1&per_page=200`
+        );
+        if (!response.ok) {
+          throw new Error("Failed to fetch zones");
+        }
+        const data = await response.json();
+        setZonesData(data.zones);
+      } catch (error) {
+        console.error("Error fetching zones:", error);
+      } finally {
+        setIsLoadingZones(false);
+      }
+    };
+
+    fetchZones();
+  }, []);
 
   // console.log(user);
 
@@ -163,14 +200,27 @@ export default function CheckoutPage() {
                 onCitySelect={setSelectedCity}
                 onShippingDetailsChange={setShippingDetails}
                 setDisableContinue={setDisableContinue}
+                zonesData={zonesData}
+                isLoadingZones={isLoadingZones}
+                onZoneSelect={setSelectedZone}
               />
             )}
             {currentStep === 2 && (
               <PickupSection
                 selectedState={selectedState}
                 onPickupSelect={setPickupData}
-                onDeliveryInfoChange={setDeliveryInfo}
-                shippingDetails={shippingDetails}
+                onDeliveryInfoChange={(zone) => {
+                  if (zone) {
+                    setDeliveryInfo({
+                      fee: String(zone.fee ?? 0),
+                      duration: zone.duration ?? "",
+                      id: zone.id,
+                    });
+                  } else {
+                    setDeliveryInfo({ fee: "0", duration: "", id: undefined });
+                  }
+                }}
+                selectedZone={selectedZone}
               />
             )}
             {currentStep === 3 && (
@@ -182,6 +232,7 @@ export default function CheckoutPage() {
                   location: pickupData?.pickup,
                 }}
                 deliveryInfo={deliveryInfo}
+                zonesData={zonesData}
               />
             )}
           </div>

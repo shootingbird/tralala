@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/Input";
 import { Pen } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import Select from "react-select";
-import statesAndCities from "@/data/states-and-cities.json";
 
 const STORAGE_KEY = "shipping_details";
 
@@ -25,16 +24,45 @@ type ShippingAddressSectionProps = {
   onCitySelect: (city: string) => void;
   onShippingDetailsChange: (details: typeof defaultAddress) => void;
   setDisableContinue: (disabled: boolean) => void;
+  zonesData?: Zone[];
+  isLoadingZones?: boolean;
+  onZoneSelect?: (zone: Zone | null) => void;
 };
 
 type StateOption = { value: string; label: string };
 type CityOption = { value: string; label: string };
+
+interface Zone {
+  city: string;
+  duration: string;
+  fee: number;
+  id: number;
+  is_active: boolean;
+  lga: string | null;
+  pickups: string[];
+  state: string;
+}
+
+interface ZonesResponse {
+  pagination: {
+    current_page: number;
+    has_next: boolean;
+    has_prev: boolean;
+    per_page: number;
+    total: number;
+    total_pages: number;
+  };
+  zones: Zone[];
+}
 
 export const ShippingAddressSection = ({
   onStateSelect,
   onCitySelect,
   onShippingDetailsChange,
   setDisableContinue,
+  zonesData: externalZonesData,
+  isLoadingZones: externalIsLoadingZones,
+  onZoneSelect,
 }: ShippingAddressSectionProps) => {
   const { user, isAuthenticated } = useAuth();
   const [isEditing, setIsEditing] = useState(!isAuthenticated);
@@ -43,11 +71,27 @@ export const ShippingAddressSection = ({
   const [selectedCity, setSelectedCity] = useState<CityOption | null>(null);
   const [availableCities, setAvailableCities] = useState<CityOption[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [zonesData, setZonesData] = useState<Zone[]>([]);
+  const [isLoadingZones, setIsLoadingZones] = useState(false);
+  const [selectedZone, setSelectedZone] = useState<Zone | null>(null);
 
-  const stateOptions: StateOption[] = statesAndCities.map((state) => ({
-    value: state.name,
-    label: state.name,
+  // Use external data if provided, otherwise use internal state
+  const currentZonesData = externalZonesData || zonesData;
+  const currentIsLoadingZones =
+    externalIsLoadingZones !== undefined
+      ? externalIsLoadingZones
+      : isLoadingZones;
+
+  const stateOptions: StateOption[] = Array.from(
+    new Set(currentZonesData.map((zone) => zone.state))
+  ).map((state) => ({
+    value: state,
+    label: state,
   }));
+
+  useEffect(() => {
+    fetchZones();
+  }, []);
 
   useEffect(() => {
     const savedDetails = localStorage.getItem(STORAGE_KEY);
@@ -98,7 +142,7 @@ export const ShippingAddressSection = ({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, onStateSelect]);
+  }, [user, onStateSelect, zonesData]);
 
   const updateShippingDetails = (newDetails: typeof shippingDetails) => {
     setShippingDetails(newDetails);
@@ -106,17 +150,32 @@ export const ShippingAddressSection = ({
     onShippingDetailsChange(newDetails);
   };
 
-  const updateCities = (stateName: string) => {
-    const selectedStateData = statesAndCities.find(
-      (state) => state.name === stateName
-    );
-    if (selectedStateData) {
-      setAvailableCities(
-        selectedStateData.cities.map((city) => ({ value: city, label: city }))
+  const fetchZones = async () => {
+    setIsLoadingZones(true);
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/delivery/zones?active=true&page=1&per_page=200`
       );
-    } else {
-      setAvailableCities([]);
+      if (!response.ok) {
+        throw new Error("Failed to fetch zones");
+      }
+      const data: ZonesResponse = await response.json();
+      setZonesData(data.zones);
+    } catch (error) {
+      console.error("Error fetching zones:", error);
+    } finally {
+      setIsLoadingZones(false);
     }
+  };
+
+  const updateCities = (stateName: string) => {
+    const citiesForState = currentZonesData
+      .filter((zone) => zone.state === stateName)
+      .map((zone) => zone.city);
+    const uniqueCities = Array.from(new Set(citiesForState));
+    setAvailableCities(
+      uniqueCities.map((city) => ({ value: city, label: city }))
+    );
   };
 
   const normalizeName = (value: string) => {
@@ -212,6 +271,7 @@ export const ShippingAddressSection = ({
   const handleStateChange = (option: StateOption | null) => {
     setSelectedState(option);
     setSelectedCity(null);
+    setSelectedZone(null);
     const newDetails = {
       ...shippingDetails,
       state: option?.value || "",
@@ -220,8 +280,20 @@ export const ShippingAddressSection = ({
     updateShippingDetails(newDetails);
     validateField("state", option?.value || "");
     onStateSelect(option?.value || "");
-    if (option) updateCities(option.value);
-    else setAvailableCities([]);
+    if (option) {
+      updateCities(option.value);
+      // Find the first zone for this state and notify parent
+      const stateZone = currentZonesData.find(
+        (zone) => zone.state === option.value
+      );
+      if (stateZone) {
+        setSelectedZone(stateZone);
+        onZoneSelect?.(stateZone);
+      }
+    } else {
+      setAvailableCities([]);
+      onZoneSelect?.(null);
+    }
   };
 
   const handleCityChange = (option: CityOption | null) => {
@@ -230,6 +302,21 @@ export const ShippingAddressSection = ({
     updateShippingDetails(newDetails);
     validateField("city", option?.value || "");
     onCitySelect(option?.value || "");
+
+    // Find and set the specific zone for the selected city
+    if (option && selectedState) {
+      const cityZone = currentZonesData.find(
+        (zone) =>
+          zone.state === selectedState.value && zone.city === option.value
+      );
+      if (cityZone) {
+        setSelectedZone(cityZone);
+        onZoneSelect?.(cityZone);
+      }
+    } else {
+      setSelectedZone(null);
+      onZoneSelect?.(null);
+    }
   };
 
   return (
@@ -310,7 +397,10 @@ export const ShippingAddressSection = ({
                 options={stateOptions}
                 isClearable
                 isSearchable
-                placeholder="Select State"
+                placeholder={
+                  currentIsLoadingZones ? "Loading states..." : "Select State"
+                }
+                isDisabled={currentIsLoadingZones}
                 className="react-select-container"
                 classNamePrefix="react-select"
               />
@@ -328,8 +418,14 @@ export const ShippingAddressSection = ({
                 options={availableCities}
                 isClearable
                 isSearchable
-                placeholder="Select City"
-                isDisabled={!selectedState}
+                placeholder={
+                  !selectedState
+                    ? "Select state first"
+                    : currentIsLoadingZones
+                    ? "Loading cities..."
+                    : "Select City"
+                }
+                isDisabled={!selectedState || currentIsLoadingZones}
                 className="react-select-container"
                 classNamePrefix="react-select"
               />

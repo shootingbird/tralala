@@ -51,6 +51,7 @@ interface OrderItemsProps {
   deliveryDuration: string;
   shippingDetails: any;
   deliveryInfo?: any; // added to match usage in the component
+  zonesData?: any[];
 }
 
 // Free shipping threshold (per your requirement: free shipping when >= ₦100,000)
@@ -77,6 +78,7 @@ export default function OrderItems({
   deliveryDuration,
   shippingDetails,
   deliveryInfo,
+  zonesData,
 }: OrderItemsProps) {
   const router = useRouter();
   const { cartItems, updateQuantity, removeFromCart, clearCart } = useCart();
@@ -189,7 +191,7 @@ export default function OrderItems({
         },
         shipping: {
           state: selectedState,
-          city: selectedCity || deliveryInfo?.city,
+          city: selectedCity || shippingDetails?.city || "",
           address: shippingDetails?.address || "",
         },
 
@@ -198,7 +200,7 @@ export default function OrderItems({
             selectedState.toLowerCase() === "lagos"
               ? "Home Delivery"
               : pickupLocation,
-          id: deliveryInfo?.id,
+          zone_id: deliveryInfo?.id,
           fee: deliveryFeeNumber,
         },
 
