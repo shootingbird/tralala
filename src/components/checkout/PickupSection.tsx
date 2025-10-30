@@ -27,10 +27,14 @@ export type ApiZone = {
   city?: string;
   fee: number | string;
   duration: string;
-  pickups: string[];
+  pickups?: string[];
+  pickup_point?: string;
   is_active?: boolean;
+  lga?: string;
+  created_at?: string;
+  updated_at?: string;
   // any extra fields the API returns
-  [key: string]: any;
+  [key: string]: unknown;
 };
 
 export type SelectedPickup = {
@@ -46,7 +50,6 @@ export const PickupSection = ({
   selectedState,
   onPickupSelect,
   onDeliveryInfoChange,
-  shippingDetails,
   selectedZone,
 }: PickupSectionProps) => {
   const [deliveryInfo, setDeliveryInfo] = useState<{
@@ -99,10 +102,10 @@ export const PickupSection = ({
           url = `${apiUrl}/api/delivery/zones/${selectedZone.id}`;
           console.log("Fetching zone details from:", url);
         } else {
-          // Fallback to state query
+          // Use new zones endpoint with state parameter
           url = `${apiUrl}/api/delivery/zones?state=${encodeURIComponent(
             selectedState
-          )}&active=true&per_page=1`;
+          )}&active=1&page=1&per_page=20`;
           console.log("Fetching delivery info from:", url);
         }
 
@@ -114,15 +117,15 @@ export const PickupSection = ({
         const data = await res.json();
         console.log("API response data:", data);
 
-        let zone: ApiZone;
+        let zones: ApiZone[];
 
         if (selectedZone?.id) {
           // Response format: { "zone": {...} }
-          zone = data.zone;
+          zones = [data.zone];
         } else {
           // Response format: { "zones": [...] }
           if (data?.zones?.length > 0) {
-            zone = data.zones[0];
+            zones = data.zones;
           } else {
             throw new Error(
               "No delivery info available for the selected state."
@@ -130,31 +133,57 @@ export const PickupSection = ({
           }
         }
 
+        // Extract pickup points from zones
+        const pickupPoints: string[] = zones
+          .map(
+            (zone) => zone.pickup_point || (zone.pickups ? zone.pickups : [])
+          )
+          .filter((point): point is string | string[] => Boolean(point))
+          .flat()
+          .filter((point): point is string => typeof point === "string");
+
+        // Use the first zone for fee and duration
+        const firstZone = zones[0];
         const normalized = {
-          fee: String(zone.fee ?? 0),
-          duration: zone.duration ?? "",
-          pickups: Array.isArray(zone.pickups) ? zone.pickups : [],
+          fee: String(firstZone.fee ?? 0),
+          duration: firstZone.duration ?? "",
+          pickups: pickupPoints,
         };
 
         console.log("Normalized delivery info:", normalized);
 
-        // store both normalized values for the UI and the full zone for parent
+        // store both normalized values for the UI and the full zones for parent
         setDeliveryInfo(normalized);
-        setCurrentZone(zone);
+        setCurrentZone(firstZone);
 
         // Notify parent with full zone immediately (so they have access)
-        onDeliveryInfoChange(zone);
+        onDeliveryInfoChange(firstZone);
 
-        // Clear previous pickup selection while we may restore from storage next
-        setSelectedPickupPoint(null);
-        onPickupSelect({
-          pickup: null,
-          fee: normalized.fee,
-          duration: normalized.duration,
-          zone,
-        });
-      } catch (err: any) {
-        if (err.name === "AbortError") return;
+        // Auto-select if only one pickup option
+        if (normalized.pickups.length === 1) {
+          const autoPickup = {
+            value: normalized.pickups[0],
+            label: normalized.pickups[0],
+          };
+          setSelectedPickupPoint(autoPickup);
+          onPickupSelect({
+            pickup: autoPickup,
+            fee: normalized.fee,
+            duration: normalized.duration,
+            zone: firstZone,
+          });
+        } else {
+          // Clear previous pickup selection while we may restore from storage next
+          setSelectedPickupPoint(null);
+          onPickupSelect({
+            pickup: null,
+            fee: normalized.fee,
+            duration: normalized.duration,
+            zone: firstZone,
+          });
+        }
+      } catch (err: unknown) {
+        if (err instanceof Error && err.name === "AbortError") return;
         console.error("Error fetching delivery info", err);
         setDeliveryInfo(null);
         setCurrentZone(null);

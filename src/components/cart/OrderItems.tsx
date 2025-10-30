@@ -196,12 +196,7 @@ export default function OrderItems({
         },
 
         delivery: {
-          pickup_location:
-            selectedState.toLowerCase() === "lagos"
-              ? "Home Delivery"
-              : pickupLocation,
           zone_id: deliveryInfo?.id,
-          fee: deliveryFeeNumber,
         },
 
         items: cartItems.map(({ productId, quantity, variationId }) => ({

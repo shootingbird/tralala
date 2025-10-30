@@ -74,23 +74,18 @@ export const ShippingAddressSection = ({
   const [zonesData, setZonesData] = useState<Zone[]>([]);
   const [isLoadingZones, setIsLoadingZones] = useState(false);
   const [selectedZone, setSelectedZone] = useState<Zone | null>(null);
+  const [states, setStates] = useState<StateOption[]>([]);
+  const [isLoadingStates, setIsLoadingStates] = useState(false);
+  const [isLoadingCities, setIsLoadingCities] = useState(false);
 
   // Use external data if provided, otherwise use internal state
   const currentZonesData = externalZonesData || zonesData;
-  const currentIsLoadingZones =
-    externalIsLoadingZones !== undefined
-      ? externalIsLoadingZones
-      : isLoadingZones;
 
-  const stateOptions: StateOption[] = Array.from(
-    new Set(currentZonesData.map((zone) => zone.state))
-  ).map((state) => ({
-    value: state,
-    label: state,
-  }));
+  const stateOptions = states;
 
   useEffect(() => {
     fetchZones();
+    fetchStates();
   }, []);
 
   useEffect(() => {
@@ -150,7 +145,7 @@ export const ShippingAddressSection = ({
       if (!selectedState || !selectedCity) return;
 
       const zone = currentZonesData.find(
-        (z) => z.state === selectedState.value && z.city === selectedCity.value
+        (z) => z.state === selectedState.label && z.city === selectedCity.value
       );
 
       if (zone?.id) {
@@ -194,6 +189,52 @@ export const ShippingAddressSection = ({
       console.error("Error fetching zones:", error);
     } finally {
       setIsLoadingZones(false);
+    }
+  };
+
+  const fetchStates = async () => {
+    setIsLoadingStates(true);
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/delivery/states`
+      );
+      if (!response.ok) {
+        throw new Error("Failed to fetch states");
+      }
+      const data = await response.json();
+      const stateOptions = data.states.map(
+        (state: { alias: string; name: string }) => ({
+          value: state.alias,
+          label: state.name,
+        })
+      );
+      setStates(stateOptions);
+    } catch (error) {
+      console.error("Error fetching states:", error);
+    } finally {
+      setIsLoadingStates(false);
+    }
+  };
+
+  const fetchCities = async (stateName: string) => {
+    setIsLoadingCities(true);
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/delivery/cities/${stateName}`
+      );
+      if (!response.ok) {
+        throw new Error("Failed to fetch cities");
+      }
+      const data = await response.json();
+      const cityOptions = data.lgas.map((city: string) => ({
+        value: city,
+        label: city,
+      }));
+      setAvailableCities(cityOptions);
+    } catch (error) {
+      console.error("Error fetching cities:", error);
+    } finally {
+      setIsLoadingCities(false);
     }
   };
 
@@ -303,17 +344,17 @@ export const ShippingAddressSection = ({
     setSelectedZone(null);
     const newDetails = {
       ...shippingDetails,
-      state: option?.value || "",
+      state: option?.label || "",
       city: "",
     };
     updateShippingDetails(newDetails);
-    validateField("state", option?.value || "");
-    onStateSelect(option?.value || "");
+    validateField("state", option?.label || "");
+    onStateSelect(option?.label || "");
     if (option) {
-      updateCities(option.value);
+      fetchCities(option.value);
       // Find the first zone for this state and notify parent
       const stateZone = currentZonesData.find(
-        (zone) => zone.state === option.value
+        (zone) => zone.state === option.label
       );
       if (stateZone) {
         setSelectedZone(stateZone);
@@ -336,7 +377,7 @@ export const ShippingAddressSection = ({
     if (option && selectedState) {
       const cityZone = currentZonesData.find(
         (zone) =>
-          zone.state === selectedState.value && zone.city === option.value
+          zone.state === selectedState.label && zone.city === option.value
       );
       if (cityZone) {
         setSelectedZone(cityZone);
@@ -427,9 +468,9 @@ export const ShippingAddressSection = ({
                 isClearable
                 isSearchable
                 placeholder={
-                  currentIsLoadingZones ? "Loading states..." : "Select State"
+                  isLoadingStates ? "Loading states..." : "Select State"
                 }
-                isDisabled={currentIsLoadingZones}
+                isDisabled={isLoadingStates}
                 className="react-select-container"
                 classNamePrefix="react-select"
               />
@@ -450,11 +491,11 @@ export const ShippingAddressSection = ({
                 placeholder={
                   !selectedState
                     ? "Select state first"
-                    : currentIsLoadingZones
+                    : isLoadingCities
                     ? "Loading cities..."
                     : "Select City"
                 }
-                isDisabled={!selectedState || currentIsLoadingZones}
+                isDisabled={!selectedState || isLoadingCities}
                 className="react-select-container"
                 classNamePrefix="react-select"
               />
