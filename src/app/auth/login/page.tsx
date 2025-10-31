@@ -1,39 +1,64 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/contexts/AuthContext";
-import { AuthWrapper } from "@/components/auth/AuthWrapper";
+import Link from "next/link";
+import { useLoginMutation } from "@/slices/auth/auth";
+import { useDispatch, useSelector } from "react-redux";
+import { setCredentials } from "@/slices/authSlice";
+import { RootState } from "@/lib/store/store";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
-import { Modal } from "@/components/ui/Modal";
-import Link from "next/link";
-export default function LoginPage() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [showModal, setShowModal] = useState(false);
-  const [modalType, setModalType] = useState<"success" | "error">("success");
-  const [formData, setFormData] = useState({ email: "", password: "" });
-  const router = useRouter();
-  const { login } = useAuth();
+import { AuthWrapper } from "@/components/auth/AuthWrapper";
+import AppWapper from "@/app/AppWapper";
 
+export default function LoginPage() {
+  return (
+    <AppWapper>
+      <LoginPageContent />
+    </AppWapper>
+  );
+}
+
+function LoginPageContent() {
+  const [login, { isLoading }] = useLoginMutation();
+  const [formData, setFormData] = useState({ email: "", password: "" });
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+  const dispatch = useDispatch();
+  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push("/");
+    }
+  }, [isAuthenticated, router]);
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    setError(null);
 
-    const result = await login(formData);
+    try {
+      const result = await login(formData).unwrap();
 
-    if (result.success) {
-      setModalType("success");
-      setShowModal(true);
-      setTimeout(() => {
-        router.push("/");
-      }, 2000);
-    } else {
-      setModalType("error");
-      setShowModal(true);
+      // Dispatch to store
+      dispatch(
+        setCredentials({
+          user: result.user,
+          accessToken: result.token,
+          refreshToken: null,
+        })
+      );
+
+      // Redirect to home or dashboard
+      router.push("/");
+    } catch (err: unknown) {
+      if (typeof err === "object" && err !== null && "data" in err) {
+        const errorData = (err as { data?: { message?: string } }).data;
+        setError(errorData?.message || "Login failed. Please try again.");
+      } else {
+        setError("Login failed. Please try again.");
+      }
     }
-
-    setIsLoading(false);
   };
 
   return (
@@ -75,25 +100,14 @@ export default function LoginPage() {
           </Link>
         </div>
 
-        <Button type="submit" isLoading={isLoading}>
-          Sign in →
+        <Button
+          type="submit"
+          className="w-full bg-[#E94B1C] hover:bg-[#E94B1C]/50"
+          disabled={isLoading}
+        >
+          {isLoading ? "Signing in..." : "Sign in →"}
         </Button>
-
-        {/* disabled the social login for v1 */}
-        {/* <div className="relative my-6">
-                    <div className="absolute inset-0 flex items-center">
-                        <div className="w-full border-t border-gray-300" />
-                    </div>
-                    <div className="relative flex justify-center text-sm">
-                        <span className="px-2 bg-white text-gray-500">OR</span>
-                    </div>
-                </div>
-
-                <div className="space-y-3">
-                    <SocialButton provider="google" label="Sign in with Google" />
-                    <SocialButton provider="facebook" label="Sign in with Facebook" />
-                    <SocialButton provider="apple" label="Sign in with Apple" />
-                </div> */}
+        {error && <p className="text-red-500 text-center">{error}</p>}
 
         <p className="text-center text-sm text-gray-600">
           Don&lsquo;t have an account?{" "}
@@ -105,24 +119,6 @@ export default function LoginPage() {
           </Link>
         </p>
       </form>
-
-      <Modal
-        isOpen={showModal}
-        onClose={() => setShowModal(false)}
-        type={modalType}
-        title={
-          modalType === "success"
-            ? "Authentication Successful"
-            : "Authentication Failed"
-        }
-        message={
-          modalType === "success"
-            ? "Redirecting to homepage..."
-            : "Invalid email or password"
-        }
-        autoClose={modalType === "success"}
-        autoCloseTime={2000}
-      />
     </AuthWrapper>
   );
 }

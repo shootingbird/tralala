@@ -396,7 +396,7 @@ export const ShippingAddressSection = ({
         {isAuthenticated && (
           <button
             onClick={() => setIsEditing(!isEditing)}
-            className="text-[#184193] flex items-center text-sm"
+            className="text-[#E94B1C] flex items-center text-sm"
           >
             <Pen size={14} className="mr-1" /> Edit
           </button>
@@ -526,51 +526,51 @@ export const ShippingAddressSection = ({
 
           <button
             type="submit"
-            className="bg-[#184193] text-white px-4 py-2 rounded-md mt-4"
+            className="bg-[#E94B1C] text-white px-4 py-2 rounded-md mt-4"
           >
             Save Address
           </button>
         </form>
       ) : (
         <div className="p-2 md:p-0 grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-[#18419310] py-2 px-5 rounded-lg">
+          <div className="bg-[#E94B1C10] py-2 px-5 rounded-lg">
             <label className="block text-sm text-gray-500 mb-1">
               First Name
             </label>
             <p className="text-gray-900">{shippingDetails.firstName}</p>
           </div>
-          <div className="bg-[#18419310] py-2 px-5 rounded-lg">
+          <div className="bg-[#E94B1C10] py-2 px-5 rounded-lg">
             <label className="block text-sm text-gray-500 mb-1">
               Last Name
             </label>
             <p className="text-gray-900">{shippingDetails.lastName}</p>
           </div>
-          <div className="bg-[#18419310] py-2 px-5 rounded-lg">
+          <div className="bg-[#E94B1C10] py-2 px-5 rounded-lg">
             <label className="block text-sm text-gray-500 mb-1">
               Email Address
             </label>
             <p className="text-gray-900">{shippingDetails.email}</p>
           </div>
-          <div className="bg-[#18419310] py-2 px-5 rounded-lg">
+          <div className="bg-[#E94B1C10] py-2 px-5 rounded-lg">
             <label className="block text-sm text-gray-500 mb-1">
               Mobile Number
             </label>
             <p className="text-gray-900">{shippingDetails.phone}</p>
           </div>
-          <div className="bg-[#18419310] py-2 px-5 rounded-lg">
+          <div className="bg-[#E94B1C10] py-2 px-5 rounded-lg">
             <label className="block text-sm text-gray-500 mb-1">State</label>
             <p className="text-gray-900">{shippingDetails.state}</p>
           </div>
-          <div className="bg-[#18419310] py-2 px-5 rounded-lg">
+          <div className="bg-[#E94B1C10] py-2 px-5 rounded-lg">
             <label className="block text-sm text-gray-500 mb-1">City</label>
             <p className="text-gray-900">{shippingDetails.city}</p>
           </div>
-          <div className="bg-[#18419310] col-span-1 md:col-span-2 py-2 px-5 rounded-lg">
+          <div className="bg-[#E94B1C10] col-span-1 md:col-span-2 py-2 px-5 rounded-lg">
             <label className="block text-sm text-gray-500 mb-1">Address</label>
             <p className="text-gray-900">{shippingDetails.address}</p>
           </div>
           {shippingDetails.note && (
-            <div className="bg-[#18419310] col-span-1 md:col-span-2 py-2 px-5 rounded-lg">
+            <div className="bg-[#E94B1C10] col-span-1 md:col-span-2 py-2 px-5 rounded-lg">
               <label className="block text-sm text-gray-500 mb-1">Note</label>
               <p className="text-gray-900">{shippingDetails.note}</p>
             </div>

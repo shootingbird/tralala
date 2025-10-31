@@ -11,9 +11,6 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 
-import { TopBanner } from "@/components/layout/TopBanner";
-import { Header } from "@/components/layout/Header";
-import { Footer } from "@/components/layout/Footer";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { Pagination } from "@/components/common/Pagination";
 import {
@@ -23,6 +20,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useRouter } from "next/navigation";
+import AppWapper from "@/app/AppWapper";
+import { useAuth } from "@/contexts/AuthContext";
+import Header from "@/components/shared/Header";
+import { Footer } from "@/components/shared/Footer";
 
 type Order = {
   image: string;
@@ -31,7 +32,7 @@ type Order = {
   createdAt: string; // ISO
   status: string;
   placedDate: string; // ISO
-  raw?: any; // original payload if needed
+  raw?: Record<string, unknown>; // original payload if needed
 };
 
 type APIOrder = {
@@ -43,8 +44,10 @@ type APIOrder = {
   contact?: { email?: string; name?: string };
   items_count?: number;
   updated_at?: string;
+  items?: Array<Record<string, unknown>>;
+  pagination?: Record<string, unknown>;
   // plus other fields from the response...
-  [key: string]: any;
+  [key: string]: unknown;
 };
 
 const PLACEHOLDER_IMAGE = "/404.png";
@@ -65,10 +68,10 @@ const getStatusColor = (status: string) => {
 const mapApiToOrder = (a: APIOrder): Order => {
   // Try to find the first item with a non-empty image_url
   const validImage =
-    a.items?.find(
-      (item) =>
+    (a.items?.find(
+      (item: Record<string, unknown>) =>
         typeof item.image_url === "string" && item.image_url.trim() !== ""
-    )?.image_url ?? PLACEHOLDER_IMAGE;
+    )?.image_url as string) ?? PLACEHOLDER_IMAGE;
 
   return {
     image: validImage,
@@ -219,7 +222,7 @@ const OrderCard = ({ order }: { order: Order }) => {
 
       <div className="flex-shrink-0">
         <button
-          className="hidden md:inline-block text-[#184193] text-sm font-medium hover:underline"
+          className="hidden md:inline-block text-[#E94B1C] text-sm font-medium hover:underline"
           aria-label="Return and Refund"
           onClick={() => router.push(`/orders/${encodeURIComponent(orderId)}`)}
         >
@@ -227,7 +230,7 @@ const OrderCard = ({ order }: { order: Order }) => {
         </button>
 
         <button
-          className="md:hidden p-1 text-gray-600 hover:text-[#184193] transition"
+          className="md:hidden p-1 text-gray-600 hover:text-[#E94B1C] transition"
           aria-label="Order options"
         >
           <EllipsisVertical className="w-5 h-5" />
@@ -238,6 +241,16 @@ const OrderCard = ({ order }: { order: Order }) => {
 };
 
 export default function OrderHistory() {
+  return (
+    <AppWapper>
+      <OrderHistoryContent />
+    </AppWapper>
+  );
+}
+
+function OrderHistoryContent() {
+  const { getToken } = useAuth();
+
   // UI / pagination
   const [page, setPage] = useState<number>(1);
   const [perPage, setPerPage] = useState<number>(10);
@@ -264,18 +277,6 @@ export default function OrderHistory() {
     { label: "Profile", href: "/profile" },
     { label: "Order History" },
   ];
-
-  // get token from cookies (tries several common cookie names)
-  const getToken = useCallback(() => {
-    if (typeof window === "undefined") return null;
-    const names = ["token", "access_token", "auth_token", "jwt"];
-    for (const n of names) {
-      const v = Cookies.get(n);
-      if (v) return v;
-    }
-    // fallback to localStorage for backward compatibility
-    return localStorage.getItem("token") || null;
-  }, []);
 
   const fetchOrders = useCallback(
     async (opts?: {
@@ -312,17 +313,18 @@ export default function OrderHistory() {
 
         if (!res.ok) {
           // try to parse structured error response
-          let parsed: any = null;
+          let parsed: Record<string, unknown> | null = null;
           try {
             parsed = await res.json();
           } catch (e) {
             // fallthrough
           }
 
-          const errCode = parsed?.error?.code;
+          const errCode = (parsed?.error as Record<string, unknown>)
+            ?.code as string;
           const errMsg =
-            parsed?.error?.message ||
-            parsed?.message ||
+            ((parsed?.error as Record<string, unknown>)?.message as string) ||
+            (parsed?.message as string) ||
             `Failed fetching orders (${res.status})`;
 
           const errObj = { code: errCode, message: errMsg };
@@ -343,7 +345,7 @@ export default function OrderHistory() {
           : Array.isArray(json.orders)
           ? json.orders
           : Array.isArray(json)
-          ? (json as any)
+          ? (json as APIOrder[])
           : [];
 
         const mapped = payload.map(mapApiToOrder);
@@ -360,13 +362,15 @@ export default function OrderHistory() {
         setTotalOrders(total);
 
         setOrders(mapped);
-      } catch (err: any) {
-        if (err.name === "AbortError") {
+      } catch (err: unknown) {
+        if (err instanceof Error && err.name === "AbortError") {
           // aborted, don't set an error state
           return;
         }
         console.error("Fetch orders error:", err);
-        setError({ message: err?.message ?? "Unknown error" });
+        setError({
+          message: err instanceof Error ? err.message : "Unknown error",
+        });
       } finally {
         setLoading(false);
       }
@@ -417,7 +421,6 @@ export default function OrderHistory() {
 
   return (
     <>
-      <TopBanner theme="dark" />
       <Header />
       <main className="min-h-screen">
         <div className="container mx-auto px-4 py-10">

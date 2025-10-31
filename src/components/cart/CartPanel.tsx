@@ -1,7 +1,7 @@
 import { X, Minus, Plus } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useCart } from "@/context/CartContext";
+import { useCart } from "@/hooks/useCart";
 
 interface CartPanelProps {
   isOpen: boolean;

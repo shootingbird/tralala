@@ -2,12 +2,15 @@
 
 import { useState, useEffect } from "react";
 import { X } from "lucide-react";
-import { Input } from "@/components/ui/Input";
-import { Button } from "@/components/ui/Button";
-import { SocialButton } from "@/components/auth/SocialButton";
-import { Modal } from "@/components/ui/Modal";
-import Link from "next/link";
-import { useAuth } from "@/contexts/AuthContext";
+import {
+  useLoginMutation,
+  useSignupMutation,
+  useVerifyOtpMutation,
+  useRequestOtpMutation,
+} from "@/slices/auth/auth";
+import { Button } from "../ui/Button";
+import { Modal } from "../ui/Modal";
+import { Input } from "../ui/Input";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -15,14 +18,10 @@ interface AuthModalProps {
 }
 
 export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
-  const {
-    login,
-    signup,
-    verifyEmail,
-    resendVerificationCode,
-    isAuthenticated,
-    user,
-  } = useAuth();
+  const [login] = useLoginMutation();
+  const [signup] = useSignupMutation();
+  const [verifyOtp] = useVerifyOtpMutation();
+  const [requestOtp] = useRequestOtpMutation();
   const [isLogin, setIsLogin] = useState(true);
   const [showOtpVerification, setShowOtpVerification] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -40,9 +39,6 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
-      if (isAuthenticated && user) {
-        onClose(true);
-      }
     } else {
       document.body.style.overflow = "auto";
     }
@@ -50,23 +46,24 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
     return () => {
       document.body.style.overflow = "auto";
     };
-  }, [isOpen, isAuthenticated, user]);
+  }, [isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     try {
       const result = isLogin
-        ? await login({ email, password })
+        ? await login({ email, password }).unwrap()
         : await signup({
             email,
             password,
             first_name: firstName,
             last_name: lastName,
-            phone_number: phoneNumber,
-          });
+            phone: phoneNumber,
+            confirmPassword: password,
+          }).unwrap();
 
-      if (result.success) {
+      if ("token" in result || "success" in result) {
         if (!isLogin) {
           // Show OTP verification for signup
           setShowOtpVerification(true);
@@ -78,13 +75,12 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
           }, 2000);
         }
       } else {
-        setErrorMessage(result.error || "Authentication failed");
+        setErrorMessage("Authentication failed");
         setShowErrorModal(true);
       }
-    } catch (error) {
-      setErrorMessage(
-        error instanceof Error ? error.message : "Authentication failed"
-      );
+    } catch (error: unknown) {
+      const err = error as { data?: { message?: string } };
+      setErrorMessage(err?.data?.message || "Authentication failed");
       setShowErrorModal(true);
     } finally {
       setIsLoading(false);
@@ -95,7 +91,7 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const result = await verifyEmail({ email, otp: otpCode });
+      const result = await verifyOtp({ code: otpCode, email }).unwrap();
 
       if (result.success) {
         // Show "Correct OTP" success modal first
@@ -105,27 +101,29 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
         // Wait for the success modal to show, then auto-login
         setTimeout(async () => {
           setShowSuccessModal(false);
-          const loginResult = await login({ email, password });
-          if (loginResult.success) {
-            setShowSuccessModal(true);
-            setTimeout(() => {
-              onClose(true);
-            }, 2000);
-          } else {
-            setErrorMessage(
-              loginResult.error || "Auto-login failed after verification"
-            );
+          try {
+            const loginResult = await login({ email, password }).unwrap();
+            if (loginResult.token) {
+              setShowSuccessModal(true);
+              setTimeout(() => {
+                onClose(true);
+              }, 2000);
+            } else {
+              setErrorMessage("Auto-login failed after verification");
+              setShowErrorModal(true);
+            }
+          } catch (loginError) {
+            setErrorMessage("Auto-login failed after verification");
             setShowErrorModal(true);
           }
         }, 1500);
       } else {
-        setErrorMessage(result.error || "OTP verification failed");
+        setErrorMessage("OTP verification failed");
         setShowErrorModal(true);
       }
-    } catch (error) {
-      setErrorMessage(
-        error instanceof Error ? error.message : "OTP verification failed"
-      );
+    } catch (error: unknown) {
+      const err = error as { data?: { message?: string } };
+      setErrorMessage(err?.data?.message || "OTP verification failed");
       setShowErrorModal(true);
     } finally {
       setIsLoading(false);
@@ -135,17 +133,15 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
   const handleResendOtp = async () => {
     setIsResendingOtp(true);
     try {
-      console.log(email);
-      const result = await resendVerificationCode(email);
-      if (result.success) {
+      const result = await requestOtp({ email }).unwrap();
+      if (result.email_sent) {
         setShowSuccessModal(true);
         setTimeout(() => setShowSuccessModal(false), 2000);
       } else {
-        setErrorMessage(result.error || "Failed to resend OTP");
+        setErrorMessage("Failed to resend OTP");
         setShowErrorModal(true);
       }
-    } catch (error) {
-      console.log(error);
+    } catch (error: unknown) {
       setErrorMessage("Failed to resend OTP");
       setShowErrorModal(true);
     } finally {
@@ -164,19 +160,7 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
     setErrorMessage("");
   };
 
-  if (isAuthenticated && user) {
-    return (
-      <Modal
-        isOpen={isOpen}
-        onClose={() => onClose(false)}
-        type="info"
-        title="Authenticating"
-        message="Please wait while we prepare your checkout..."
-        autoClose
-        autoCloseTime={2000}
-      />
-    );
-  }
+  // Remove the authenticated user check since we're not using context
 
   return (
     <div className={`fixed inset-0 z-[100] ${isOpen ? "block" : "hidden"}`}>
@@ -252,12 +236,7 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                   required
                 />
                 {/* // Main form submit button (Create Account/Sign In) */}
-                <Button
-                  type="submit"
-                  className="w-full"
-                  isLoading={isLoading}
-                  disabled={isLoading}
-                >
+                <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading
                     ? isLogin
                       ? "Signing In..."
@@ -270,7 +249,6 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                 <Button
                   type="submit"
                   className="w-full"
-                  isLoading={isLoading}
                   disabled={isLoading || otpCode.length !== 6}
                 >
                   {isLoading ? "Verifying..." : "Verify Email"}
@@ -338,7 +316,7 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
 
               <div className="mt-4 text-center">
                 <p className="text-sm text-gray-600 mb-2">
-                  Didn't receive the code?
+                  {"Didn't receive the code?"}
                 </p>
                 <button
                   onClick={handleResendOtp}

@@ -4,16 +4,15 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import Image from "next/image";
 import { CreditCard, Info, X } from "lucide-react";
 import { LiaUserFriendsSolid } from "react-icons/lia";
-import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
 
 import { ConfirmationModal } from "@/components/ui/ConfirmationModal";
 import { Button } from "@/components/ui/Button";
-import { useCart } from "@/context/CartContext";
+import { useCart } from "@/hooks/useCart";
 import { CouponHelper } from "@/lib/coupons";
 import { useAuth } from "@/contexts/AuthContext";
 import PayForMeDialog from "../checkout/PayForMeDialog";
-import { useVerifiedPromo } from "@/context/PadiCodeContext";
+import { useVerifiedPromo } from "@/hooks/useVerifiedPromo";
 
 interface CartItem {
   productId: string;
@@ -161,7 +160,7 @@ export default function OrderItems({
 
   // Create order and redirect to payment
   const handlePayment = useCallback(async () => {
-    const token = Cookies.get("token");
+    const token = getToken();
 
     if (cartItems.length === 0) {
       alert("Cart is empty");
@@ -483,7 +482,7 @@ export default function OrderItems({
                       checked={selectedPayment === option.id}
                       onChange={() => setSelectedPayment(option.id)}
                       aria-checked={selectedPayment === option.id}
-                      className="peer appearance-none w-3 h-3 rounded-full checked:bg-[#184193] border-none transition-colors ring-4 ring-gray-600 checked:ring-[#184193] outline-3 outline-white"
+                      className="peer appearance-none w-3 h-3 rounded-full checked:bg-[#E94B1C] border-none transition-colors ring-4 ring-gray-600 checked:ring-[#E94B1C] outline-3 outline-white"
                     />
                   </div>
                 </label>
@@ -495,7 +494,7 @@ export default function OrderItems({
                 onClick={handlePayment}
                 rounded={true}
                 disabled={cartItems.length === 0 || isLoading}
-                className={`w-full py-3 px-4 bg-[#184193] text-white rounded-full mt-4 ${
+                className={`w-full py-3 px-4 bg-[#E94B1C] text-white rounded-full mt-4 ${
                   isLoading || cartItems.length === 0
                     ? "opacity-50 cursor-not-allowed"
                     : ""

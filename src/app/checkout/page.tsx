@@ -7,8 +7,9 @@ import { ShippingAddressSection } from "@/components/checkout/ShippingAddressSec
 import { PickupSection } from "@/components/checkout/PickupSection";
 import { PaymentSection } from "@/components/checkout/PaymentSection";
 import { TopBanner } from "@/components/layout/TopBanner";
-import { Header } from "@/components/layout/Header";
 import { type Coupon } from "@/lib/coupons";
+import AppWapper from "@/app/AppWapper";
+import Header from "@/components/shared/Header";
 
 interface ApiResponse<T = any> {
   success: boolean;
@@ -43,6 +44,14 @@ interface Zone {
 }
 
 export default function CheckoutPage() {
+  return (
+    <AppWapper>
+      <CheckoutPageContent />
+    </AppWapper>
+  );
+}
+
+function CheckoutPageContent() {
   const router = useRouter();
   const [applyingCode, setapplyingCode] = useState<boolean>(false);
   const [fullTotal, setfullTotal] = useState<number>(0);
@@ -150,12 +159,12 @@ export default function CheckoutPage() {
   return (
     <>
       <TopBanner theme="dark" />
-      <Header />
-      <div className="container mx-auto px-4 py-8 ">
+      <Header isProductPage={false} showSearchbar={false} />
+      <div className="container mx-auto px-4 pb-8 ">
         <div className="container mx-auto px-4 md:py-2 max-w-3xl">
           <div className="flex justify-between mb-8">
             <div className="flex flex-col items-center">
-              <div className="w-8 h-8 bg-[#184193] rounded-full flex items-center justify-center text-white text-sm font-medium mb-2">
+              <div className="w-8 h-8 bg-[#E94B1C] rounded-full flex items-center justify-center text-white text-sm font-medium mb-2">
                 1
               </div>
               <span className="text-xs">Add Items</span>
@@ -163,7 +172,7 @@ export default function CheckoutPage() {
             <div className="flex flex-col items-center">
               <div
                 className={`w-8 h-8 ${
-                  currentStep >= 1 ? "bg-[#184193]" : "bg-gray-200"
+                  currentStep >= 1 ? "bg-[#E94B1C]" : "bg-gray-200"
                 } rounded-full flex items-center justify-center text-white text-sm font-medium mb-2`}
               >
                 2
@@ -173,7 +182,7 @@ export default function CheckoutPage() {
             <div className="flex flex-col items-center">
               <div
                 className={`w-8 h-8 ${
-                  currentStep >= 2 ? "bg-[#184193]" : "bg-gray-200"
+                  currentStep >= 2 ? "bg-[#E94B1C]" : "bg-gray-200"
                 } rounded-full flex items-center justify-center text-white text-sm font-medium mb-2`}
               >
                 3
@@ -183,7 +192,7 @@ export default function CheckoutPage() {
             <div className="flex flex-col items-center">
               <div
                 className={`w-8 h-8 ${
-                  currentStep >= 3 ? "bg-[#184193]" : "bg-gray-200"
+                  currentStep >= 3 ? "bg-[#E94B1C]" : "bg-gray-200"
                 } rounded-full flex items-center justify-center text-white text-sm font-medium mb-2`}
               >
                 4
@@ -241,15 +250,15 @@ export default function CheckoutPage() {
             {currentStep === 1 && (
               <Button
                 onClick={handleBack}
-                variant="secondary_outline"
-                className="w-full"
+                // variant="secondary_outline"
+                className="flex-1 bg-transparent text-[#E94B1C] hover:bg-gray-100 border border-[#E94B1C]"
               >
                 Go back
               </Button>
             )}
 
             {currentStep <= 2 && (
-              <div className="w-full">
+              <div className="flex-1">
                 <div
                   className={`${currentStep === 2 ? "mx-auto max-w-sm" : ""}`}
                 >

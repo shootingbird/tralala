@@ -28,10 +28,10 @@ const STAGES: OrderStatus[] = [
 ];
 
 const statusIcons = [
-  { Icon: PiNotebook, text: "Order Placed", activeColor: "text-[#184193]" },
-  { Icon: PiNotebook, text: "Processing", activeColor: "text-[#184193]" },
-  { Icon: PiTruckLight, text: "Shipped", activeColor: "text-[#184193]" },
-  { Icon: PiTruckLight, text: "Arrived", activeColor: "text-[#184193]" },
+  { Icon: PiNotebook, text: "Order Placed", activeColor: "text-[#E94B1C]" },
+  { Icon: PiNotebook, text: "Processing", activeColor: "text-[#E94B1C]" },
+  { Icon: PiTruckLight, text: "Shipped", activeColor: "text-[#E94B1C]" },
+  { Icon: PiTruckLight, text: "Arrived", activeColor: "text-[#E94B1C]" },
   { Icon: PiHandshakeLight, text: "Delivered", activeColor: "text-green-700" },
 ];
 
@@ -121,7 +121,7 @@ const OrderProgressBar: React.FC<OrderProgressProps> = ({
 
       {/* progress fill: transition-all lets the width animate smoothly */}
       <div
-        className="absolute top-1/2 left-0 h-[4px] bg-[#184193] -translate-y-1/2 transition-all duration-300 z-20"
+        className="absolute top-1/2 left-0 h-[4px] bg-[#E94B1C] -translate-y-1/2 transition-all duration-300 z-20"
         style={{ width: `${clampedPercent}%` }}
       />
 
@@ -134,9 +134,9 @@ const OrderProgressBar: React.FC<OrderProgressProps> = ({
           return (
             <div
               key={idx}
-              className={`w-5 h-5 md:w-7 md:h-7 rounded-full flex items-center justify-center border-2 border-[#184193] transition-colors duration-300 ${
+              className={`w-5 h-5 md:w-7 md:h-7 rounded-full flex items-center justify-center border-2 border-[#E94B1C] transition-colors duration-300 ${
                 isActive
-                  ? "bg-[#184193] scale-120 border-2 border-white"
+                  ? "bg-[#E94B1C] scale-120 border-2 border-white"
                   : "bg-white"
               } ${becomesActive ? "animate-bounce-once" : ""}`}
             >

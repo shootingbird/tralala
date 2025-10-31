@@ -7,8 +7,17 @@ import { Button } from "@/components/ui/Button";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import AppWapper from "@/app/AppWapper";
 
 export default function ForgotPasswordPage() {
+  return (
+    <AppWapper>
+      <ForgotPasswordPageContent />
+    </AppWapper>
+  );
+}
+
+function ForgotPasswordPageContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);

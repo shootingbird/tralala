@@ -1,16 +1,16 @@
 "use client";
 
-import React, { use, useEffect, useState, useMemo } from "react";
+import React, { use, useEffect, useState } from "react";
 import Image from "next/image";
-import { TopBanner } from "@/components/layout/TopBanner";
-import { Header } from "@/components/layout/Header";
-import { Footer } from "@/components/layout/Footer";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
-import { RatingModal } from "@/components/orders/RatingModal";
-import { Button } from "@/components/ui/Button";
 import { Plus } from "lucide-react";
-import Cookies from "js-cookie";
+import { Button } from "@/components/ui/Button";
+import { Footer } from "@/components/shared/Footer";
+import Header from "@/components/shared/Header";
+import AppWapper from "@/app/AppWapper";
+import { useAuth } from "@/contexts/AuthContext";
 import OrderProgressBar from "@/components/orders/OrderProgressBar";
+import { RatingModal } from "@/components/orders/RatingModal";
 
 // --- Types that match your API response ---
 
@@ -108,8 +108,17 @@ export default function OrderDetailsPage({
 }: {
   params: Promise<Params>;
 }) {
+  return (
+    <AppWapper>
+      <OrderDetailsContent params={params} />
+    </AppWapper>
+  );
+}
+
+function OrderDetailsContent({ params }: { params: Promise<Params> }) {
   // keep same semantics as original file
   const { id } = use(params) as Params;
+  const { getToken } = useAuth();
 
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
@@ -200,7 +209,7 @@ export default function OrderDetailsPage({
     const fetchOrder = async () => {
       try {
         setLoading(true);
-        const token = Cookies.get("token");
+        const token = getToken();
         if (!token) {
           setError("Authentication required");
           setLoading(false);
@@ -239,7 +248,7 @@ export default function OrderDetailsPage({
 
         setOrder(loadedOrder);
       } catch (err) {
-        if ((err as any).name === "AbortError") return;
+        if (err instanceof Error && err.name === "AbortError") return;
         setError(err instanceof Error ? err.message : "Failed to fetch order");
       } finally {
         setLoading(false);
@@ -259,7 +268,6 @@ export default function OrderDetailsPage({
   if (loading) {
     return (
       <>
-        <TopBanner theme="dark" />
         <Header />
         <main className="container mx-auto px-4 py-8">
           <Breadcrumb items={breadcrumbItems} className="mb-6" />
@@ -311,10 +319,8 @@ export default function OrderDetailsPage({
   const totalItems =
     order.items?.reduce((sum, item) => sum + (item.quantity || 0), 0) ?? 0;
 
-  console.log(order);
   return (
     <>
-      <TopBanner theme="dark" />
       <Header />
       <main className="container mx-auto md:px-4 py-8">
         <Breadcrumb items={breadcrumbItems} className="mb-6" />
@@ -326,11 +332,10 @@ export default function OrderDetailsPage({
               <Button
                 variant="outline"
                 onClick={() => setIsRatingModalOpen(true)}
-                className="text-[#184193] flex items-center gap-1"
-                rounded={true}
+                className="text-[#E94B1C] flex items-center gap-1"
               >
                 Leave a Rating
-                <Plus className="text-[#184193] w-5 h-5" />
+                <Plus className="text-[#E94B1C] w-5 h-5" />
               </Button>
             </div>
           </div>
@@ -346,7 +351,7 @@ export default function OrderDetailsPage({
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-[#184193] text-xl font-semibold">
+                <p className="text-[#E94B1C] text-xl font-semibold">
                   {formatCurrency(order.amounts?.total)}
                 </p>
               </div>

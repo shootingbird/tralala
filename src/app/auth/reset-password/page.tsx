@@ -7,8 +7,17 @@ import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import AppWapper from "@/app/AppWapper";
 
 export default function ResetPasswordPage() {
+  return (
+    <AppWapper>
+      <ResetPasswordPageContent />
+    </AppWapper>
+  );
+}
+
+function ResetPasswordPageContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [password, setPassword] = useState("");

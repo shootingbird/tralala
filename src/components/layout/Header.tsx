@@ -7,8 +7,8 @@ import { useRouter, usePathname } from "next/navigation";
 import { CartPanel } from "@/components/cart/CartPanel";
 import { useAuth } from "@/contexts/AuthContext";
 import { ChevronDown, LogOut, User, ShoppingBag, Heart } from "lucide-react";
-import { useWishlist } from "@/context/WishlistContext";
-import { useCart } from "@/context/CartContext";
+import { useCart } from "@/hooks/useCart";
+// import { useWishlist } from "@/context/WishlistContext";
 
 const navLinks = [
   { name: "Why Shop With Us", href: "/why-shop-with-us" },
@@ -87,7 +87,6 @@ export function HeaderComponent({
   const router = useRouter();
   const pathname = usePathname();
   const { user, logout } = useAuth();
-  const { wishlist } = useWishlist();
   const { cartItems } = useCart();
 
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -322,9 +321,9 @@ export function HeaderComponent({
                   aria-label="Wishlist"
                 >
                   <Heart size={20} strokeWidth={1.5} />
-                  <span className="absolute top-0 -right-2 border-2 border-white bg-[#184193] text-white text-[10px] rounded-full w-5 h-5 flex items-center justify-center">
+                  {/* <span className="absolute top-0 -right-2 border-2 border-white bg-[#184193] text-white text-[10px] rounded-full w-5 h-5 flex items-center justify-center">
                     {wishlist.length}
-                  </span>
+                  </span> */}
                 </Link>
               </div>
             </div>

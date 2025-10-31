@@ -2,13 +2,21 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
-import Cookies from "js-cookie";
 import { useAuth } from "@/contexts/AuthContext";
-import { useCart } from "@/context/CartContext";
+import { useCart } from "@/hooks/useCart";
+import AppWapper from "@/app/AppWapper";
 
 type Order = any; // replace with a proper order type when available
 
 export default function PaymentPage() {
+  return (
+    <AppWapper>
+      <PaymentPageContent />
+    </AppWapper>
+  );
+}
+
+function PaymentPageContent() {
   const router = useRouter();
   const { clearCart } = useCart();
   const { getToken } = useAuth();
@@ -39,7 +47,7 @@ export default function PaymentPage() {
       setLoadingOrder(true);
       setOrderError(null);
 
-      const token = Cookies.get("token");
+      const token = getToken();
       const headers: Record<string, string> = {
         "Content-Type": "application/json",
         ...(token ? { Authorization: `Bearer ${token}` } : {}),

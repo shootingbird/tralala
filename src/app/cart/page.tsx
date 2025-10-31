@@ -4,21 +4,23 @@ import { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Percent, X } from "lucide-react";
-import { TopBanner } from "@/components/layout/TopBanner";
-import { Header } from "@/components/layout/Header";
-import { Footer } from "@/components/layout/Footer";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { StarIcon } from "@/components/icons/ShopIcons";
-import { ConfirmationModal } from "@/components/ui/ConfirmationModal";
-import { Button } from "@/components/ui/Button";
-import { AuthModal } from "@/components/auth/AuthModal";
 import { useRouter } from "next/navigation";
-import { useCart } from "@/context/CartContext";
+import { useCart } from "@/hooks/useCart";
 import { CouponHelper, type Coupon } from "@/lib/coupons";
 import Cookies from "js-cookie";
-import { useVerifiedPromo } from "@/context/PadiCodeContext";
+import { useVerifiedPromo } from "@/hooks/useVerifiedPromo";
+import { ConfirmationModal } from "@/components/ui/ConfirmationModal";
+import { Button } from "@/components/ui/Button";
+import { Footer } from "@/components/shared/Footer";
+import Header from "@/components/shared/Header";
+import { useSelector } from "react-redux";
+import { RootState } from "@/lib/store/store";
+import { AuthModal } from "@/components/auth/AuthModal";
+import AppWapper from "@/app/AppWapper";
 
-interface ApiResponse<T = any> {
+interface ApiResponse<T = unknown> {
   success: boolean;
   message: string;
   data: T | null;
@@ -28,6 +30,14 @@ interface ApiResponse<T = any> {
 }
 
 export default function CartPage() {
+  return (
+    <AppWapper>
+      <CartPageContent />
+    </AppWapper>
+  );
+}
+
+function CartPageContent() {
   const router = useRouter();
   const { cartItems, updateQuantity, removeFromCart } = useCart();
   const { verifiedPromoCode, setVerifiedPromoCode } = useVerifiedPromo();
@@ -49,8 +59,7 @@ export default function CartPage() {
   );
   const [couponError, setCouponError] = useState("");
   const [availableCoupons, setAvailableCoupons] = useState<Coupon[]>([]);
-  const [isAuthenticated] = useState(false); // replace with real auth
-
+  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
   // Derived subtotal from cartItems
   const subtotal = useMemo(
     () => cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0),
@@ -129,12 +138,12 @@ export default function CartPage() {
 
   const handleRemoveConfirm = () => {
     if (itemToRemove) {
-      removeFromCart(itemToRemove);
+      removeFromCart(itemToRemove, undefined);
       setItemToRemove(null);
     }
   };
 
-  const handleAuthComplete = (isSuccessful?: boolean) => {
+  const handleAuthComplete = async (isSuccessful?: boolean) => {
     setShowAuthModal(false);
     if (isSuccessful || checkoutType === "guest") {
       router.push("/checkout");
@@ -197,7 +206,7 @@ export default function CartPage() {
         }
       );
 
-      const data: ApiResponse<any> = await response.json();
+      const data: ApiResponse<unknown> = await response.json();
 
       if (data.success && data.statusCode === 200) {
         setAppliedPadiCode(true);
@@ -220,22 +229,22 @@ export default function CartPage() {
     setItemToRemove(productId);
   };
 
+  console.log(isAuthenticated);
+
   const handleCheckout = () => {
     if (isAuthenticated) {
-      setShowAuthModal(true);
+      router.push("/checkout");
     } else {
       setCheckoutType(null);
       setShowAuthModal(true);
     }
   };
-
   return (
     <>
-      <TopBanner theme="dark" />
-      <Header />
-      <main className="container mx-auto px-4 py-8">
+      <Header isProductPage={true} />
+      <main className="container mx-auto px-4 md:py-8">
         <div className="bg-white rounded-xl px-2 pb-3 md:px-6">
-          <Breadcrumb items={breadcrumbItems} className="pb-0  md:py-0" />
+          <Breadcrumb items={breadcrumbItems} className="pb-0 md:py-0" />
           <h1 className="text-lg md:text-2xl font-semibold mt-2 md:mt-4">
             Shopping cart
           </h1>
@@ -288,7 +297,7 @@ export default function CartPage() {
 
               {cartItems.map((item) => (
                 <div
-                  key={item.productId}
+                  key={`${item.productId}-${item.variationId || "default"}`}
                   className="flex flex-col md:grid md:grid-cols-12 gap-4 py-4 items-start md:items-center border-t border-[#E0E5EB]"
                 >
                   <div className="flex gap-4 w-full md:w-auto md:col-span-5">
@@ -297,6 +306,7 @@ export default function CartPage() {
                         src={item.image}
                         alt={item.title}
                         fill
+                        unoptimized
                         className="object-cover rounded-lg"
                       />
                     </div>
@@ -438,8 +448,8 @@ export default function CartPage() {
                       onClick={() => applyPadiCoupon(promoCode)}
                       className={
                         applyingCode
-                          ? "px-4 bg-[#1E1E1E] text-white rounded-xl"
-                          : "px-4 bg-[#184193] text-white rounded-xl"
+                          ? "px-4 bg-[#81260a] text-white rounded-xl"
+                          : "px-4 bg-[#E94B1C] text-white rounded-xl"
                       }
                       disabled={applyingCode}
                     >
@@ -492,7 +502,7 @@ export default function CartPage() {
                 </div>
                 <Button
                   onClick={handleCheckout}
-                  className="w-full py-3 px-4 bg-[#184193] text-white rounded-xl mt-4"
+                  className="w-full py-3 px-4 bg-[#E94B1C] text-white rounded-xl mt-4"
                 >
                   Proceed to checkout
                 </Button>

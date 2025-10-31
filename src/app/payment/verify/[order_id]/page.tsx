@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Cookies from "js-cookie";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { useCart } from "@/context/CartContext";
+import { useCart } from "@/hooks/useCart";
 type AdminAuthResponse = {
   success: boolean;
   data: {

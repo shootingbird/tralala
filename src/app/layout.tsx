@@ -1,10 +1,7 @@
-import { AuthProvider } from "@/contexts/AuthContext";
 import "./globals.css";
 import { Inter, Montserrat } from "next/font/google";
 import { Suspense } from "react";
-import { WishlistProvider } from "@/context/WishlistContext";
-import { CartProvider } from "@/context/CartContext";
-import { VerifiedPromoProvider } from "@/context/PadiCodeContext";
+import AppWapper from "./AppWapper";
 
 const montserrat = Montserrat({
   weight: ["400", "500", "600", "700"],
@@ -62,13 +59,7 @@ export default function RootLayout({
       </head>
       <body className={`${montserrat.className}`}>
         <Suspense fallback={<div>Loading...</div>}>
-          <AuthProvider>
-            <CartProvider>
-              <WishlistProvider>
-                <VerifiedPromoProvider>{children}</VerifiedPromoProvider>
-              </WishlistProvider>
-            </CartProvider>
-          </AuthProvider>
+          <AppWapper>{children}</AppWapper>
         </Suspense>
       </body>
     </html>
