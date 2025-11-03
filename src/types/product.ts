@@ -50,6 +50,7 @@ export interface Pagination {
 export interface ProductsResponse {
   pagination: Pagination;
   products: Product[];
+  query_generated?: string; // For image-based searches
 }
 
 export interface SingleProductResponse {

@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "next dev",
     "dev:https": "local-ssl-proxy --key localhost-key.pem --cert localhost.pem --source 3001 --target 3000 & next dev",
     "build": "next build",
     "start": "next start",

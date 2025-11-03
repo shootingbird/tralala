@@ -4,15 +4,16 @@ import {
   CategoriesResponse,
   Category,
 } from "@/types/product";
-import { fetchBaseQuery } from "@reduxjs/toolkit/query";
 import { createApi } from "@reduxjs/toolkit/query/react";
 import { setCategories } from "../categoriesSlice";
+import { baseQueryWithReauth } from "@/lib/api/baseQuery";
 
 export interface ProductsQueryParams {
   has_discount?: boolean;
   has_images?: boolean;
   code?: string;
   q?: string; // Add search parameter
+  image_url?: string; // Add image URL for AI-based search
   created_after?: string;
   created_before?: string;
   updated_after?: string;
@@ -30,9 +31,7 @@ export interface ProductsQueryParams {
 
 export const productApiSlice = createApi({
   reducerPath: "productApi",
-  baseQuery: fetchBaseQuery({
-    baseUrl: process.env.NEXT_PUBLIC_API_URL,
-  }),
+  baseQuery: baseQueryWithReauth,
   endpoints: (builder) => ({
     getProducts: builder.query<ProductsResponse, ProductsQueryParams>({
       query: (params = {}) => {
@@ -87,7 +86,7 @@ export const productApiSlice = createApi({
       ProductsResponse,
       { productId: number; category: string; limit?: number }
     >({
-      query: ({ productId, category, limit = 4 }) => ({
+      query: ({ category, limit = 4 }) => ({
         url: "/api/products",
         params: {
           category,
@@ -105,6 +104,16 @@ export const productApiSlice = createApi({
         };
       },
     }),
+    uploadImage: builder.mutation<
+      { image: string },
+      { image: string; filename: string }
+    >({
+      query: (body) => ({
+        url: "/api/upload",
+        method: "POST",
+        body,
+      }),
+    }),
   }),
 });
 
@@ -114,4 +123,5 @@ export const {
   useGetCategoriesQuery,
   useGetExploreProductsQuery,
   useGetRelatedProductsQuery,
+  useUploadImageMutation,
 } = productApiSlice;

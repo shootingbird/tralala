@@ -4,9 +4,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import React, { useState, useRef, useEffect } from "react";
 import {
-  Search,
   User,
-  Heart,
   ShoppingBag,
   ChevronDown,
   LogOut,
@@ -15,8 +13,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useAppDispatch, useAppSelector } from "@/hooks/redux";
-import { useGetCategoriesQuery } from "@/slices/products/productApiSlice";
 import { selectCartItemCount } from "@/slices/cartSlice";
+import ImageSearchInput from "./ImageSearchInput";
 
 /* --- shadcn dropdown imports (assumes you have the components copied to "@/components/ui/*") --- */
 import {
@@ -40,19 +38,13 @@ export default function Header({
   showSearchbar?: boolean;
 }) {
   const router = useRouter();
-  const [query, setQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [selectedCategoryName, setSelectedCategoryName] = useState("All");
-  const [wishlistCount, setWishlistCount] = useState(3);
+  // const [wishlistCount, setWishlistCount] = useState(3);
   const [isClient, setIsClient] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const catRef = useRef<HTMLDivElement | null>(null);
   const { isAuthenticated } = useAppSelector((state) => state.auth);
   const categories = useAppSelector((state) => state.categories.categories);
   const cartCount = useAppSelector(selectCartItemCount);
-  const { isLoading } = useGetCategoriesQuery(undefined, {
-    skip: categories.length > 0,
-  });
   const dispatch = useAppDispatch();
 
   // Fix hydration mismatch by ensuring auth state is only rendered on client
@@ -70,14 +62,6 @@ export default function Header({
     document.addEventListener("mousedown", onDoc);
     return () => document.removeEventListener("mousedown", onDoc);
   }, []);
-
-  function onSearch(e?: React.FormEvent) {
-    e?.preventDefault();
-    const params = new URLSearchParams();
-    if (query) params.set("q", query);
-    if (selectedCategory) params.set("category", selectedCategory);
-    router.push(`/products?${params.toString()}`);
-  }
 
   function handleLogout() {
     try {
@@ -103,65 +87,11 @@ export default function Header({
         </Link>
 
         {/* central search */}
-        <form
-          onSubmit={onSearch}
-          className="hidden md:flex flex-1 items-center justify-center"
-          role="search"
-        >
+        <div className="hidden md:flex flex-1 items-center justify-center">
           <div className="w-full max-w-2xl">
-            <div className="flex items-center bg-white border border-gray-200 rounded-lg overflow-hidden">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button
-                    type="button"
-                    aria-label="Select category"
-                    className="px-4 py-3 bg-white hover:bg-gray-50 border-r border-gray-200 text-sm"
-                  >
-                    {selectedCategoryName}
-                    <ChevronDown size={16} className="ml-1" />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-48">
-                  <DropdownMenuItem
-                    onClick={() => {
-                      setSelectedCategory(null);
-                      setSelectedCategoryName("All Categories");
-                      onSearch();
-                    }}
-                  >
-                    All Categories
-                  </DropdownMenuItem>
-                  {categories.map((cat) => (
-                    <DropdownMenuItem
-                      key={cat.id}
-                      onClick={() => {
-                        setSelectedCategory(cat.id);
-                        setSelectedCategoryName(cat.name);
-                        onSearch();
-                      }}
-                    >
-                      {cat.name}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-              <input
-                aria-label="Search products"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                className="flex-1 px-4 py-3 text-sm placeholder-gray-400 outline-none"
-                placeholder="Search here ..."
-              />
-              <button
-                type="submit"
-                aria-label="Search"
-                className="px-4 py-3 bg-white hover:bg-gray-50 border-l border-gray-200"
-              >
-                <Search size={18} color="#99a1af" />
-              </button>
-            </div>
+            <ImageSearchInput className="w-full" />
           </div>
-        </form>
+        </div>
 
         {/* right icons */}
         <div className="flex items-center md:gap-4">
@@ -246,7 +176,7 @@ export default function Header({
             )}
           </div>
 
-          <div className="relative hidden md:block">
+          {/* <div className="relative hidden md:block">
             <button
               onClick={() => router.push("/wishlist")}
               aria-label="Wishlist"
@@ -259,71 +189,17 @@ export default function Header({
                 {wishlistCount}
               </span>
             )}
-          </div>
+          </div> */}
         </div>
       </div>
 
       {/* mobile search */}
       {showSearchbar ? (
-        <form
-          onSubmit={onSearch}
-          className="mx-4 -mt-4 mb-2 md:hidden flex flex-1 items-center justify-center"
-          role="search"
-        >
+        <div className="mx-4 -mt-4 mb-2 md:hidden flex flex-1 items-center justify-center">
           <div className="w-full max-w-2xl">
-            <div className="flex items-center bg-white border border-gray-200 rounded-2xl overflow-hidden">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button
-                    type="button"
-                    aria-label="Select category"
-                    className="px-3 py-2 bg-white hover:bg-gray-50 border-r border-gray-200 text-sm flex items-center"
-                  >
-                    {selectedCategoryName}
-                    <ChevronDown size={14} className="ml-1" />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-48">
-                  <DropdownMenuItem
-                    onClick={() => {
-                      setSelectedCategory(null);
-                      setSelectedCategoryName("All Categories");
-                      onSearch();
-                    }}
-                  >
-                    All Categories
-                  </DropdownMenuItem>
-                  {categories.map((cat) => (
-                    <DropdownMenuItem
-                      key={cat.id}
-                      onClick={() => {
-                        setSelectedCategory(cat.id);
-                        setSelectedCategoryName(cat.name);
-                        onSearch();
-                      }}
-                    >
-                      {cat.name}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-              <input
-                aria-label="Search products"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                className="flex-1 px-4 py-2 text-sm placeholder-gray-400 outline-none"
-                placeholder="Search here ..."
-              />
-              <button
-                type="submit"
-                aria-label="Search"
-                className="px-4 py-2 bg-white hover:bg-gray-50 border-l border-gray-200"
-              >
-                <Search size={18} color="#99a1af" />
-              </button>
-            </div>
+            <ImageSearchInput className="w-full" />
           </div>
-        </form>
+        </div>
       ) : null}
 
       {/* second row: nav categories */}

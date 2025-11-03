@@ -11,14 +11,12 @@ import {
   LoginResponse,
   ResendOtpResponse,
 } from "@/types/auth";
-import { fetchBaseQuery } from "@reduxjs/toolkit/query";
 import { createApi } from "@reduxjs/toolkit/query/react";
+import { baseQueryWithReauth } from "@/lib/api/baseQuery";
 
 export const authApiSlice = createApi({
   reducerPath: "authApi",
-  baseQuery: fetchBaseQuery({
-    baseUrl: process.env.NEXT_PUBLIC_API_URL,
-  }),
+  baseQuery: baseQueryWithReauth,
   endpoints: (builder) => ({
     signup: builder.mutation<AuthResponse<User>, SignupRequest>({
       query: (body) => ({

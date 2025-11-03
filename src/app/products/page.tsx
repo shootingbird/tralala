@@ -2,8 +2,6 @@
 
 import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import Link from "next/link";
-import Image from "next/image";
 import ProductGrid from "@/components/Products/ProductGrid";
 import ProductGridSkeleton from "@/components/Products/ProductGridSkeleton";
 import { useGetProductsQuery } from "@/slices/products/productApiSlice";
@@ -17,6 +15,7 @@ import FilterSidebar, {
   SortOption,
   FilterOptions,
 } from "@/components/Products/FilterSidebar";
+import CategoryCarousel from "@/components/sections/CategoryCarousel";
 import AppWapper from "@/app/AppWapper";
 
 function ProductsPageContent() {
@@ -51,6 +50,7 @@ function ProductsPageContent() {
   const updated_after = searchParams.get("updated_after");
   const updated_before = searchParams.get("updated_before");
   const per_page = searchParams.get("per_page");
+  const image_url = searchParams.get("image_url");
 
   if (q) params.q = q;
   if (cat) params.category = cat;
@@ -64,6 +64,7 @@ function ProductsPageContent() {
   if (updated_after) params.updated_after = updated_after;
   if (updated_before) params.updated_before = updated_before;
   if (per_page) params.per_page = parseInt(per_page);
+  if (image_url) params.image_url = image_url;
 
   // Add page and per_page for infinite scroll
   params.page = page;
@@ -123,20 +124,55 @@ function ProductsPageContent() {
     );
   }
 
+  const imageUrlParam = searchParams.get("image_url");
+
   if (isError) {
+    const errorMessage =
+      "message" in error ? error.message : "Failed to load products";
+    const isImageError =
+      imageUrlParam &&
+      (errorMessage?.includes("image") || errorMessage?.includes("Gemini"));
+
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-red-600 text-lg">
-            Error:{" "}
-            {"message" in error ? error.message : "Failed to load products"}
+        <div className="text-center max-w-md">
+          <div className="mb-4">
+            {isImageError ? (
+              <div className="text-6xl mb-4">🖼️</div>
+            ) : (
+              <div className="text-6xl mb-4">⚠️</div>
+            )}
+          </div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+            {isImageError ? "Image Search Failed" : "Search Error"}
+          </h2>
+          <p className="text-red-600 text-lg mb-4">
+            {isImageError
+              ? "Failed to identify item from image. Please try a different image or use text search instead."
+              : errorMessage}
           </p>
-          <button
-            onClick={() => window.location.reload()}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-          >
-            Try Again
-          </button>
+          {isImageError && (
+            <p className="text-gray-600 mb-4">
+              Make sure the image is publicly accessible and contains a clear,
+              recognizable object.
+            </p>
+          )}
+          <div className="space-x-2">
+            <button
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              Try Again
+            </button>
+            {isImageError && (
+              <button
+                onClick={() => window.history.back()}
+                className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+              >
+                Go Back
+              </button>
+            )}
+          </div>
         </div>
       </div>
     );
@@ -147,8 +183,15 @@ function ProductsPageContent() {
   const searchQuery = searchParams.get("q");
 
   let title = "Products";
+  let subtitle = null;
+
   if (searchQuery) {
     title = `Search results for "${searchQuery}"`;
+  } else if (imageUrlParam) {
+    title = "Image Search Results";
+    if (data?.query_generated) {
+      subtitle = `Identified as: ${data.query_generated}`;
+    }
   } else if (categoryId) {
     const category = categories.find((cat) => cat.id === categoryId);
     title = category ? category.name : categoryId;
@@ -171,40 +214,26 @@ function ProductsPageContent() {
       <div className="max-w-7xl mx-auto px-4 pt-4 pb-8">
         <p className="text-lg font-medium ">Shop by Categories</p>
 
-        <nav className="hidden md:block bg-white overflow-x-auto no-scrollbar relative z-[10] px-6">
-          <div className="px-6 relative min-h-20">
-            <ul className="absolute top-0 left-4 right-4 md:relative flex justify-start items-center gap-2 md:gap-6 py-3 text-sm text-gray-700">
-              {categories.map((cat) => (
-                <li key={cat.id} className="list-none relative rounded-3xl">
-                  <Link
-                    href={`/products?category=${cat.id}`}
-                    className="px-4 py-3 rounded-md whitespace-nowrap hover:bg-gray-50 hover:text-gray-900 transition-colors"
-                  >
-                    <div className="relative w-40 h-30">
-                      <Image
-                        src={cat.image_url}
-                        alt={cat.description}
-                        fill
-                        unoptimized
-                        className="rounded-full"
-                      />
-                    </div>
-
-                    <p className="text-center mt-2">{cat?.name}</p>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </nav>
+        <CategoryCarousel categories={categories} />
         <div className="mb-6 flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 capitalize">
               {title.replace(/-/g, " ")}
             </h1>
+            {subtitle && (
+              <p className="text-blue-600 mt-1 text-lg font-medium">
+                {subtitle}
+              </p>
+            )}
             <p className="text-gray-600 mt-2">
-              {displayProducts.length} product
-              {displayProducts.length !== 1 ? "s" : ""} found
+              {isLoading && page === 1 ? (
+                <span className="animate-pulse">Loading products...</span>
+              ) : (
+                <>
+                  {displayProducts.length} product
+                  {displayProducts.length !== 1 ? "s" : ""} found
+                </>
+              )}
             </p>
           </div>
           <button
