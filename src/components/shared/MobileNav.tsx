@@ -174,7 +174,7 @@ export default function MobileNav() {
   return (
     <nav
       aria-label="Primary"
-      className="fixed md:hidden bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 h-18 px-4"
+      className="fixed md:hidden bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 px-4"
     >
       <div className=" py-3">
         <div className="flex items-center justify-between">

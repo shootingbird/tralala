@@ -363,56 +363,6 @@ function MobileProfileContent() {
         {/* bottom spacing to allow for fixed nav */}
         <div style={{ height: 80 }} />
       </div>
-
-      {/* Bottom navigation (fixed) */}
-      <div className="fixed bottom-0 left-0 right-0 flex justify-center">
-        <div
-          className="w-full max-w-[390px] mx-auto"
-          style={{ backgroundColor: tokens.theme.background_color }}
-        >
-          <div
-            className="flex justify-between items-center px-6 py-3 border-t"
-            style={{
-              borderTop: `1px solid ${tokens.theme.divider_color}`,
-              height: 64,
-            }}
-          >
-            <div className="flex flex-col items-center text-[12px]">
-              <IconHome active={true} />
-              <div
-                className="mt-1 text-[12px]"
-                style={{ color: tokens.theme.icon_color_active }}
-              >
-                Home
-              </div>
-            </div>
-
-            <div
-              className="flex flex-col items-center text-[12px]"
-              style={{ color: tokens.theme.icon_color_inactive }}
-            >
-              <IconShop color={tokens.theme.icon_color_inactive} />
-              <div className="mt-1 text-[12px]">Shop</div>
-            </div>
-
-            <div
-              className="flex flex-col items-center text-[12px]"
-              style={{ color: tokens.theme.icon_color_inactive }}
-            >
-              <IconSearch color={tokens.theme.icon_color_inactive} />
-              <div className="mt-1 text-[12px]">Search</div>
-            </div>
-
-            <div
-              className="flex flex-col items-center text-[12px]"
-              style={{ color: tokens.theme.icon_color_inactive }}
-            >
-              <IconProfile color={tokens.theme.icon_color_inactive} />
-              <div className="mt-1 text-[12px]">Profile</div>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

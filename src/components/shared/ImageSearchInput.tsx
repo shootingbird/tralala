@@ -104,7 +104,7 @@ export default function ImageSearchInput({
 
   return (
     <form onSubmit={handleSearch} className={`relative ${className}`}>
-      <div className="flex items-center bg-white border border-gray-200 rounded-lg overflow-hidden">
+      <div className="flex items-center bg-white border border-gray-500 rounded-lg overflow-hidden">
         {/* Image Preview */}
         {previewImage && (
           <div className="relative ml-2">
@@ -144,7 +144,7 @@ export default function ImageSearchInput({
           {isUploading ? (
             <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
           ) : (
-            <Camera size={16} className="text-gray-600" />
+            <Camera size={16} className="text-[#E94B1C]" />
           )}
         </button>
 
@@ -154,7 +154,7 @@ export default function ImageSearchInput({
           disabled={!query.trim() && !uploadedImageUrl}
           className="px-4 py-3 bg-white hover:bg-gray-50 border-l border-gray-200 disabled:opacity-50"
         >
-          <Search size={18} className="text-gray-600" />
+          <Search size={18} className="text-[#E94B1C]" />
         </button>
       </div>
 

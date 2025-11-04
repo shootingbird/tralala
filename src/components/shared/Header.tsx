@@ -10,8 +10,10 @@ import {
   LogOut,
   UserCheck,
   ClipboardList,
+  ArrowLeft,
 } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/hooks/redux";
 import { selectCartItemCount } from "@/slices/cartSlice";
 import ImageSearchInput from "./ImageSearchInput";
@@ -38,6 +40,8 @@ export default function Header({
   showSearchbar?: boolean;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
+  const isHomePage = pathname === "/";
   // const [wishlistCount, setWishlistCount] = useState(3);
   const [isClient, setIsClient] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -75,16 +79,27 @@ export default function Header({
     <header className="w-full bg-white">
       {/* Top row: logo, search, icons */}
       <div className="px-4 md:px-12 py-4 flex items-center justify-between gap-6 ">
-        <Link href={"/"} className="flex items-center w-48">
-          <Image
-            src="/logo-transparent.png"
-            alt="Steadfast"
-            width={200}
-            height={50}
-            priority
-            className="object-contain w-25 h-8 md:w-50 md:h-13"
-          />
-        </Link>
+        {isHomePage ? (
+          <Link href={"/"} className="flex items-center w-48">
+            <Image
+              src="/logo-transparent.png"
+              alt="Steadfast"
+              width={200}
+              height={50}
+              priority
+              className="object-contain w-25 h-8 md:w-50 md:h-13"
+            />
+          </Link>
+        ) : (
+          <button
+            onClick={() => router.back()}
+            className="flex items-center gap-2 text-gray-700 hover:text-gray-900"
+            aria-label="Go back"
+          >
+            <ArrowLeft size={20} />
+            <span className="hidden md:inline">Back</span>
+          </button>
+        )}
 
         {/* central search */}
         <div className="hidden md:flex flex-1 items-center justify-center">
