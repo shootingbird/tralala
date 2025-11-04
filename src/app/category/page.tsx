@@ -114,7 +114,7 @@ export default function Page() {
                           No subcategories.
                         </div>
                       ) : (
-                        <ul className="space-y-2 flex-1 flex items-start gap-2 flex-wrap">
+                        <ul className="flex-1 flex items-start gap-2 flex-wrap">
                           {cat.subcategories.map((s) => (
                             <li
                               key={s.id}
@@ -122,7 +122,7 @@ export default function Page() {
                             >
                               <Link
                                 href={`/products?subcat=${s.id}`}
-                                className="inline-flex items-center justify-center gap-2 px-4 py-2 min-w-10 bg-white border rounded-md shadow-sm hover:shadow-md transition text-sm text-[#21164a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-200"
+                                className="inline-flex items-center justify-center gap-2 px-4 py-1 min-w-10 bg-white border rounded-md shadow-sm hover:shadow-md transition text-sm text-[#21164a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-200"
                               >
                                 {s.name}
                               </Link>

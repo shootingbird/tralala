@@ -57,17 +57,17 @@ export const PickupSection = ({
     duration: string;
     pickups: string[];
   } | null>(null);
-  console.log(deliveryInfo);
 
   const [currentZone, setCurrentZone] = useState<ApiZone | null>(null);
   const [selectedPickupPoint, setSelectedPickupPoint] =
     useState<PickupOption | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [zones, setZones] = useState<ApiZone[]>([]);
 
   const isLagos = selectedState?.toUpperCase() === "LAGOS";
 
-  // Fetch zone details using zone_id if available, otherwise use state query
+  // Fetch zone details using selectedZone if available, otherwise use state query
   useEffect(() => {
     const controller = new AbortController();
 
@@ -83,49 +83,39 @@ export const PickupSection = ({
       setLoading(true);
       setError(null);
 
-      // Check if API URL is defined
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-      if (!apiUrl) {
-        console.error(
-          "NEXT_PUBLIC_API_URL is not defined in environment variables"
-        );
-        setError("API configuration error. Please contact support.");
-        setLoading(false);
-        return;
-      }
-
       try {
-        let url: string;
-
-        if (selectedZone?.id) {
-          // Use zone_id endpoint if we have a selected zone
-          url = `${apiUrl}/api/delivery/zones/${selectedZone.id}`;
-          console.log("Fetching zone details from:", url);
-        } else {
-          // Use new zones endpoint with state parameter
-          url = `${apiUrl}/api/delivery/zones?state=${encodeURIComponent(
-            selectedState
-          )}&active=1&page=1&per_page=20`;
-          console.log("Fetching delivery info from:", url);
-        }
-
-        const res = await fetch(url, { signal: controller.signal });
-        console.log("Fetch response status:", res.status);
-
-        if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-
-        const data = await res.json();
-        console.log("API response data:", data);
-
         let zones: ApiZone[];
 
-        if (selectedZone?.id) {
-          // Response format: { "zone": {...} }
-          zones = [data.zone];
+        if (selectedZone) {
+          // Use the selectedZone directly (already fetched in ShippingAddressSection)
+          zones = [selectedZone];
         } else {
+          // Check if API URL is defined
+          const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+          if (!apiUrl) {
+            console.error(
+              "NEXT_PUBLIC_API_URL is not defined in environment variables"
+            );
+            setError("API configuration error. Please contact support.");
+            setLoading(false);
+            return;
+          }
+
+          // Use new zones endpoint with state parameter
+          const url = `${apiUrl}/api/delivery/zones?state=${encodeURIComponent(
+            selectedState
+          )}&active=1&page=1&per_page=20`;
+
+          const res = await fetch(url, { signal: controller.signal });
+
+          if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+
+          const data = await res.json();
+
           // Response format: { "zones": [...] }
           if (data?.zones?.length > 0) {
             zones = data.zones;
+            setZones(zones);
           } else {
             throw new Error(
               "No delivery info available for the selected state."
@@ -142,22 +132,20 @@ export const PickupSection = ({
           .flat()
           .filter((point): point is string => typeof point === "string");
 
-        // Use the first zone for fee and duration
-        const firstZone = zones[0];
+        // Use the selectedZone if available, otherwise the first zone
+        const zoneToUse = selectedZone || zones[0];
         const normalized = {
-          fee: String(firstZone.fee ?? 0),
-          duration: firstZone.duration ?? "",
+          fee: String(zoneToUse.fee ?? 0),
+          duration: zoneToUse.duration ?? "",
           pickups: pickupPoints,
         };
 
-        console.log("Normalized delivery info:", normalized);
-
         // store both normalized values for the UI and the full zones for parent
         setDeliveryInfo(normalized);
-        setCurrentZone(firstZone);
+        setCurrentZone(zoneToUse);
 
         // Notify parent with full zone immediately (so they have access)
-        onDeliveryInfoChange(firstZone);
+        onDeliveryInfoChange(zoneToUse);
 
         // Auto-select if only one pickup option
         if (normalized.pickups.length === 1) {
@@ -170,7 +158,7 @@ export const PickupSection = ({
             pickup: autoPickup,
             fee: normalized.fee,
             duration: normalized.duration,
-            zone: firstZone,
+            zone: zoneToUse,
           });
         } else {
           // Clear previous pickup selection while we may restore from storage next
@@ -179,7 +167,7 @@ export const PickupSection = ({
             pickup: null,
             fee: normalized.fee,
             duration: normalized.duration,
-            zone: firstZone,
+            zone: zoneToUse,
           });
         }
       } catch (err: unknown) {
@@ -202,8 +190,6 @@ export const PickupSection = ({
   }, [selectedZone, selectedState]);
 
   // Removed Lagos special handling
-
-  console.log(deliveryInfo);
 
   // Restore saved pickup from localStorage once deliveryInfo/currentZone available
   useEffect(() => {
@@ -282,17 +268,26 @@ export const PickupSection = ({
 
   // When user picks from dropdown, include the full zone in onPickupSelect and update parent delivery info
   const handlePickupChange = (value: PickupOption | null) => {
+    console.log(value);
     setSelectedPickupPoint(value);
     if (value) {
       persistPickup(value);
+      // Find the zone that contains this pickup point
+      const selectedZoneForPickup =
+        zones.find(
+          (zone) =>
+            zone.pickup_point === value.value ||
+            (zone.pickups && zone.pickups.includes(value.value))
+        ) || currentZone;
+
       onPickupSelect({
         pickup: value,
-        fee: deliveryInfo?.fee || "0",
-        duration: deliveryInfo?.duration || "",
-        zone: currentZone ?? null,
+        fee: String(selectedZoneForPickup?.fee ?? 0),
+        duration: selectedZoneForPickup?.duration ?? "",
+        zone: selectedZoneForPickup ?? null,
       });
       // ensure parent has the full zone object (requested)
-      onDeliveryInfoChange(currentZone);
+      onDeliveryInfoChange(selectedZoneForPickup);
     } else {
       persistPickup(null);
       onPickupSelect({

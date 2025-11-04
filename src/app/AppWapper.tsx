@@ -8,7 +8,13 @@ import { ToastProvider } from "@/components/ui/toast";
 import { AuthProvider } from "@/contexts/AuthContext";
 import MobileNav from "@/components/shared/MobileNav";
 
-const AppWapper = ({ children }: { children: React.ReactNode }) => {
+const AppWapper = ({
+  children,
+  host = "",
+}: {
+  children: React.ReactNode;
+  host: string;
+}) => {
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
@@ -24,7 +30,6 @@ const AppWapper = ({ children }: { children: React.ReactNode }) => {
       </Provider>
     );
   }
-
   return (
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
@@ -33,7 +38,9 @@ const AppWapper = ({ children }: { children: React.ReactNode }) => {
             {children}
             <div className="w-full h-20" />
 
-            <MobileNav />
+            {host === "steadfast.ng" || host === "localhost" ? (
+              <MobileNav />
+            ) : null}
           </ToastProvider>
         </AuthProvider>
       </PersistGate>

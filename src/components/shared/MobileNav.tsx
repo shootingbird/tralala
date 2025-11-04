@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { Button } from "@/components/ui/Button"; // Adjust if your shadcn path differs
 import { ShoppingCartIcon } from "lucide-react";
 import { useAppSelector } from "@/hooks/redux";
@@ -28,10 +28,14 @@ function HomeIcon({ active }: { active?: boolean }) {
         opacity="0.4"
         d="M20.04 6.81969L14.28 2.78969C12.71 1.68969 10.3 1.74969 8.78999 2.91969L3.77999 6.82969C2.77999 7.60969 1.98999 9.20969 1.98999 10.4697V17.3697C1.98999 19.9197 4.05999 21.9997 6.60999 21.9997H17.39C19.94 21.9997 22.01 19.9297 22.01 17.3797V10.5997C22.01 9.24969 21.14 7.58969 20.04 6.81969Z"
         fill={active ? "#E94B1C" : INACTIVE_COLOR}
+        stroke={active ? "#E94B1C" : "none"}
+        strokeWidth={active ? 0.5 : 0}
       />
       <path
         d="M12 18.75C11.59 18.75 11.25 18.41 11.25 18V15C11.25 14.59 11.59 14.25 12 14.25C12.41 14.25 12.75 14.59 12.75 15V18C12.75 18.41 12.41 18.75 12 18.75Z"
         fill={active ? "#E94B1C" : INACTIVE_COLOR}
+        stroke={active ? "#E94B1C" : "none"}
+        strokeWidth={active ? 0.5 : 0}
       />
     </svg>
   );
@@ -43,7 +47,7 @@ function BagIcon({ active }: { active?: boolean }) {
       <path
         d="M6 7H18L17 20H7L6 7Z"
         stroke={active ? ACTIVE_COLOR : INACTIVE_COLOR}
-        strokeWidth="1.6"
+        strokeWidth={active ? 2 : 1.6}
         strokeLinecap="round"
         strokeLinejoin="round"
         fill="none"
@@ -51,33 +55,10 @@ function BagIcon({ active }: { active?: boolean }) {
       <path
         d="M9 7V6a3 3 0 016 0v1"
         stroke={active ? ACTIVE_COLOR : INACTIVE_COLOR}
-        strokeWidth="1.6"
+        strokeWidth={active ? 2 : 1.6}
         strokeLinecap="round"
         strokeLinejoin="round"
         fill="none"
-      />
-    </svg>
-  );
-}
-
-function SearchIcon({ active }: { active?: boolean }) {
-  return (
-    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" aria-hidden>
-      <circle
-        cx="11"
-        cy="11"
-        r="5"
-        stroke={active ? ACTIVE_COLOR : INACTIVE_COLOR}
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M21 21L16.65 16.65"
-        stroke={active ? ACTIVE_COLOR : INACTIVE_COLOR}
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
       />
     </svg>
   );
@@ -89,7 +70,7 @@ function UserIcon({ active }: { active?: boolean }) {
       <path
         d="M12 12a4 4 0 100-8 4 4 0 000 8z"
         stroke={active ? ACTIVE_COLOR : INACTIVE_COLOR}
-        strokeWidth="1.6"
+        strokeWidth={active ? 2 : 1.6}
         strokeLinecap="round"
         strokeLinejoin="round"
         fill="none"
@@ -97,7 +78,7 @@ function UserIcon({ active }: { active?: boolean }) {
       <path
         d="M4 20c0-3.333 3.333-6 8-6s8 2.667 8 6"
         stroke={active ? ACTIVE_COLOR : INACTIVE_COLOR}
-        strokeWidth="1.6"
+        strokeWidth={active ? 2 : 1.6}
         strokeLinecap="round"
         strokeLinejoin="round"
         fill="none"
@@ -149,17 +130,31 @@ function NavItem({
   );
 }
 
+const getActiveTab = (pathname: string): TabKey => {
+  if (pathname === "/") return "home";
+  if (pathname === "/category") return "category";
+  if (pathname === "/cart") return "cart";
+  if (pathname === "/account" || pathname === "/auth/login") return "account";
+  return "home"; // default
+};
+
 export default function MobileNav() {
   const [active, setActive] = useState<TabKey>("home");
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
   const { isAuthenticated } = useAppSelector((state) => state.auth);
   const cartCount = useAppSelector(selectCartItemCount);
 
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  useEffect(() => {
+    const currentTab = getActiveTab(pathname);
+    setActive(currentTab);
+  }, [pathname]);
 
   const handleClick = (id: TabKey) => {
     setActive(id);
@@ -181,7 +176,7 @@ export default function MobileNav() {
       aria-label="Primary"
       className="fixed md:hidden bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 h-18 px-4"
     >
-      <div className=" mx-auto px-4 py-3">
+      <div className=" py-3">
         <div className="flex items-center justify-between">
           <NavItem
             id="home"
@@ -210,7 +205,11 @@ export default function MobileNav() {
             onClick={handleClick}
           >
             <div className="relative">
-              <ShoppingCartIcon size={24} />
+              <ShoppingCartIcon
+                size={24}
+                color={active === "cart" ? ACTIVE_COLOR : INACTIVE_COLOR}
+                strokeWidth={active === "cart" ? 2.5 : 1.5}
+              />
               {isClient && cartCount > 0 && (
                 <span className="absolute -top-1 -right-2.5 bg-[#E94B1C] text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center">
                   {cartCount}

@@ -2,6 +2,7 @@ import "./globals.css";
 import { Inter, Montserrat } from "next/font/google";
 import { Suspense } from "react";
 import AppWapper from "./AppWapper";
+import { headers } from "next/headers";
 
 const montserrat = Montserrat({
   weight: ["400", "500", "600", "700"],
@@ -49,6 +50,8 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const host = headers().get("host")?.split(":")[0].toLowerCase();
+  console.log("Host in layout:", host);
   return (
     <html lang="en" className={`${inter.variable} ${montserrat.variable}`}>
       <head>
@@ -59,7 +62,7 @@ export default function RootLayout({
       </head>
       <body className={`${montserrat.className}`}>
         <Suspense fallback={<div>Loading...</div>}>
-          <AppWapper>{children}</AppWapper>
+          <AppWapper host={host}>{children}</AppWapper>
         </Suspense>
       </body>
     </html>
