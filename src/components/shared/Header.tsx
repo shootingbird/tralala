@@ -94,7 +94,7 @@ export default function Header({
         </div>
 
         {/* right icons */}
-        <div className="flex items-center md:gap-4">
+        <div className="hidden md:flex items-center md:gap-4">
           {/* ---------- USER: when authenticated show shadcn dropdown (desktop + mobile) ---------- */}
           {isClient && (
             <>
