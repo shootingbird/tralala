@@ -315,6 +315,7 @@ function ProductDetailPageContent() {
         <div className="flex flex-col md:flex-row md:gap-8 mt-8">
           <ProductImageGallery
             image_urls={product.image_urls}
+            videos={product.videos || []}
             name={product.name}
             title={product.title || product.name}
           />

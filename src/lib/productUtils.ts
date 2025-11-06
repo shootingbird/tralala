@@ -95,6 +95,7 @@ export const normalizeProduct = (raw: ApiProduct): NormalizedProduct => {
     image: (raw.image_urls?.[0] || raw.images?.[0]) ?? "",
     images: raw.image_urls ?? raw.images ?? [],
     image_urls: raw.image_urls ?? raw.images ?? [],
+    videos: (raw as any).videos ?? [],
     dateCreated: raw.created_at,
     dateUpdated: raw.updated_at,
     stock: Number(raw.stock_quantity ?? 0),

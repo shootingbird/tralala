@@ -18,6 +18,7 @@ export interface Product {
   highlights: string[];
   images: string[];
   image_urls?: string[]; // for single product
+  videos?: string[];
   is_variable_product: boolean;
   price: number;
   productId: number;
@@ -110,6 +111,7 @@ export interface NormalizedProduct {
   image: string;
   images: string[];
   image_urls: string[];
+  videos?: string[];
   isNew?: boolean;
   dateCreated: string;
   dateUpdated: string;

@@ -1,7 +1,7 @@
 "use client";
-
+import { HiOutlineCamera } from "react-icons/hi2";
 import React, { useState, useRef } from "react";
-import { Camera, Search, X } from "lucide-react";
+import { X } from "lucide-react";
 import { useUploadImageMutation } from "@/slices/products/productApiSlice";
 import { useRouter } from "next/navigation";
 
@@ -104,7 +104,7 @@ export default function ImageSearchInput({
 
   return (
     <form onSubmit={handleSearch} className={`relative ${className}`}>
-      <div className="flex items-center bg-white border border-gray-500 rounded-lg overflow-hidden">
+      <div className="flex items-center bg-white border-2 border-gray-700 rounded-full overflow-hidden h-10 md:h-12">
         {/* Image Preview */}
         {previewImage && (
           <div className="relative ml-2">
@@ -138,24 +138,26 @@ export default function ImageSearchInput({
           type="button"
           onClick={() => fileInputRef.current?.click()}
           disabled={isUploading}
-          className="px-3 py-3 bg-gray-50 hover:bg-gray-100 border-l border-gray-200 disabled:opacity-50"
+          className="px-3  disabled:opacity-50"
           title="Upload image"
         >
           {isUploading ? (
             <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
           ) : (
-            <Camera size={16} className="text-[#E94B1C]" />
+            <HiOutlineCamera size={30} className="text-gray-700 font-thin" />
           )}
         </button>
 
         {/* Search Button */}
-        <button
-          type="submit"
-          disabled={!query.trim() && !uploadedImageUrl}
-          className="px-4 py-3 bg-white hover:bg-gray-50 border-l border-gray-200 disabled:opacity-50"
-        >
-          <Search size={18} className="text-[#E94B1C]" />
-        </button>
+        <div className="h-full flex items-center mb:pt-1">
+          <button
+            type="submit"
+            disabled={!query.trim() && !uploadedImageUrl}
+            className="h-[90%] px-5 md:mt-[2px] mr-0.5 bg-gradient-to-r from-[#f2683d] to-[#E94B11] hover:bg-gray-50 border-l border-gray-200 disabled:opacity-50 text-white font-medium rounded-full"
+          >
+            GO
+          </button>
+        </div>
       </div>
 
       {/* Hidden File Input */}
@@ -166,13 +168,6 @@ export default function ImageSearchInput({
         onChange={handleFileSelect}
         className="hidden"
       />
-
-      {/* Upload Status */}
-      {isUploading && (
-        <div className="absolute top-full mt-1 text-sm text-gray-600">
-          Uploading image...
-        </div>
-      )}
     </form>
   );
 }

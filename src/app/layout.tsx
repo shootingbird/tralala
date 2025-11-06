@@ -45,12 +45,12 @@ export const viewport = {
   userScalable: "no",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const host = headers().get("host")?.split(":")[0].toLowerCase();
+  const host = (await headers()).get("host")?.split(":")[0].toLowerCase() || "";
   console.log("Host in layout:", host);
   return (
     <html lang="en" className={`${inter.variable} ${montserrat.variable}`}>

@@ -78,7 +78,7 @@ export default function Header({
   return (
     <header className="w-full bg-white">
       {/* Top row: logo, search, icons */}
-      <div className="px-4 md:px-12 py-4 flex items-center justify-between gap-6 ">
+      <div className="px-4 md:px-12 pb-4 pt-1 md:pt-4 flex items-center justify-between gap-6 ">
         {isHomePage ? (
           <Link href={"/"} className="flex items-center w-48">
             <Image
@@ -207,7 +207,6 @@ export default function Header({
           </div> */}
         </div>
       </div>
-
       {/* mobile search */}
       {showSearchbar ? (
         <div className="mx-4 -mt-4 mb-2 md:hidden flex flex-1 items-center justify-center">
@@ -216,7 +215,6 @@ export default function Header({
           </div>
         </div>
       ) : null}
-
       {/* second row: nav categories */}
       {isProductPage ? null : (
         <nav className="hidden md:block bg-white overflow-x-auto no-scrollbar -mt-2 relative z-[10]">
@@ -251,7 +249,6 @@ export default function Header({
           </div>
         </nav>
       )}
-
       <CartPanel isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
     </header>
   );
