@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useEffect, useMemo, useCallback } from "react";
+import { useRef, useState } from "react";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight, Play } from "lucide-react";
 
@@ -17,36 +17,23 @@ export function ProductImageGallery({
   name,
   title,
 }: ProductImageGalleryProps) {
-  const media = useMemo(
-    (): Array<{ type: "image" | "video"; url: string }> => [
-      ...(image_urls || []).map((u) => ({ type: "image" as const, url: u })),
-      ...(Array.isArray(videos) ? videos : []).map((u) => ({
-        type: "video" as const,
-        url: u,
-      })),
-    ],
-    [image_urls, videos]
-  );
+  const media: Array<{ type: "image" | "video"; url: string }> = [
+    ...(image_urls || []).map((u) => ({ type: "image" as const, url: u })),
+    ...(Array.isArray(videos) ? videos : []).map((u) => ({
+      type: "video" as const,
+      url: u,
+    })),
+  ];
 
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [thumbnailLoading, setThumbnailLoading] = useState<boolean[]>([]);
   const mediaRefs = useRef<Array<HTMLVideoElement | HTMLIFrameElement | null>>(
     []
   );
 
-  const isYouTube = useCallback(
-    (url: string) => /youtu\.be|youtube\.com/.test(url.toLowerCase()),
-    []
-  );
+  const isYouTube = (url: string) =>
+    /youtu\.be|youtube\.com/.test(url.toLowerCase());
 
-  useEffect(() => {
-    const initialLoading = media.map(
-      (item) => !(item.type === "video" && !isYouTube(item.url))
-    );
-    setThumbnailLoading(initialLoading);
-  }, [media.length]);
-
-  const getYouTubeId = useCallback((url: string): string | null => {
+  const getYouTubeId = (url: string): string | null => {
     try {
       const u = new URL(url);
       // shorts
@@ -69,30 +56,24 @@ export function ProductImageGallery({
     } catch {
       return null;
     }
-  }, []);
+  };
 
-  const toYouTubeEmbed = useCallback(
-    (url: string) => {
-      const id = getYouTubeId(url);
-      if (!id) return url;
-      const params = new URLSearchParams({
-        enablejsapi: "1",
-        modestbranding: "1",
-      });
-      return `https://www.youtube.com/embed/${id}?${params.toString()}`;
-    },
-    [getYouTubeId]
-  );
+  const toYouTubeEmbed = (url: string) => {
+    const id = getYouTubeId(url);
+    if (!id) return url;
+    const params = new URLSearchParams({
+      enablejsapi: "1",
+      modestbranding: "1",
+    });
+    return `https://www.youtube.com/embed/${id}?${params.toString()}`;
+  };
 
-  const getYouTubeThumbnail = useCallback(
-    (url: string) => {
-      const id = getYouTubeId(url);
-      return id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : "";
-    },
-    [getYouTubeId]
-  );
+  const getYouTubeThumbnail = (url: string) => {
+    const id = getYouTubeId(url);
+    return id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : "";
+  };
 
-  const pauseMedia = useCallback((index: number) => {
+  const pauseMedia = (index: number) => {
     const ref = mediaRefs.current[index];
     if (!ref) return;
     if (ref instanceof HTMLVideoElement) {
@@ -108,17 +89,17 @@ export function ProductImageGallery({
         "*"
       );
     } catch {}
-  }, []);
+  };
 
-  const nextImage = useCallback(() => {
+  const nextImage = () => {
     pauseMedia(currentIndex);
     setCurrentIndex((prev) => (prev === media.length - 1 ? 0 : prev + 1));
-  }, [pauseMedia, currentIndex, media.length]);
+  };
 
-  const prevImage = useCallback(() => {
+  const prevImage = () => {
     pauseMedia(currentIndex);
     setCurrentIndex((prev) => (prev === 0 ? media.length - 1 : prev - 1));
-  }, [pauseMedia, currentIndex, media.length]);
+  };
 
   return (
     <div className="flex-1">
@@ -141,18 +122,14 @@ export function ProductImageGallery({
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 allowFullScreen
                 frameBorder="0"
-                ref={(el) => {
-                  mediaRefs.current[currentIndex] = el;
-                }}
+                ref={(el) => (mediaRefs.current[currentIndex] = el)}
               />
             ) : (
               <video
                 src={media[currentIndex].url}
                 controls
                 className="absolute inset-0 w-full h-full object-cover z-0"
-                ref={(el) => {
-                  mediaRefs.current[currentIndex] = el;
-                }}
+                ref={(el) => (mediaRefs.current[currentIndex] = el)}
               />
             )
           ) : (
@@ -194,9 +171,6 @@ export function ProductImageGallery({
                   : "opacity-70 hover:opacity-100"
               }`}
             >
-              {thumbnailLoading[index] && (
-                <div className="absolute inset-0 bg-gray-300 animate-pulse rounded-lg"></div>
-              )}
               {item.type === "image" ? (
                 <Image
                   src={item.url}
@@ -205,47 +179,13 @@ export function ProductImageGallery({
                   className="object-cover rounded-lg"
                   sizes="(max-width: 768px) 33vw, 25vw"
                   priority={index === 0}
-                  onLoad={() => {
-                    setThumbnailLoading((prev) => {
-                      const newLoading = [...prev];
-                      newLoading[index] = false;
-                      return newLoading;
-                    });
-                  }}
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
                     target.src = "/logo.png";
-                    setThumbnailLoading((prev) => {
-                      const newLoading = [...prev];
-                      newLoading[index] = false;
-                      return newLoading;
-                    });
                   }}
                 />
               ) : isYouTube(item.url) ? (
-                <Image
-                  src={getYouTubeThumbnail(item.url)}
-                  alt={`${title} video thumbnail ${index + 1}`}
-                  fill
-                  className="object-cover rounded-lg"
-                  sizes="(max-width: 768px) 33vw, 25vw"
-                  onLoad={() => {
-                    setThumbnailLoading((prev) => {
-                      const newLoading = [...prev];
-                      newLoading[index] = false;
-                      return newLoading;
-                    });
-                  }}
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.src = "/logo.png";
-                    setThumbnailLoading((prev) => {
-                      const newLoading = [...prev];
-                      newLoading[index] = false;
-                      return newLoading;
-                    });
-                  }}
-                />
+                <div />
               ) : (
                 <div className="w-full h-full bg-black/80 text-white flex items-center justify-center">
                   <Play className="h-6 w-6" />

@@ -315,10 +315,8 @@ export const ShippingAddressSection = ({
       validateField(key, value as string)
     );
     if (!isValid) {
-      console.log("Form invalid", errors);
       return;
     }
-    console.log("Form valid → shipping details saved", shippingDetails);
     setIsEditing(false);
   };
 

@@ -94,8 +94,6 @@ function CheckoutPageContent() {
     fetchZones();
   }, []);
 
-  // console.log(user);
-
   const handleBack = () => {
     window.scrollTo(0, 0);
     if (currentStep === 1) {
@@ -105,7 +103,6 @@ function CheckoutPageContent() {
     }
   };
 
-  // console.log(deliveryInfo);
   const applyPadiCoupon = async (padiCode: string): Promise<void> => {
     setapplyingCode(true);
     try {
@@ -125,7 +122,6 @@ function CheckoutPageContent() {
         const discountedTotal = 0.98 * subtotal;
         subtotal = discountedTotal;
         setfullTotal(subtotal);
-        console.log("Subtotal: ", subtotal, discountedTotal);
       } else {
         console.log("Coupon verification failed:", data.message);
       }
@@ -137,7 +133,6 @@ function CheckoutPageContent() {
   };
 
   const handleContinue = async () => {
-    console.log(currentStep);
     window.scrollTo(0, 0);
     if (currentStep === 1 && !selectedState) {
       alert("Please select a state before proceeding");
@@ -153,9 +148,7 @@ function CheckoutPageContent() {
       router.push("/payment");
     }
   };
-  console.log(pickupData);
 
-  console.log(selectedCity, deliveryInfo, shippingDetails, pickupData);
   return (
     <>
       <TopBanner theme="dark" />
