@@ -1,7 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Select from "react-select";
+
+import {
+  ApiZone,
+  loadStoredPickup,
+  persistPickup,
+  pickupsAreEqual,
+  resolvePickupList,
+} from "../../lib/pickupUtils";
 
 type PickupSectionProps = {
   selectedState: string;
@@ -16,35 +24,12 @@ type PickupOption = {
   label: string;
 };
 
-type StoredPickupData = {
-  state: string;
-  pickup: string | PickupOption;
-};
-
-export type ApiZone = {
-  id?: number;
-  state: string;
-  city?: string;
-  fee: number | string;
-  duration: string;
-  pickups?: string[];
-  pickup_point?: string;
-  is_active?: boolean;
-  lga?: string;
-  created_at?: string;
-  updated_at?: string;
-  // any extra fields the API returns
-  [key: string]: unknown;
-};
-
 export type SelectedPickup = {
   pickup: string | PickupOption | null;
   fee: string;
   duration: string;
   zone?: ApiZone | null;
 };
-
-const STORAGE_KEY = "pickup_details";
 
 export const PickupSection = ({
   selectedState,
@@ -65,20 +50,47 @@ export const PickupSection = ({
   const [error, setError] = useState<string | null>(null);
   const [zones, setZones] = useState<ApiZone[]>([]);
 
-  const resolvePickupList = (
-    existing: string[] | undefined,
-    zone: ApiZone | null
-  ) => {
-    if (existing?.length) return existing;
-    if (zone?.pickups?.length) return zone.pickups;
-    if (zone?.pickup_point) return [zone.pickup_point];
-    return [];
-  };
+  const onPickupSelectRef = useRef(onPickupSelect);
+  const onDeliveryInfoChangeRef = useRef(onDeliveryInfoChange);
 
-  const pickupsAreEqual = (a: string[], b: string[]) => {
-    if (a.length !== b.length) return false;
-    return a.every((value, index) => value === b[index]);
-  };
+  useEffect(() => {
+    onPickupSelectRef.current = onPickupSelect;
+  }, [onPickupSelect]);
+
+  useEffect(() => {
+    onDeliveryInfoChangeRef.current = onDeliveryInfoChange;
+  }, [onDeliveryInfoChange]);
+
+  const setNormalizedDeliveryInfo = useCallback(
+    (zone: ApiZone | null, fallbackPickups?: string[]) => {
+      if (!zone) {
+        setDeliveryInfo(null);
+        return;
+      }
+
+      setDeliveryInfo((prev) => {
+        const pickups =
+          fallbackPickups ?? resolvePickupList(prev?.pickups, zone);
+        const nextInfo = {
+          fee: String(zone.fee ?? 0),
+          duration: zone.duration ?? "",
+          pickups,
+        };
+
+        if (
+          prev &&
+          prev.fee === nextInfo.fee &&
+          prev.duration === nextInfo.duration &&
+          pickupsAreEqual(prev.pickups, nextInfo.pickups)
+        ) {
+          return prev;
+        }
+
+        return nextInfo;
+      });
+    },
+    []
+  );
 
   // Fetch zone details using selectedZone if available, otherwise use state query
   useEffect(() => {
@@ -86,7 +98,7 @@ export const PickupSection = ({
 
     const fetchDeliveryInfo = async () => {
       if (!selectedZone && !selectedState) {
-        setDeliveryInfo(null);
+        setNormalizedDeliveryInfo(null);
         setCurrentZone(null);
         setError(null);
         onDeliveryInfoChange(null);
@@ -100,10 +112,8 @@ export const PickupSection = ({
         let zones: ApiZone[];
 
         if (selectedZone) {
-          // Use the selectedZone directly (already fetched in ShippingAddressSection)
           zones = [selectedZone];
         } else {
-          // Check if API URL is defined
           const apiUrl = process.env.NEXT_PUBLIC_API_URL;
           if (!apiUrl) {
             console.error(
@@ -114,7 +124,6 @@ export const PickupSection = ({
             return;
           }
 
-          // Use new zones endpoint with state parameter
           const url = `${apiUrl}/api/delivery/zones?state=${encodeURIComponent(
             selectedState
           )}&active=1&page=1&per_page=20`;
@@ -125,7 +134,6 @@ export const PickupSection = ({
 
           const data = await res.json();
 
-          // Response format: { "zones": [...] }
           if (data?.zones?.length > 0) {
             zones = data.zones;
           } else {
@@ -137,61 +145,50 @@ export const PickupSection = ({
 
         setZones(zones);
 
-        // Extract pickup points from zones
         const pickupPoints: string[] = zones
-          .map(
-            (zone) => zone.pickup_point || (zone.pickups ? zone.pickups : [])
-          )
+          .map((zone) => zone.pickup_point || zone.pickups || [])
           .filter((point): point is string | string[] => Boolean(point))
           .flat()
           .filter((point): point is string => typeof point === "string");
 
-        // Use the selectedZone if available, otherwise the first zone
         const zoneToUse = selectedZone || zones[0];
-        const normalized = {
-          fee: String(zoneToUse.fee ?? 0),
-          duration: zoneToUse.duration ?? "",
-          pickups: pickupPoints,
-        };
-
-        // store both normalized values for the UI and the full zones for parent
-        setDeliveryInfo(normalized);
         setCurrentZone(zoneToUse);
+        setNormalizedDeliveryInfo(zoneToUse, pickupPoints);
+        onDeliveryInfoChangeRef.current(zoneToUse);
 
-        // Notify parent with full zone immediately (so they have access)
-        onDeliveryInfoChange(zoneToUse);
-
-        // Auto-select if only one pickup option
-        if (normalized.pickups.length === 1) {
-          const autoPickup = {
-            value: normalized.pickups[0],
-            label: normalized.pickups[0],
-          };
+        if (pickupPoints.length === 1) {
+          const optionValue = pickupPoints[0];
+          const autoPickup = { value: optionValue, label: optionValue };
           setSelectedPickupPoint(autoPickup);
-          onPickupSelect({
+          persistPickup(selectedState, optionValue);
+          onPickupSelectRef.current({
             pickup: autoPickup,
-            fee: normalized.fee,
-            duration: normalized.duration,
+            fee: String(zoneToUse.fee ?? 0),
+            duration: zoneToUse.duration ?? "",
             zone: zoneToUse,
           });
         } else {
-          // Clear previous pickup selection while we may restore from storage next
           setSelectedPickupPoint(null);
-          onPickupSelect({
+          onPickupSelectRef.current({
             pickup: null,
-            fee: normalized.fee,
-            duration: normalized.duration,
+            fee: String(zoneToUse.fee ?? 0),
+            duration: zoneToUse.duration ?? "",
             zone: zoneToUse,
           });
         }
       } catch (err: unknown) {
         if (err instanceof Error && err.name === "AbortError") return;
         console.error("Error fetching delivery info", err);
-        setDeliveryInfo(null);
+        setNormalizedDeliveryInfo(null);
         setCurrentZone(null);
         setError("Unable to load delivery information. Please try again.");
-        onDeliveryInfoChange(null);
-        onPickupSelect({ pickup: null, fee: "0", duration: "", zone: null });
+        onDeliveryInfoChangeRef.current(null);
+        onPickupSelectRef.current({
+          pickup: null,
+          fee: "0",
+          duration: "",
+          zone: null,
+        });
       } finally {
         setLoading(false);
       }
@@ -200,122 +197,51 @@ export const PickupSection = ({
     fetchDeliveryInfo();
 
     return () => controller.abort();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedZone, selectedState]);
+  }, [selectedState, selectedZone, setNormalizedDeliveryInfo]);
 
-  console.log("Seletected pick up point", selectedPickupPoint);
+  const selectedPickupValue = selectedPickupPoint?.value;
 
   // Restore saved pickup from localStorage once deliveryInfo/currentZone available
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!deliveryInfo || !currentZone) return;
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (!saved) return;
+    if (!deliveryInfo.pickups.length) return;
 
-    try {
-      const parsed: StoredPickupData = JSON.parse(saved);
-      if (parsed.state !== selectedState) return;
-      let option: PickupOption | null = null;
-      if (typeof parsed.pickup === "string") {
-        const found = deliveryInfo.pickups.find((p) => p === parsed.pickup);
-        if (found) option = { value: found, label: found };
-      } else {
-        const obj = parsed.pickup as PickupOption;
-        const found = deliveryInfo.pickups.find((p) => p === obj.value);
-        if (found) option = { value: found, label: found };
-      }
+    const restored = loadStoredPickup(selectedState, deliveryInfo.pickups);
+    if (!restored) return;
+    if (selectedPickupValue === restored) return;
 
-      if (option) {
-        setSelectedPickupPoint(option);
-        const updatedFee = String(currentZone?.fee ?? 0);
-        const updatedDuration = currentZone?.duration ?? "";
-        setDeliveryInfo((prev) => {
-          const pickupsList = resolvePickupList(prev?.pickups, currentZone);
-          const nextInfo = {
-            fee: updatedFee,
-            duration: updatedDuration,
-            pickups: pickupsList,
-          };
+    const restoredOption = { value: restored, label: restored };
 
-          if (
-            prev &&
-            prev.fee === nextInfo.fee &&
-            prev.duration === nextInfo.duration &&
-            pickupsAreEqual(prev.pickups, nextInfo.pickups)
-          ) {
-            return prev;
-          }
+    setSelectedPickupPoint(restoredOption);
+    setNormalizedDeliveryInfo(currentZone, deliveryInfo.pickups);
+    onPickupSelectRef.current({
+      pickup: restoredOption,
+      fee: deliveryInfo.fee,
+      duration: deliveryInfo.duration,
+      zone: currentZone,
+    });
 
-          return nextInfo;
-        });
-        onPickupSelect({
-          pickup: option,
-          fee: updatedFee,
-          duration: updatedDuration,
-          zone: currentZone,
-        });
-        onDeliveryInfoChange(currentZone);
-      } else {
-        // mismatch => clear saved selection
-        setSelectedPickupPoint(null);
-        localStorage.removeItem(STORAGE_KEY);
-        const updatedFee = String(currentZone?.fee ?? 0);
-        const updatedDuration = currentZone?.duration ?? "";
-        setDeliveryInfo((prev) => {
-          const pickupsList = resolvePickupList(prev?.pickups, currentZone);
-          const nextInfo = {
-            fee: updatedFee,
-            duration: updatedDuration,
-            pickups: pickupsList,
-          };
-
-          if (
-            prev &&
-            prev.fee === nextInfo.fee &&
-            prev.duration === nextInfo.duration &&
-            pickupsAreEqual(prev.pickups, nextInfo.pickups)
-          ) {
-            return prev;
-          }
-
-          return nextInfo;
-        });
-        onPickupSelect({
-          pickup: null,
-          fee: updatedFee,
-          duration: updatedDuration,
-          zone: currentZone,
-        });
-        onDeliveryInfoChange(currentZone);
-      }
-    } catch (err) {
-      console.warn("Failed to parse pickup storage", err);
+    if (currentZone) {
+      onDeliveryInfoChangeRef.current(currentZone);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [deliveryInfo, currentZone, selectedState]);
+  }, [
+    currentZone,
+    deliveryInfo,
+    selectedPickupValue,
+    selectedState,
+    setNormalizedDeliveryInfo,
+  ]);
 
   const pickupOptions: PickupOption[] = (deliveryInfo?.pickups || []).map(
     (p) => ({ value: p, label: p })
   );
 
-  const persistPickup = (pickup: string | PickupOption | null) => {
-    if (!selectedState) return;
-    if (!pickup) {
-      localStorage.removeItem(STORAGE_KEY);
-      return;
-    }
-    const payload: StoredPickupData = {
-      state: selectedState,
-      pickup: typeof pickup === "string" ? pickup : pickup,
-    };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-  };
-
   // When user picks from dropdown, include the full zone in onPickupSelect and update parent delivery info
   const handlePickupChange = (value: PickupOption | null) => {
-    console.log(value);
     setSelectedPickupPoint(value);
     if (value) {
-      persistPickup(value);
+      persistPickup(selectedState, value.value);
       // Find the zone that contains this pickup point
       const selectedZoneForPickup =
         zones.find(
@@ -325,64 +251,25 @@ export const PickupSection = ({
         ) || currentZone;
 
       setCurrentZone(selectedZoneForPickup ?? null);
-      setDeliveryInfo((prev) => {
-        const pickupsList = resolvePickupList(
-          prev?.pickups,
-          selectedZoneForPickup ?? null
-        );
-        const nextInfo = {
-          fee: String(selectedZoneForPickup?.fee ?? 0),
-          duration: selectedZoneForPickup?.duration ?? "",
-          pickups: pickupsList,
-        };
-
-        if (
-          prev &&
-          prev.fee === nextInfo.fee &&
-          prev.duration === nextInfo.duration &&
-          pickupsAreEqual(prev.pickups, nextInfo.pickups)
-        ) {
-          return prev;
-        }
-
-        return nextInfo;
-      });
-      onPickupSelect({
+      setNormalizedDeliveryInfo(selectedZoneForPickup ?? null);
+      onPickupSelectRef.current({
         pickup: value,
         fee: String(selectedZoneForPickup?.fee ?? 0),
         duration: selectedZoneForPickup?.duration ?? "",
         zone: selectedZoneForPickup ?? null,
       });
       // ensure parent has the full zone object (requested)
-      onDeliveryInfoChange(selectedZoneForPickup);
+      onDeliveryInfoChangeRef.current(selectedZoneForPickup ?? null);
     } else {
-      persistPickup(null);
-      setDeliveryInfo((prev) => {
-        const pickupsList = resolvePickupList(prev?.pickups, currentZone);
-        const nextInfo = {
-          fee: String(currentZone?.fee ?? 0),
-          duration: currentZone?.duration ?? "",
-          pickups: pickupsList,
-        };
-
-        if (
-          prev &&
-          prev.fee === nextInfo.fee &&
-          prev.duration === nextInfo.duration &&
-          pickupsAreEqual(prev.pickups, nextInfo.pickups)
-        ) {
-          return prev;
-        }
-
-        return nextInfo;
-      });
-      onPickupSelect({
+      persistPickup(selectedState, null);
+      setNormalizedDeliveryInfo(currentZone);
+      onPickupSelectRef.current({
         pickup: null,
-        fee: "0",
-        duration: "",
+        fee: String(currentZone?.fee ?? 0),
+        duration: currentZone?.duration ?? "",
         zone: currentZone ?? null,
       });
-      onDeliveryInfoChange(currentZone);
+      onDeliveryInfoChangeRef.current(currentZone);
     }
   };
 
