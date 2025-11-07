@@ -241,7 +241,7 @@ function CartPageContent() {
   };
   return (
     <>
-      <Header isProductPage={true} showSearchbar={false} />
+      <Header isProductPage={false} showSearchbar={false} />
       <main className="container mx-auto px-4 md:py-8">
         <div className="bg-white rounded-xl px-2 pb-3 md:px-6">
           <Breadcrumb items={breadcrumbItems} className="pb-0 md:py-0" />

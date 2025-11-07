@@ -24,14 +24,13 @@ export default function ImageSearchInput({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadImage] = useUploadImageMutation();
 
-  const toBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
+  const toBase64 = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.readAsDataURL(file);
       reader.onload = () => resolve(reader.result as string);
       reader.onerror = (error) => reject(error);
     });
-  };
 
   const handleImageUpload = async (file: File) => {
     if (!file.type.startsWith("image/")) {
@@ -39,11 +38,10 @@ export default function ImageSearchInput({
       return;
     }
 
-    // Create preview
     const previewUrl = URL.createObjectURL(file);
     setPreviewImage(previewUrl);
-
     setIsUploading(true);
+
     try {
       const base64 = await toBase64(file);
       const result = await uploadImage({
@@ -53,7 +51,6 @@ export default function ImageSearchInput({
 
       if (result.url) {
         setUploadedImageUrl(result.url);
-        // Automatically trigger search after successful upload
         const params = new URLSearchParams();
         params.set("image_url", result.url);
         router.push(`/products?${params.toString()}`);
@@ -69,67 +66,60 @@ export default function ImageSearchInput({
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      handleImageUpload(file);
-    }
+    if (file) handleImageUpload(file);
   };
 
   const handleSearch = (e?: React.FormEvent) => {
     e?.preventDefault();
 
+    const params = new URLSearchParams();
     if (uploadedImageUrl) {
-      // Search by image URL
-      const params = new URLSearchParams();
       params.set("image_url", uploadedImageUrl);
-      router.push(`/products?${params.toString()}`);
     } else if (query.trim()) {
-      // Search by text
-      const params = new URLSearchParams();
       params.set("q", query.trim());
-      router.push(`/products?${params.toString()}`);
-    }
+    } else return;
 
-    if (onSearch) {
-      onSearch(query, uploadedImageUrl || undefined);
-    }
+    router.push(`/products?${params.toString()}`);
+    onSearch?.(query, uploadedImageUrl || undefined);
   };
 
   const clearImage = () => {
     setUploadedImageUrl(null);
     setPreviewImage(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   return (
-    <form onSubmit={handleSearch} className={`relative ${className}`}>
-      <div className="flex items-center bg-white border-2 border-gray-700 rounded-full overflow-hidden h-10 md:h-12">
+    <form
+      onSubmit={handleSearch}
+      className={`relative w-full max-w-2xl mx-auto transition-all duration-300 ${className}`}
+    >
+      <div className="flex items-center bg-white border-[1.5px] border-gray-900 rounded-full shadow-sm overflow-hidden focus-within:ring-2 focus-within:ring-[#E94B11] transition-all duration-200 h-11 sm:h-12 md:h-14 px-[2px]">
         {/* Image Preview */}
         {previewImage && (
-          <div className="relative ml-2">
+          <div className="relative ml-2 shrink-0">
             <img
               src={previewImage}
               alt="Selected"
-              className="w-8 h-8 object-cover rounded"
+              className="w-7 h-7 sm:w-8 sm:h-8 object-cover rounded"
             />
             <button
               type="button"
               onClick={clearImage}
-              className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs hover:bg-red-600"
+              className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] hover:bg-red-600"
             >
               <X size={8} />
             </button>
           </div>
         )}
 
-        {/* Text Input */}
+        {/* Input */}
         <input
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder={uploadedImageUrl ? "Searching by image..." : placeholder}
-          className="flex-1 px-4 py-3 text-sm placeholder-gray-400 outline-none"
+          className="flex-1 min-w-0 px-3 sm:px-4 py-2 text-sm sm:text-base placeholder-gray-400 outline-none bg-transparent"
           disabled={!!uploadedImageUrl}
         />
 
@@ -138,22 +128,24 @@ export default function ImageSearchInput({
           type="button"
           onClick={() => fileInputRef.current?.click()}
           disabled={isUploading}
-          className="px-3  disabled:opacity-50"
+          className="p-2 sm:px-3 disabled:opacity-50 flex items-center justify-center"
           title="Upload image"
         >
           {isUploading ? (
             <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
           ) : (
-            <HiOutlineCamera size={30} className="text-gray-700 font-thin" />
+            <HiOutlineCamera
+              size={24}
+              className="text-gray-700 hover:text-[#E94B11] transition-colors duration-200"
+            />
           )}
         </button>
 
-        {/* Search Button */}
-        <div className="h-full flex items-center mb:pt-1">
+        {/* Search Button (with padding space) */}
+        <div className="h-full flex items-center px-[2px]">
           <button
             type="submit"
-            disabled={!query.trim() && !uploadedImageUrl}
-            className="h-[90%] px-5 md:mt-[2px] mr-0.5 bg-gradient-to-r from-[#f2683d] to-[#E94B11] hover:bg-gray-50 border-l border-gray-200 disabled:opacity-50 text-white font-medium rounded-full"
+            className="h-[calc(100%-4px)] px-5 sm:px-6 bg-gradient-to-r from-[#f2683d] to-[#E94B11] hover:opacity-90 text-white font-medium text-sm sm:text-base rounded-full transition-all duration-200 disabled:opacity-50"
           >
             GO
           </button>

@@ -10,7 +10,7 @@ import {
   LogOut,
   UserCheck,
   ClipboardList,
-  ArrowLeft,
+  ChevronLeft,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -76,7 +76,7 @@ export default function Header({
   }
 
   return (
-    <header className="w-full bg-white">
+    <header className="w-full bg-white ">
       {/* Top row: logo, search, icons */}
       <div className="px-4 md:px-12 pb-4 pt-1 md:pt-4 flex items-center justify-between gap-6 ">
         {isHomePage ? (
@@ -93,10 +93,12 @@ export default function Header({
         ) : (
           <button
             onClick={() => router.back()}
-            className="flex items-center gap-2 text-gray-700 hover:text-gray-900"
-            aria-label="Go back"
+            className={`${
+              isProductPage ? "hidden" : ""
+            } flex items-center gap-2 text-gray-700 hover:text-gray-900 mt-2 border"
+            aria-label="Go back`}
           >
-            <ArrowLeft size={20} />
+            <ChevronLeft size={24} />
             <span className="hidden md:inline">Back</span>
           </button>
         )}
@@ -210,7 +212,17 @@ export default function Header({
       {/* mobile search */}
       {showSearchbar ? (
         <div className="mx-4 -mt-4 mb-2 md:hidden flex flex-1 items-center justify-center">
-          <div className="w-full max-w-2xl">
+          <div className="w-full flex gap-x-3 max-w-2xl pt-2">
+            <button
+              onClick={() => router.back()}
+              className={`${
+                !isProductPage ? "hidden" : ""
+              } flex items-center gap-2 text-gray-700 hover:text-gray-900"
+              aria-label="Go back`}
+            >
+              <ChevronLeft size={24} />
+              <span className="hidden md:inline">Back</span>
+            </button>
             <ImageSearchInput className="w-full" />
           </div>
         </div>

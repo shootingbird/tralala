@@ -50,23 +50,21 @@ function CategoryIcon({ active }: { active?: boolean }) {
       height={24}
       stroke={active ? ACTIVE_COLOR : INACTIVE_COLOR}
       fill="none"
-      strokeWidth={active ? 3 : 2.5}
+      strokeWidth={active ? 5 : 4.5} // ⬅️ Increased stroke thickness
       strokeLinecap="round"
       strokeLinejoin="round"
       className="transition-all duration-300"
     >
       {/* Top-left box */}
       <rect x="6" y="6" width="24" height="24" rx="6" />
-
       {/* Top-right box */}
       <rect x="34" y="6" width="24" height="24" rx="6" />
-
       {/* Bottom-left box */}
       <rect x="6" y="34" width="24" height="24" rx="6" />
-
       {/* Bottom-right: magnifying glass */}
       <circle cx="46" cy="46" r="10" />
-      <line x1="52" y1="52" x2="56" y2="56" />
+      <line x1="52" y1="52" x2="57" y2="57" />{" "}
+      {/* Slightly lengthened for balance */}
     </svg>
   );
 }
@@ -84,7 +82,7 @@ function UserIcon({ active }: { active?: boolean }) {
       <path
         d="M12 12a4 4 0 100-8 4 4 0 000 8z"
         stroke={active ? ACTIVE_COLOR : INACTIVE_COLOR}
-        strokeWidth={active ? 2.5 : 1.6}
+        strokeWidth={2.2}
         strokeLinecap="round"
         strokeLinejoin="round"
         fill="none"
@@ -92,7 +90,7 @@ function UserIcon({ active }: { active?: boolean }) {
       <path
         d="M4 20c0-3.333 3.333-6 8-6s8 2.667 8 6"
         stroke={active ? ACTIVE_COLOR : INACTIVE_COLOR}
-        strokeWidth={active ? 2.5 : 1.6}
+        strokeWidth={2.2}
         strokeLinecap="round"
         strokeLinejoin="round"
         fill="none"
@@ -132,10 +130,8 @@ function NavItem({
       <div className="flex items-center justify-center">{children}</div>
 
       <span
-        className={`leading-4 transition-all duration-300 ${
-          active
-            ? "text-[#FF6A4C] font-bold"
-            : "text-[rgba(0,0,0,0.8)] font-normal"
+        className={`leading-4 transition-all duration-300 font-bold text-sm ${
+          active ? "text-[#FF6A4C]" : "text-[rgba(0,0,0,0.8)]"
         }`}
       >
         {label}
@@ -188,9 +184,9 @@ export default function MobileNav() {
   return (
     <nav
       aria-label="Primary"
-      className="fixed md:hidden -bottom-1 left-0 right-0 bg-white/80 backdrop-blur border-t border-gray-200 z-50 px-4 h-20"
+      className="fixed md:hidden -bottom-1 left-0 right-0 bg-white/80 backdrop-blur border-t border-gray-200 z-50 px-4 h-15"
     >
-      <div className="h-full py-3">
+      <div className="h-full py-2">
         <div className="h-full flex items-center justify-between">
           <NavItem
             id="home"
@@ -222,7 +218,8 @@ export default function MobileNav() {
               <ShoppingCartIcon
                 size={24}
                 color={active === "cart" ? ACTIVE_COLOR : INACTIVE_COLOR}
-                strokeWidth={active === "cart" ? 2.5 : 1.5}
+                strokeWidth={2.3}
+                className="font-bold"
               />
               {isClient && cartCount > 0 && (
                 <span className="absolute -top-1 -right-2.5 bg-[#E94B1C] text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center">
