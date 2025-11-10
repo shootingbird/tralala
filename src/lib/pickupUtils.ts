@@ -18,6 +18,9 @@ export const STORAGE_KEY = "pickup_details";
 export type StoredPickupData = {
   state: string;
   pickup: string;
+  zoneId?: number;
+  fee?: string | number;
+  duration?: string;
 };
 
 export const resolvePickupList = (
@@ -38,7 +41,7 @@ export const pickupsAreEqual = (a: string[], b: string[]) => {
 export const loadStoredPickup = (
   state: string,
   availablePickups: string[]
-): string | null => {
+): StoredPickupData | null => {
   if (!state || !availablePickups.length) return null;
 
   const saved = localStorage.getItem(STORAGE_KEY);
@@ -47,14 +50,19 @@ export const loadStoredPickup = (
   try {
     const parsed: StoredPickupData = JSON.parse(saved);
     if (parsed.state !== state) return null;
-    return availablePickups.includes(parsed.pickup) ? parsed.pickup : null;
+    if (!availablePickups.includes(parsed.pickup)) return null;
+    return parsed;
   } catch (err) {
     console.warn("Failed to parse pickup storage", err);
     return null;
   }
 };
 
-export const persistPickup = (state: string, pickup: string | null) => {
+export const persistPickup = (
+  state: string,
+  pickup: string | null,
+  zone?: ApiZone | null
+) => {
   if (!state) return;
 
   if (!pickup) {
@@ -65,8 +73,10 @@ export const persistPickup = (state: string, pickup: string | null) => {
   const payload: StoredPickupData = {
     state,
     pickup,
+    zoneId: zone?.id,
+    fee: zone?.fee,
+    duration: zone?.duration,
   };
 
   localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
 };
-

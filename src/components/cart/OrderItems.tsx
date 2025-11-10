@@ -216,32 +216,34 @@ export default function OrderItems({
         },
       };
 
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/orders/`,
-        {
-          method: "POST",
-          headers,
-          body: JSON.stringify(payload),
-        }
-      );
+      console.log("Payload Order", payload);
 
-      if (!res.ok) {
-        const text = await res.text().catch(() => "");
-        console.error("Order creation failed:", res.status, text);
-        throw new Error("Failed to create order");
-      }
+      // const res = await fetch(
+      //   `${process.env.NEXT_PUBLIC_API_URL}/api/orders/`,
+      //   {
+      //     method: "POST",
+      //     headers,
+      //     body: JSON.stringify(payload),
+      //   }
+      // );
 
-      const { data } = await res.json();
-      clearCart();
-      localStorage.removeItem("appliedCoupon");
-      if (selectedPayment !== "pay_now") {
-        setPayFormeLink(
-          `${process.env.NEXT_PUBLIC_ROUTE}/payment/pay-for-me/${data?.order_id}?price=${data.amounts?.total}&firstName=${data?.contact?.first_name}`
-        );
-        return;
-      }
+      // if (!res.ok) {
+      //   const text = await res.text().catch(() => "");
+      //   console.error("Order creation failed:", res.status, text);
+      //   throw new Error("Failed to create order");
+      // }
 
-      router.push(`/payment/${data?.order_id}`);
+      // const { data } = await res.json();
+      // clearCart();
+      // localStorage.removeItem("appliedCoupon");
+      // if (selectedPayment !== "pay_now") {
+      //   setPayFormeLink(
+      //     `${process.env.NEXT_PUBLIC_ROUTE}/payment/pay-for-me/${data?.order_id}?price=${data.amounts?.total}&firstName=${data?.contact?.first_name}`
+      //   );
+      //   return;
+      // }
+
+      // router.push(`/payment/${data?.order_id}`);
     } catch (err) {
       console.error("Payment flow error:", err);
       alert(err.message || "Failed to process order. Please try again.");

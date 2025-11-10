@@ -25,7 +25,6 @@ type ShippingAddressSectionProps = {
   onShippingDetailsChange: (details: typeof defaultAddress) => void;
   setDisableContinue: (disabled: boolean) => void;
   zonesData?: Zone[];
-  isLoadingZones?: boolean;
   onZoneSelect?: (zone: Zone | null) => void;
 };
 
@@ -61,7 +60,6 @@ export const ShippingAddressSection = ({
   onShippingDetailsChange,
   setDisableContinue,
   zonesData: externalZonesData,
-  isLoadingZones: externalIsLoadingZones,
   onZoneSelect,
 }: ShippingAddressSectionProps) => {
   const { user, isAuthenticated } = useAuth();
@@ -72,8 +70,7 @@ export const ShippingAddressSection = ({
   const [availableCities, setAvailableCities] = useState<CityOption[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [zonesData, setZonesData] = useState<Zone[]>([]);
-  const [isLoadingZones, setIsLoadingZones] = useState(false);
-  const [selectedZone, setSelectedZone] = useState<Zone | null>(null);
+  // removed unused isLoadingZones and selectedZone for simplicity/performance
   const [states, setStates] = useState<StateOption[]>([]);
   const [isLoadingStates, setIsLoadingStates] = useState(false);
   const [isLoadingCities, setIsLoadingCities] = useState(false);
@@ -84,9 +81,11 @@ export const ShippingAddressSection = ({
   const stateOptions = states;
 
   useEffect(() => {
-    fetchZones();
+    if (!externalZonesData) {
+      fetchZones();
+    }
     fetchStates();
-  }, []);
+  }, [externalZonesData]);
 
   useEffect(() => {
     const savedDetails = localStorage.getItem(STORAGE_KEY);
@@ -139,34 +138,7 @@ export const ShippingAddressSection = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, onStateSelect, zonesData]);
 
-  // Fetch zone details by ID when state and city are selected
-  useEffect(() => {
-    const fetchZoneById = async () => {
-      if (!selectedState || !selectedCity) return;
-
-      const zone = currentZonesData.find(
-        (z) => z.state === selectedState.label && z.city === selectedCity.value
-      );
-
-      if (zone?.id) {
-        try {
-          const response = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/delivery/zones/${zone.id}`
-          );
-          if (response.ok) {
-            const data = await response.json();
-            const fetchedZone = data.zone;
-            setSelectedZone(fetchedZone);
-            onZoneSelect?.(fetchedZone);
-          }
-        } catch (error) {
-          console.error("Failed to fetch zone details:", error);
-        }
-      }
-    };
-
-    fetchZoneById();
-  }, [selectedState, selectedCity, currentZonesData, onZoneSelect]);
+  // Removed redundant zone-by-id fetch: we already have zone details in currentZonesData
 
   const updateShippingDetails = (newDetails: typeof shippingDetails) => {
     setShippingDetails(newDetails);
@@ -175,7 +147,6 @@ export const ShippingAddressSection = ({
   };
 
   const fetchZones = async () => {
-    setIsLoadingZones(true);
     try {
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/delivery/zones?active=true&page=1&per_page=200`
@@ -187,8 +158,6 @@ export const ShippingAddressSection = ({
       setZonesData(data.zones);
     } catch (error) {
       console.error("Error fetching zones:", error);
-    } finally {
-      setIsLoadingZones(false);
     }
   };
 
@@ -339,7 +308,6 @@ export const ShippingAddressSection = ({
   const handleStateChange = (option: StateOption | null) => {
     setSelectedState(option);
     setSelectedCity(null);
-    setSelectedZone(null);
     const newDetails = {
       ...shippingDetails,
       state: option?.label || "",
@@ -349,13 +317,20 @@ export const ShippingAddressSection = ({
     validateField("state", option?.label || "");
     onStateSelect(option?.label || "");
     if (option) {
-      fetchCities(option.value);
+      // Prefer deriving cities locally for speed; fallback to API if none
+      const hasZonesForState = currentZonesData.some(
+        (zone) => zone.state === option.label
+      );
+      if (hasZonesForState) {
+        updateCities(option.label);
+      } else {
+        fetchCities(option.value);
+      }
       // Find the first zone for this state and notify parent
       const stateZone = currentZonesData.find(
         (zone) => zone.state === option.label
       );
       if (stateZone) {
-        setSelectedZone(stateZone);
         onZoneSelect?.(stateZone);
       }
     } else {
@@ -378,11 +353,9 @@ export const ShippingAddressSection = ({
           zone.state === selectedState.label && zone.city === option.value
       );
       if (cityZone) {
-        setSelectedZone(cityZone);
         onZoneSelect?.(cityZone);
       }
     } else {
-      setSelectedZone(null);
       onZoneSelect?.(null);
     }
   };
