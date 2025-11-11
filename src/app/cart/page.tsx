@@ -13,7 +13,6 @@ import Cookies from "js-cookie";
 import { useVerifiedPromo } from "@/hooks/useVerifiedPromo";
 import { ConfirmationModal } from "@/components/ui/ConfirmationModal";
 import { Button } from "@/components/ui/Button";
-import { Footer } from "@/components/shared/Footer";
 import Header from "@/components/shared/Header";
 import { useSelector } from "react-redux";
 import { RootState } from "@/lib/store/store";
@@ -219,10 +218,18 @@ function CartPageContent() {
     } catch (error) {
       console.error("Error verifying padi code:", error);
       setAppliedPadiCode(false);
+      setVerifiedPromoCode({ verified: false, code: "" });
       setCouponError("Failed to verify padi code. Please try again.");
     } finally {
       setApplyingCode(false);
     }
+  };
+
+  const removePadiCode = () => {
+    setAppliedPadiCode(false);
+    setVerifiedPromoCode({ verified: false, code: "" });
+    setPromoCode("");
+    setCouponError("");
   };
 
   const handleRemoveClick = (productId: string) => {
@@ -460,7 +467,15 @@ function CartPageContent() {
                     <p className="text-red-500 text-sm">{couponError}</p>
                   )}
                   {appliedPadiCode && (
-                    <p className="text-sm text-green-600">PADI verified</p>
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm text-green-600">PADI verified</p>
+                      <button
+                        onClick={removePadiCode}
+                        className="text-red-500 hover:text-red-700 text-sm"
+                      >
+                        Remove
+                      </button>
+                    </div>
                   )}
                 </div>
               )}

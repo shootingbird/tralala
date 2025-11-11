@@ -160,6 +160,7 @@ export default function OrderItems({
 
   // Create order and redirect to payment
   const handlePayment = useCallback(async () => {
+    console.log("hello");
     const token = getToken();
 
     if (cartItems.length === 0) {
