@@ -75,6 +75,8 @@ export const ShippingAddressSection = ({
   const [isLoadingStates, setIsLoadingStates] = useState(false);
   const [isLoadingCities, setIsLoadingCities] = useState(false);
 
+  console.log(zonesData);
+
   // Use external data if provided, otherwise use internal state
   const currentZonesData = externalZonesData || zonesData;
 
@@ -317,15 +319,7 @@ export const ShippingAddressSection = ({
     validateField("state", option?.label || "");
     onStateSelect(option?.label || "");
     if (option) {
-      // Prefer deriving cities locally for speed; fallback to API if none
-      const hasZonesForState = currentZonesData.some(
-        (zone) => zone.state === option.label
-      );
-      if (hasZonesForState) {
-        updateCities(option.label);
-      } else {
-        fetchCities(option.value);
-      }
+      fetchCities(option.value);
       // Find the first zone for this state and notify parent
       const stateZone = currentZonesData.find(
         (zone) => zone.state === option.label
