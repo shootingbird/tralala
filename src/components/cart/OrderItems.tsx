@@ -88,7 +88,9 @@ export default function OrderItems({
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [selectedPayment, setSelectedPayment] = useState<string>("pay_now");
   const [payFormeLink, setPayFormeLink] = useState<string>("");
+  const [showLoginModal, setShowLoginModal] = useState<boolean>(false);
   const { verifiedPromoCode } = useVerifiedPromo();
+  const { logout } = useAuth();
 
   // Derived values
   const subtotal = useMemo(
@@ -219,32 +221,45 @@ export default function OrderItems({
 
       console.log("Payload Order", payload);
 
-      // const res = await fetch(
-      //   `${process.env.NEXT_PUBLIC_API_URL}/api/orders/`,
-      //   {
-      //     method: "POST",
-      //     headers,
-      //     body: JSON.stringify(payload),
-      //   }
-      // );
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/orders/`,
+        {
+          method: "POST",
+          headers,
+          body: JSON.stringify(payload),
+        }
+      );
 
-      // if (!res.ok) {
-      //   const text = await res.text().catch(() => "");
-      //   console.error("Order creation failed:", res.status, text);
-      //   throw new Error("Failed to create order");
-      // }
+      if (!res.ok) {
+        const text = await res.text().catch(() => "");
+        console.error("Order creation failed:", res.status, text);
 
-      // const { data } = await res.json();
-      // clearCart();
-      // localStorage.removeItem("appliedCoupon");
-      // if (selectedPayment !== "pay_now") {
-      //   setPayFormeLink(
-      //     `${process.env.NEXT_PUBLIC_ROUTE}/payment/pay-for-me/${data?.order_id}?price=${data.amounts?.total}&firstName=${data?.contact?.first_name}`
-      //   );
-      //   return;
-      // }
+        // Check if the error is TOKEN_EXPIRED
+        try {
+          const errorData = JSON.parse(text);
+          if (errorData?.error?.code === "TOKEN_EXPIRED") {
+            setShowLoginModal(true);
+            setIsLoading(false);
+            return;
+          }
+        } catch {
+          // If parsing fails, continue with generic error
+        }
 
-      // router.push(`/payment/${data?.order_id}`);
+        throw new Error("Failed to create order");
+      }
+
+      const { data } = await res.json();
+      clearCart();
+      localStorage.removeItem("appliedCoupon");
+      if (selectedPayment !== "pay_now") {
+        setPayFormeLink(
+          `${process.env.NEXT_PUBLIC_ROUTE}/payment/pay-for-me/${data?.order_id}?price=${data.amounts?.total}&firstName=${data?.contact?.first_name}`
+        );
+        return;
+      }
+
+      router.push(`/payment/${data?.order_id}`);
     } catch (err) {
       console.error("Payment flow error:", err);
       alert(err.message || "Failed to process order. Please try again.");
@@ -523,6 +538,18 @@ export default function OrderItems({
         onCancel={() => setItemToRemove(null)}
         title="Remove from Cart"
         message="Are you sure you want to remove this item from your cart? If you change your mind, you'll need to add the item again."
+      />
+
+      <ConfirmationModal
+        isOpen={showLoginModal}
+        onConfirm={() => {
+          logout();
+          router.push("/auth/login");
+          setShowLoginModal(false);
+        }}
+        onCancel={() => setShowLoginModal(false)}
+        title="Session Expired"
+        message="Your session has expired. Please log in again to continue with your purchase."
       />
     </div>
   );
