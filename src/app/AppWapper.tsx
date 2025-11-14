@@ -16,6 +16,7 @@ const AppWapper = ({
   host: string;
 }) => {
   const [isClient, setIsClient] = useState(false);
+  console.log(host);
 
   useEffect(() => {
     setIsClient(true);
@@ -38,7 +39,9 @@ const AppWapper = ({
             {children}
             <div className="w-full h-20" />
 
-            {host === "steadfast.ng" || host === "localhost" ? (
+            {host === "steadfast.ng" ||
+            host === "localhost" ||
+            host === "frontend-nextjs-production-936a.up.railway.app" ? (
               <MobileNav />
             ) : null}
           </ToastProvider>
