@@ -8,6 +8,7 @@ import { CartPanel } from "@/components/cart/CartPanel";
 import { useAuth } from "@/contexts/AuthContext";
 import { ChevronDown, LogOut, User, ShoppingBag, Heart } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
+import { Category } from "@/types/product";
 // import { useWishlist } from "@/context/WishlistContext";
 
 const navLinks = [
@@ -17,7 +18,9 @@ const navLinks = [
   { name: "Privacy Policy", href: "/privacy-policy" },
 ];
 
-const SearchComponent: React.FC = () => {
+const SearchComponent: React.FC<{ categories: Category[] }> = ({
+  categories,
+}) => {
   const router = useRouter();
   const params =
     typeof window !== "undefined"
@@ -25,6 +28,44 @@ const SearchComponent: React.FC = () => {
       : new URLSearchParams();
   const initial = params.get("q") || "";
   const [searchQuery, setSearchQuery] = useState(initial);
+  const [currentPlaceholder, setCurrentPlaceholder] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [shuffledCategories, setShuffledCategories] = useState<string[]>([]);
+
+  // Generate dynamic placeholders from categories
+  useEffect(() => {
+    if (categories.length > 0) {
+      const categoryPlaceholders = categories.map((cat) => {
+        // Always add "Explore: " prefix to all categories
+        return `Explore: ${cat.name}`;
+      });
+
+      // Shuffle the array randomly
+      const shuffled = [...categoryPlaceholders].sort(
+        () => Math.random() - 0.5,
+      );
+      setShuffledCategories(shuffled);
+    } else {
+      // Only show default search text when no categories available
+      setShuffledCategories([]);
+    }
+  }, [categories]);
+
+  useEffect(() => {
+    if (shuffledCategories.length === 0) return;
+
+    const interval = setInterval(() => {
+      setIsAnimating(true);
+      setTimeout(() => {
+        setCurrentPlaceholder((prev) => (prev + 1) % shuffledCategories.length);
+        setTimeout(() => {
+          setIsAnimating(false);
+        }, 100);
+      }, 3000);
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, [shuffledCategories]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,14 +79,46 @@ const SearchComponent: React.FC = () => {
       <div className="absolute hidden md:flex inset-y-0 left-4 items-center pointer-events-none">
         <SearchIcon className="w-4 h-4" />
       </div>
-      <input
-        type="text"
-        value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
-        placeholder="Search product, category"
-        aria-label="Search products"
-        className="w-full pl-10 pr-12 py-2.5 bg-[#F0F0F0] text-black placeholder:text-black border border-gray-200 rounded-full focus:outline-none text-sm"
-      />
+      <div className="relative w-full">
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder=""
+          aria-label="Search products"
+          className="w-full pl-10 pr-12 py-2.5 bg-[#F0F0F0] text-black placeholder:text-black border border-gray-200 rounded-full focus:outline-none text-sm"
+        />
+        {!searchQuery && (
+          <div className="absolute inset-y-0 left-10 flex items-center pointer-events-none overflow-hidden">
+            <div
+              className={`text-sm text-black transition-all duration-500 ${
+                isAnimating
+                  ? "translate-y-full opacity-0"
+                  : "translate-y-0 opacity-60"
+              }`}
+              style={{
+                animation: !isAnimating ? "slideFromTop 0.5s ease-out" : "none",
+              }}
+            >
+              {shuffledCategories.length > 0
+                ? shuffledCategories[currentPlaceholder]
+                : "Search products, categories..."}
+            </div>
+          </div>
+        )}
+        <style jsx>{`
+          @keyframes slideFromTop {
+            from {
+              transform: translateY(-100%);
+              opacity: 0;
+            }
+            to {
+              transform: translateY(0);
+              opacity: 0.6;
+            }
+          }
+        `}</style>
+      </div>
       <button
         type="submit"
         className="hidden md:block absolute right-0 top-0 h-full px-6 bg-[#184193] text-white rounded-r-full text-sm font-medium"
@@ -63,21 +136,6 @@ const SearchComponent: React.FC = () => {
     </form>
   );
 };
-
-interface Category {
-  id: string;
-  name: string;
-  slug: string;
-  description?: string;
-  image_url?: string;
-  topProducts?: { id: string; name: string; slug: string }[];
-  subcategories?: {
-    id: string;
-    name: string;
-    slug: string;
-    description?: string;
-  }[];
-}
 
 export function HeaderComponent({
   showSearch = false,
@@ -134,7 +192,7 @@ export function HeaderComponent({
     (async () => {
       try {
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/categories`
+          `${process.env.NEXT_PUBLIC_API_URL}/api/categories`,
         );
         const data = await res.json();
         if (!mounted) return;
@@ -242,7 +300,7 @@ export function HeaderComponent({
                   <div className="w-full h-10 bg-gray-100 animate-pulse rounded-full" />
                 }
               >
-                <SearchComponent />
+                <SearchComponent categories={categories} />
               </Suspense>
             </div>
 
@@ -667,22 +725,7 @@ export function HeaderComponent({
 // keep both named and default exports so both import styles work
 
 export function Header({ showSearch = false }: { showSearch?: boolean }) {
-  return (
-    <>
-      <HeaderComponent showSearch={showSearch} />
-      {showSearch && (
-        <div className="md:hidden px-4">
-          <Suspense
-            fallback={
-              <div className="w-full h-10 bg-gray-100 animate-pulse rounded-full" />
-            }
-          >
-            <SearchComponent />
-          </Suspense>
-        </div>
-      )}
-    </>
-  );
+  return <HeaderComponent showSearch={showSearch} />;
 }
 
 export default Header;
