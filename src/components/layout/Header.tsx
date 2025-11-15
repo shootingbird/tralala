@@ -36,8 +36,8 @@ const SearchComponent: React.FC<{ categories: Category[] }> = ({
   useEffect(() => {
     if (categories.length > 0) {
       const categoryPlaceholders = categories.map((cat) => {
-        // Always add "Explore: " prefix to all categories
-        return `Explore: ${cat.name}`;
+        // Return just the category name without prefix
+        return cat.name;
       });
 
       // Shuffle the array randomly
@@ -60,9 +60,9 @@ const SearchComponent: React.FC<{ categories: Category[] }> = ({
         setCurrentPlaceholder((prev) => (prev + 1) % shuffledCategories.length);
         setTimeout(() => {
           setIsAnimating(false);
-        }, 100);
-      }, 3000);
-    }, 4000);
+        }, 500);
+      }, 5500);
+    }, 6500);
 
     return () => clearInterval(interval);
   }, [shuffledCategories]);
