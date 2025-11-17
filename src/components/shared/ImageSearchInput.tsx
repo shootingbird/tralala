@@ -34,8 +34,7 @@ export default function ImageSearchInput({
   useEffect(() => {
     if (categories.length > 0) {
       const categoryPlaceholders = categories.map((cat) => {
-        // Always add "Explore: " prefix to all categories
-        return `Explore: ${cat.name}`;
+        return cat.name;
       });
 
       // Shuffle the array randomly
@@ -52,17 +51,26 @@ export default function ImageSearchInput({
   useEffect(() => {
     if (shuffledCategories.length === 0) return;
 
-    const interval = setInterval(() => {
-      setIsAnimating(true);
-      setTimeout(() => {
-        setCurrentPlaceholder((prev) => (prev + 1) % shuffledCategories.length);
-        setTimeout(() => {
-          setIsAnimating(false);
-        }, 100);
-      }, 3000);
-    }, 4000);
+    let stayTimeout: ReturnType<typeof setTimeout>;
+    let outTimeout: ReturnType<typeof setTimeout>;
 
-    return () => clearInterval(interval);
+    const cycle = () => {
+      setIsAnimating(false);
+      stayTimeout = setTimeout(() => {
+        setIsAnimating(true);
+        outTimeout = setTimeout(() => {
+          setCurrentPlaceholder((prev) => (prev + 1) % shuffledCategories.length);
+          cycle();
+        }, 500);
+      }, 5000);
+    };
+
+    cycle();
+
+    return () => {
+      clearTimeout(stayTimeout);
+      clearTimeout(outTimeout);
+    };
   }, [shuffledCategories]);
 
   const toBase64 = (file: File): Promise<string> =>
@@ -90,10 +98,10 @@ export default function ImageSearchInput({
         filename: file.name,
       }).unwrap();
 
-      if (result.url) {
-        setUploadedImageUrl(result.url);
+      if (result.image) {
+        setUploadedImageUrl(result.image);
         const params = new URLSearchParams();
-        params.set("image_url", result.url);
+        params.set("image_url", result.image);
         router.push(`/products?${params.toString()}`);
       }
     } catch (error) {
