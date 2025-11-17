@@ -1,6 +1,12 @@
 "use client";
 import { HiOutlineCamera } from "react-icons/hi2";
-import React, { useState, useRef, useEffect } from "react";
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useMemo,
+  useCallback,
+} from "react";
 import Image from "next/image";
 import { X } from "lucide-react";
 import { useUploadImageMutation } from "@/slices/products/productApiSlice";
@@ -31,13 +37,17 @@ export default function ImageSearchInput({
   const [isAnimating, setIsAnimating] = useState(false);
   const [shuffledCategories, setShuffledCategories] = useState<string[]>([]);
 
-  // Generate dynamic placeholders from categories
-  useEffect(() => {
+  // Memoize category processing to prevent unnecessary re-renders
+  const categoryPlaceholders = useMemo(() => {
     if (categories.length > 0) {
-      const categoryPlaceholders = categories.map((cat) => {
-        return cat.name;
-      });
+      return categories.map((cat) => cat.name);
+    }
+    return [];
+  }, [categories]);
 
+  // Only shuffle when categoryPlaceholders actually change
+  useEffect(() => {
+    if (categoryPlaceholders.length > 0) {
       // Shuffle the array randomly
       const shuffled = [...categoryPlaceholders].sort(
         () => Math.random() - 0.5
@@ -47,19 +57,26 @@ export default function ImageSearchInput({
       // Only show default search text when no categories available
       setShuffledCategories([]);
     }
-  }, [categories]);
+  }, [categoryPlaceholders]);
 
   useEffect(() => {
     if (shuffledCategories.length === 0) return;
 
     let stayTimeout: ReturnType<typeof setTimeout>;
     let outTimeout: ReturnType<typeof setTimeout>;
+    let isMounted = true;
 
     const cycle = () => {
+      if (!isMounted) return;
+
       setIsAnimating(false);
       stayTimeout = setTimeout(() => {
+        if (!isMounted) return;
+
         setIsAnimating(true);
         outTimeout = setTimeout(() => {
+          if (!isMounted) return;
+
           setCurrentPlaceholder(
             (prev) => (prev + 1) % shuffledCategories.length
           );
@@ -71,75 +88,89 @@ export default function ImageSearchInput({
     cycle();
 
     return () => {
+      isMounted = false;
       clearTimeout(stayTimeout);
       clearTimeout(outTimeout);
     };
   }, [shuffledCategories]);
 
-  const toBase64 = (file: File): Promise<string> =>
-    new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = (error) => reject(error);
-    });
+  const toBase64 = useCallback(
+    (file: File): Promise<string> =>
+      new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = (error) => reject(error);
+      }),
+    []
+  );
 
-  const handleImageUpload = async (file: File) => {
-    if (!file.type.startsWith("image/")) {
-      alert("Please select a valid image file.");
-      return;
-    }
-
-    const previewUrl = URL.createObjectURL(file);
-    setPreviewImage(previewUrl);
-    setIsUploading(true);
-
-    try {
-      const base64 = await toBase64(file);
-      const result = await uploadImage({
-        image: base64,
-        filename: file.name,
-      }).unwrap();
-
-      if (result.image) {
-        setUploadedImageUrl(result.image);
-        const params = new URLSearchParams();
-        params.set("image_url", result.image);
-        router.push(`/products?${params.toString()}`);
+  const handleImageUpload = useCallback(
+    async (file: File) => {
+      if (!file.type.startsWith("image/")) {
+        alert("Please select a valid image file.");
+        return;
       }
-    } catch (error) {
-      console.error("Upload failed:", error);
-      alert("Failed to upload image. Please try again.");
-      setPreviewImage(null);
-    } finally {
-      setIsUploading(false);
-    }
-  };
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) handleImageUpload(file);
-  };
+      const previewUrl = URL.createObjectURL(file);
+      setPreviewImage(previewUrl);
+      setIsUploading(true);
 
-  const handleSearch = (e?: React.FormEvent) => {
-    e?.preventDefault();
+      try {
+        const base64 = await toBase64(file);
+        const result = await uploadImage({
+          image: base64,
+          filename: file.name,
+        }).unwrap();
 
-    const params = new URLSearchParams();
-    if (uploadedImageUrl) {
-      params.set("image_url", uploadedImageUrl);
-    } else if (query.trim()) {
-      params.set("q", query.trim());
-    } else return;
+        console.log(result);
 
-    router.push(`/products?${params.toString()}`);
-    onSearch?.(query, uploadedImageUrl || undefined);
-  };
+        if (result.url) {
+          setUploadedImageUrl(result.url);
+          const params = new URLSearchParams();
+          params.set("image_url", result.url);
+          router.push(`/products?${params.toString()}`);
+        }
+      } catch (error) {
+        console.error("Upload failed:", error);
+        alert("Failed to upload image. Please try again.");
+        setPreviewImage(null);
+      } finally {
+        setIsUploading(false);
+      }
+    },
+    [uploadImage, router, toBase64]
+  );
 
-  const clearImage = () => {
+  const handleFileSelect = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (file) handleImageUpload(file);
+    },
+    [handleImageUpload]
+  );
+
+  const handleSearch = useCallback(
+    (e?: React.FormEvent) => {
+      e?.preventDefault();
+      const params = new URLSearchParams();
+      if (uploadedImageUrl) {
+        params.set("image_url", uploadedImageUrl);
+      } else if (query.trim()) {
+        params.set("q", query.trim());
+      } else return;
+
+      router.push(`/products?${params.toString()}`);
+      onSearch?.(query, uploadedImageUrl || undefined);
+    },
+    [query, uploadedImageUrl, router, onSearch]
+  );
+
+  const clearImage = useCallback(() => {
     setUploadedImageUrl(null);
     setPreviewImage(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
-  };
+  }, []);
 
   return (
     <form

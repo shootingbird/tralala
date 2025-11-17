@@ -13,6 +13,8 @@ import Banner from "./HomeScreen/Banner";
 import { useGetExploreProductsQuery } from "@/slices/products/productApiSlice";
 import { fetchProducts } from "@/lib/api/products";
 import { Product } from "@/types/product";
+import Link from "next/link";
+import Image from "next/image";
 
 const ClientPage = () => {
   const [showMegaMenu, setShowMegaMenu] = useState(false);
@@ -79,8 +81,25 @@ const ClientPage = () => {
     return () => document.removeEventListener("mousedown", onDoc);
   }, []);
   return (
-    <div className="mt-24 md:mt-40">
-      <div className="fixed top-0 right-0 left-0  z-50">
+    <div className="">
+      {/* Logo - only show on mobile and outside sticky container */}
+      {isMobile && (
+        <div className="px-4 py-2 bg-white">
+          <Link href={"/"} className="flex items-center w-48">
+            <Image
+              src="/logo-transparent.png"
+              alt="Steadfast"
+              width={200}
+              height={50}
+              priority
+              className="object-contain w-25 h-8"
+            />
+          </Link>
+        </div>
+      )}
+
+      {/* Sticky header container */}
+      <div className="sticky top-0 right-0 left-0 z-50">
         <Header onCategoryClick={setShowMegaMenu} />
       </div>
 
