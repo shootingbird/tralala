@@ -112,7 +112,7 @@ export function ProductImageGallery({
                 src={media[currentIndex].url}
                 alt={`${name} - View ${currentIndex + 1}`}
                 fill
-                className="object-cover z-0"
+                className="object-fit z-0 bg-white"
               />
             ) : isYouTube(media[currentIndex].url) ? (
               <iframe

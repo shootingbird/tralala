@@ -303,7 +303,7 @@ function ProductDetailPageContent() {
   console.log("Rendering product page for:", product);
   return (
     <>
-      <Header isProductPage showSearchbar={false} />
+      <Header isProductPage showSearchbar={true} />
       <main className="container mx-auto px-4">
         <Breadcrumb
           items={[

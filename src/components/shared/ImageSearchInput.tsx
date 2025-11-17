@@ -94,7 +94,7 @@ export default function ImageSearchInput({
       onSubmit={handleSearch}
       className={`relative w-full max-w-2xl mx-auto transition-all duration-300 ${className}`}
     >
-      <div className="flex items-center bg-white border-[1.5px] border-gray-900 rounded-full shadow-sm overflow-hidden focus-within:ring-2 focus-within:ring-[#E94B11] transition-all duration-200 h-11 sm:h-12 md:h-14 px-[2px]">
+      <div className="flex items-center bg-white border border-gray-700 rounded-full shadow-sm overflow-hidden focus-within:ring-2 focus-within:ring-[#E94B11] transition-all duration-200 h-11 sm:h-12 md:h-14 px-[2px]">
         {/* Image Preview */}
         {previewImage && (
           <div className="relative ml-2 shrink-0">
@@ -145,7 +145,7 @@ export default function ImageSearchInput({
         <div className="h-full flex items-center px-[2px]">
           <button
             type="submit"
-            className="h-[calc(100%-4px)] px-5 sm:px-6 bg-gradient-to-r from-[#f2683d] to-[#E94B11] hover:opacity-90 text-white font-medium text-sm sm:text-base rounded-full transition-all duration-200 disabled:opacity-50"
+            className="h-[calc(100%-4px)] px-5 sm:px-6 bg-gradient-to-r from-[#f2683d] to-[#E94B11] hover:opacity-90 text-white text-sm sm:text-base rounded-full transition-all duration-200 disabled:opacity-50"
           >
             GO
           </button>
