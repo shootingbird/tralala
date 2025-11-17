@@ -1,6 +1,7 @@
 "use client";
 import { HiOutlineCamera } from "react-icons/hi2";
 import React, { useState, useRef, useEffect } from "react";
+import Image from "next/image";
 import { X } from "lucide-react";
 import { useUploadImageMutation } from "@/slices/products/productApiSlice";
 import { useRouter } from "next/navigation";
@@ -147,10 +148,13 @@ export default function ImageSearchInput({
         {/* Image Preview */}
         {previewImage && (
           <div className="relative ml-2 shrink-0">
-            <img
+            <Image
               src={previewImage}
               alt="Selected"
+              width={32}
+              height={32}
               className="w-7 h-7 sm:w-8 sm:h-8 object-cover rounded"
+              unoptimized
             />
             <button
               type="button"
@@ -188,7 +192,7 @@ export default function ImageSearchInput({
               >
                 {shuffledCategories.length > 0
                   ? shuffledCategories[currentPlaceholder]
-                  : "Search products or upload image..."}
+                  : placeholder}
               </div>
             </div>
           )}

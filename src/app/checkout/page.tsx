@@ -4,14 +4,14 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { ShippingAddressSection } from "@/components/checkout/ShippingAddressSection";
-import { PickupSection } from "@/components/checkout/PickupSection";
+import { PickupSection, SelectedPickup } from "@/components/checkout/PickupSection";
 import { PaymentSection } from "@/components/checkout/PaymentSection";
 import { TopBanner } from "@/components/layout/TopBanner";
 import { type Coupon } from "@/lib/coupons";
 import AppWapper from "@/app/AppWapper";
 import Header from "@/components/shared/Header";
 
-interface ApiResponse<T = any> {
+interface ApiResponse<T = unknown> {
   success: boolean;
   message: string;
   data: T | null;
@@ -29,7 +29,7 @@ export type ApiZone = {
   pickups: string[];
   is_active?: boolean;
   // any extra fields the API returns
-  [key: string]: any;
+  [key: string]: unknown;
 };
 
 interface Zone {
@@ -43,6 +43,17 @@ interface Zone {
   state: string;
 }
 
+type ShippingDetails = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  city: string;
+  state: string;
+  address: string;
+  note: string;
+};
+
 export default function CheckoutPage() {
   return (
     <AppWapper>
@@ -53,14 +64,14 @@ export default function CheckoutPage() {
 
 function CheckoutPageContent() {
   const router = useRouter();
-  const [applyingCode, setapplyingCode] = useState<boolean>(false);
-  const [fullTotal, setfullTotal] = useState<number>(0);
+
+
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedState, setSelectedState] = useState("");
-  let subtotal = 0;
+
   const [selectedCity, setSelectedCity] = useState("");
-  const [shippingDetails, setShippingDetails] = useState<any>(null);
-  const [pickupData, setPickupData] = useState<any>(null);
+  const [shippingDetails, setShippingDetails] = useState<ShippingDetails | null>(null);
+  const [pickupData, setPickupData] = useState<SelectedPickup | null>(null);
   const [deliveryInfo, setDeliveryInfo] = useState<{
     fee: string;
     duration: string;
@@ -103,34 +114,7 @@ function CheckoutPageContent() {
     }
   };
 
-  const applyPadiCoupon = async (padiCode: string): Promise<void> => {
-    setapplyingCode(true);
-    try {
-      const response = await fetch(
-        `https://steadfast-padi-backend.pxxl.tech/api/payment/${padiCode}/verify-padi-code`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
 
-      const data: ApiResponse<Coupon> = await response.json();
-
-      if (data.success && data.statusCode == 200) {
-        const discountedTotal = 0.98 * subtotal;
-        subtotal = discountedTotal;
-        setfullTotal(subtotal);
-      } else {
-        console.log("Coupon verification failed:", data.message);
-      }
-    } catch (error) {
-      console.error("Error verifying coupon:", error);
-    } finally {
-      setapplyingCode(false);
-    }
-  };
 
   const handleContinue = async () => {
     window.scrollTo(0, 0);
@@ -231,10 +215,17 @@ function CheckoutPageContent() {
                 pickupLocation={{
                   state: selectedState,
                   city: selectedCity,
-                  location: pickupData?.pickup,
+                  location: pickupData?.pickup
+                    ? typeof pickupData.pickup === "string"
+                      ? pickupData.pickup
+                      : { value: pickupData.pickup.value }
+                    : null,
                 }}
                 deliveryInfo={deliveryInfo}
-                zonesData={zonesData}
+                zonesData={zonesData.map((z) => ({
+                  ...z,
+                  lga: z.lga ?? undefined,
+                }))}
               />
             )}
           </div>

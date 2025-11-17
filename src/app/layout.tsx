@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import AppWapper from "./AppWapper";
 import { headers } from "next/headers";
 import Script from "next/script";
+import Image from "next/image";
 
 const montserrat = Montserrat({
   weight: ["400", "500", "600", "700"],
@@ -82,11 +83,13 @@ export default async function RootLayout({
           `}
         </Script>
         <noscript>
-          <img
-            height="1"
-            width="1"
+          <Image
+            height={1}
+            width={1}
             style={{ display: "none" }}
             src="https://www.facebook.com/tr?id=644795937619117&ev=PageView&noscript=1"
+            alt=""
+            unoptimized
           />
         </noscript>
       </body>

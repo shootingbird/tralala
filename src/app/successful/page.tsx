@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { TopBanner } from '@/components/layout/TopBanner';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
-import { ProductGrid } from '@/components/product/ProductGrid';
 
 export default function PaymentSuccessfulPage() {
     const router = useRouter();
