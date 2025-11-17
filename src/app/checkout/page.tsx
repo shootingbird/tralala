@@ -222,7 +222,7 @@ function CheckoutPageContent() {
                     setDeliveryInfo({ fee: "0", duration: "", id: undefined });
                   }
                 }}
-                selectedZone={selectedZone}
+                selectedZone={selectedZone ? { ...selectedZone, lga: selectedZone.lga ?? undefined } : null}
               />
             )}
             {currentStep === 3 && (
@@ -257,9 +257,8 @@ function CheckoutPageContent() {
                 >
                   <Button
                     onClick={handleContinue}
-                    rounded={currentStep === 2}
                     disabled={disableContinue}
-                    className={`w-full ${
+                    className={`w-full ${currentStep === 2 ? "rounded-full" : ""} ${
                       disableContinue
                         ? "opacity-60 cursor-not-allowed"
                         : "cursor-pointer"
