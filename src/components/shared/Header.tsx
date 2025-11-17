@@ -106,7 +106,7 @@ export default function Header({
         {/* central search */}
         <div className="hidden md:flex flex-1 items-center justify-center">
           <div className="w-full max-w-2xl">
-            <ImageSearchInput className="w-full" />
+            <ImageSearchInput className="w-full" categories={categories} />
           </div>
         </div>
 
@@ -223,7 +223,7 @@ export default function Header({
               <ChevronLeft size={24} />
               <span className="hidden md:inline">Back</span>
             </button>
-            <ImageSearchInput className="w-full" />
+            <ImageSearchInput className="w-full" categories={categories} />
           </div>
         </div>
       ) : null}

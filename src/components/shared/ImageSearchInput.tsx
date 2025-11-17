@@ -1,20 +1,24 @@
 "use client";
 import { HiOutlineCamera } from "react-icons/hi2";
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
+import Image from "next/image";
 import { X } from "lucide-react";
 import { useUploadImageMutation } from "@/slices/products/productApiSlice";
 import { useRouter } from "next/navigation";
+import { Category } from "@/types/product";
 
 interface ImageSearchInputProps {
   onSearch?: (query: string, imageUrl?: string) => void;
   placeholder?: string;
   className?: string;
+  categories?: Category[];
 }
 
 export default function ImageSearchInput({
   onSearch,
   placeholder = "Search products or upload image...",
   className = "",
+  categories = [],
 }: ImageSearchInputProps) {
   const router = useRouter();
   const [query, setQuery] = useState("");
@@ -23,6 +27,52 @@ export default function ImageSearchInput({
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadImage] = useUploadImageMutation();
+  const [currentPlaceholder, setCurrentPlaceholder] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [shuffledCategories, setShuffledCategories] = useState<string[]>([]);
+
+  // Generate dynamic placeholders from categories
+  useEffect(() => {
+    if (categories.length > 0) {
+      const categoryPlaceholders = categories.map((cat) => {
+        return cat.name;
+      });
+
+      // Shuffle the array randomly
+      const shuffled = [...categoryPlaceholders].sort(
+        () => Math.random() - 0.5,
+      );
+      setShuffledCategories(shuffled);
+    } else {
+      // Only show default search text when no categories available
+      setShuffledCategories([]);
+    }
+  }, [categories]);
+
+  useEffect(() => {
+    if (shuffledCategories.length === 0) return;
+
+    let stayTimeout: ReturnType<typeof setTimeout>;
+    let outTimeout: ReturnType<typeof setTimeout>;
+
+    const cycle = () => {
+      setIsAnimating(false);
+      stayTimeout = setTimeout(() => {
+        setIsAnimating(true);
+        outTimeout = setTimeout(() => {
+          setCurrentPlaceholder((prev) => (prev + 1) % shuffledCategories.length);
+          cycle();
+        }, 500);
+      }, 5000);
+    };
+
+    cycle();
+
+    return () => {
+      clearTimeout(stayTimeout);
+      clearTimeout(outTimeout);
+    };
+  }, [shuffledCategories]);
 
   const toBase64 = (file: File): Promise<string> =>
     new Promise((resolve, reject) => {
@@ -49,10 +99,10 @@ export default function ImageSearchInput({
         filename: file.name,
       }).unwrap();
 
-      if (result.url) {
-        setUploadedImageUrl(result.url);
+      if (result.image) {
+        setUploadedImageUrl(result.image);
         const params = new URLSearchParams();
-        params.set("image_url", result.url);
+        params.set("image_url", result.image);
         router.push(`/products?${params.toString()}`);
       }
     } catch (error) {
@@ -98,10 +148,13 @@ export default function ImageSearchInput({
         {/* Image Preview */}
         {previewImage && (
           <div className="relative ml-2 shrink-0">
-            <img
+            <Image
               src={previewImage}
               alt="Selected"
+              width={32}
+              height={32}
               className="w-7 h-7 sm:w-8 sm:h-8 object-cover rounded"
+              unoptimized
             />
             <button
               type="button"
@@ -113,15 +166,56 @@ export default function ImageSearchInput({
           </div>
         )}
 
-        {/* Input */}
-        <input
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder={uploadedImageUrl ? "Searching by image..." : placeholder}
-          className="flex-1 min-w-0 px-3 sm:px-4 py-2 text-sm sm:text-base placeholder-gray-400 outline-none bg-transparent"
-          disabled={!!uploadedImageUrl}
-        />
+        {/* Input with Animated Placeholder */}
+        <div className="relative flex-1 min-w-0">
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder=""
+            className="w-full px-3 sm:px-4 py-2 text-sm sm:text-base placeholder-gray-400 outline-none bg-transparent"
+            disabled={!!uploadedImageUrl}
+          />
+          {!query && !uploadedImageUrl && (
+            <div className="absolute inset-y-0 left-3 sm:left-4 flex items-center pointer-events-none overflow-hidden">
+              <div
+                className={`text-sm sm:text-base text-gray-400 transition-all duration-500 ${
+                  isAnimating
+                    ? "translate-y-full opacity-0"
+                    : "translate-y-0 opacity-100"
+                }`}
+                style={{
+                  animation: !isAnimating
+                    ? "slideFromTop 0.5s ease-out"
+                    : "none",
+                }}
+              >
+                {shuffledCategories.length > 0
+                  ? shuffledCategories[currentPlaceholder]
+                  : placeholder}
+              </div>
+            </div>
+          )}
+          <style jsx>{`
+            @keyframes slideFromTop {
+              from {
+                transform: translateY(-100%);
+                opacity: 0;
+              }
+              to {
+                transform: translateY(0);
+                opacity: 1;
+              }
+            }
+          `}</style>
+          {!query && uploadedImageUrl && (
+            <div className="absolute inset-y-0 left-3 sm:left-4 flex items-center pointer-events-none">
+              <span className="text-sm sm:text-base text-gray-400">
+                Searching by image...
+              </span>
+            </div>
+          )}
+        </div>
 
         {/* Upload Button */}
         <button

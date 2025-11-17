@@ -25,6 +25,7 @@ type ShippingAddressSectionProps = {
   onShippingDetailsChange: (details: typeof defaultAddress) => void;
   setDisableContinue: (disabled: boolean) => void;
   zonesData?: Zone[];
+  isLoadingZones?: boolean;
   onZoneSelect?: (zone: Zone | null) => void;
 };
 

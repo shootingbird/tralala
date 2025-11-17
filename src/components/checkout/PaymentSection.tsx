@@ -1,20 +1,34 @@
 "use client";
 
 import OrderItems from "../cart/OrderItems";
+import { ApiZone } from "@/lib/pickupUtils";
+
+type ShippingDetails = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  city: string;
+  state: string;
+  address: string;
+  note: string;
+};
+
+type PickupLocation = {
+  state: string;
+  city: string;
+  location: string | { value: string } | null;
+};
 
 type PaymentSectionProps = {
-  shippingDetails: any;
-  pickupLocation: {
-    state: string;
-    city: string;
-    location: any;
-  };
+  shippingDetails: ShippingDetails | null;
+  pickupLocation: PickupLocation;
   deliveryInfo: {
     fee: string;
     duration: string;
     id?: number;
   };
-  zonesData?: any[];
+  zonesData?: ApiZone[];
 };
 
 export const PaymentSection = ({

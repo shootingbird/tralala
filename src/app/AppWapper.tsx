@@ -13,7 +13,7 @@ const AppWapper = ({
   host = "",
 }: {
   children: React.ReactNode;
-  host: string;
+  host?: string;
 }) => {
   const [isClient, setIsClient] = useState(false);
 
