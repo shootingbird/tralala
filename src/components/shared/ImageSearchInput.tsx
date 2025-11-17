@@ -40,7 +40,7 @@ export default function ImageSearchInput({
 
       // Shuffle the array randomly
       const shuffled = [...categoryPlaceholders].sort(
-        () => Math.random() - 0.5,
+        () => Math.random() - 0.5
       );
       setShuffledCategories(shuffled);
     } else {
@@ -60,7 +60,9 @@ export default function ImageSearchInput({
       stayTimeout = setTimeout(() => {
         setIsAnimating(true);
         outTimeout = setTimeout(() => {
-          setCurrentPlaceholder((prev) => (prev + 1) % shuffledCategories.length);
+          setCurrentPlaceholder(
+            (prev) => (prev + 1) % shuffledCategories.length
+          );
           cycle();
         }, 500);
       }, 5000);
@@ -144,7 +146,7 @@ export default function ImageSearchInput({
       onSubmit={handleSearch}
       className={`relative w-full max-w-2xl mx-auto transition-all duration-300 ${className}`}
     >
-      <div className="flex items-center bg-white border border-gray-700 rounded-full shadow-sm overflow-hidden focus-within:ring-2 focus-within:ring-[#E94B11] transition-all duration-200 h-11 sm:h-12 md:h-14 px-[2px]">
+      <div className="flex items-center bg-white border border-gray-700 rounded-full shadow-sm overflow-hidden focus-within:ring-2 focus-within:ring-[#E94B11] transition-all duration-200 h-10 sm:h-10 md:h-12 px-[2px]">
         {/* Image Preview */}
         {previewImage && (
           <div className="relative ml-2 shrink-0">
@@ -173,7 +175,7 @@ export default function ImageSearchInput({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder=""
-            className="w-full px-3 sm:px-4 py-2 text-sm sm:text-base placeholder-gray-400 outline-none bg-transparent"
+            className="w-full px-3 sm:px-4 py-1 text-sm sm:text-base placeholder-gray-400 outline-none bg-transparent"
             disabled={!!uploadedImageUrl}
           />
           {!query && !uploadedImageUrl && (
