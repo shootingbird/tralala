@@ -12,6 +12,7 @@ export interface ProductsQueryParams {
   has_discount?: boolean;
   has_images?: boolean;
   code?: string;
+  filter?: string;
   q?: string; // Add search parameter
   image_url?: string; // Add image URL for AI-based search
   created_after?: string;
@@ -69,7 +70,7 @@ export const productApiSlice = createApi({
     >({
       query: ({ page, per_page }) => ({
         url: "/api/products",
-        params: { page, per_page, has_images: true },
+        params: { page, per_page, has_images: true, filter: "explore" },
       }),
       serializeQueryArgs: ({ endpointName }) => {
         return endpointName;

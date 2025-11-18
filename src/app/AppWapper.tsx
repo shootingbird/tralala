@@ -16,7 +16,6 @@ const AppWapper = ({
   host?: string;
 }) => {
   const [isClient, setIsClient] = useState(false);
-  console.log(host);
 
   useEffect(() => {
     setIsClient(true);

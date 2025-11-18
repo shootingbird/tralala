@@ -85,7 +85,7 @@ export default function Header({
       {/* Top row: logo, search, icons */}
       <div className="px-4 md:px-12 pb-4 pt-1 md:pt-4 flex items-center justify-between gap-6 ">
         {isHomePage ? (
-          <Link href={"/"} className="flex items-center w-48">
+          <Link href={"/"} className="hidden md:flex items-center w-48">
             <Image
               src="/logo-transparent.png"
               alt="Steadfast"

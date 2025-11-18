@@ -13,10 +13,13 @@ import Banner from "./HomeScreen/Banner";
 import { useGetExploreProductsQuery } from "@/slices/products/productApiSlice";
 import { fetchProducts } from "@/lib/api/products";
 import { Product } from "@/types/product";
+import Link from "next/link";
+import Image from "next/image";
 
 const ClientPage = () => {
   const [showMegaMenu, setShowMegaMenu] = useState(false);
-  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
+  const [newArrivalProducts, setNewArrivalProducts] = useState<Product[]>([]);
+  const [topPickProducts, setTopPickProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [explorePage, setExplorePage] = useState(1);
   const megaMenuRef = useRef<HTMLDivElement | null>(null);
@@ -47,23 +50,34 @@ const ClientPage = () => {
   };
 
   useEffect(() => {
-    const loadFeaturedProducts = async () => {
+    const loadProducts = async () => {
       try {
-        const response = await fetchProducts({
+        // Load new arrivals
+        const newArrivalResponse = await fetchProducts({
           has_images: true,
           per_page: 12,
+          filter: "newest",
         });
-        setFeaturedProducts(response.products);
+        setNewArrivalProducts(newArrivalResponse.products);
+
+        // Load top picks
+        const topPickResponse = await fetchProducts({
+          has_images: true,
+          per_page: 12,
+          filter: "top",
+        });
+        setTopPickProducts(topPickResponse.products);
       } catch (error) {
-        console.error("Failed to load featured products:", error);
-        // No fallback - show empty state or error
-        setFeaturedProducts([]);
+        console.error("Failed to load products:", error);
+        // Set empty arrays on error
+        setNewArrivalProducts([]);
+        setTopPickProducts([]);
       } finally {
         setLoading(false);
       }
     };
 
-    loadFeaturedProducts();
+    loadProducts();
   }, []);
 
   useEffect(() => {
@@ -79,8 +93,25 @@ const ClientPage = () => {
     return () => document.removeEventListener("mousedown", onDoc);
   }, []);
   return (
-    <div className="mt-24 md:mt-40">
-      <div className="fixed top-0 right-0 left-0  z-50">
+    <div className="">
+      {/* Logo - only show on mobile and outside sticky container */}
+      {isMobile && (
+        <div className="px-4 py-2 bg-white">
+          <Link href={"/"} className="flex items-center w-48">
+            <Image
+              src="/logo-transparent.png"
+              alt="Steadfast"
+              width={200}
+              height={50}
+              priority
+              className="object-contain w-25 h-8"
+            />
+          </Link>
+        </div>
+      )}
+
+      {/* Sticky header container */}
+      <div className="sticky top-0 right-0 left-0 z-50">
         <Header onCategoryClick={setShowMegaMenu} />
       </div>
 
@@ -117,20 +148,24 @@ const ClientPage = () => {
                 </div>
               </div>
             </>
-          ) : featuredProducts.length > 0 ? (
+          ) : newArrivalProducts.length > 0 || topPickProducts.length > 0 ? (
             <>
-              <ProductSlider
-                title={"New Arrival"}
-                mobileGridSize={3}
-                products={featuredProducts}
-                showNavigationButtons={false}
-              />
-              <ProductSlider
-                title={"Top Picks"}
-                mobileGridSize={3}
-                products={featuredProducts}
-                showNavigationButtons={false}
-              />
+              {newArrivalProducts.length > 0 && (
+                <ProductSlider
+                  title={"New Arrival"}
+                  mobileGridSize={3}
+                  products={newArrivalProducts}
+                  showNavigationButtons={false}
+                />
+              )}
+              {topPickProducts.length > 0 && (
+                <ProductSlider
+                  title={"Top Picks"}
+                  mobileGridSize={3}
+                  products={topPickProducts}
+                  showNavigationButtons={false}
+                />
+              )}
             </>
           ) : (
             <div className="px-4 py-4 text-center">
@@ -147,20 +182,24 @@ const ClientPage = () => {
               <ProductGridSkeleton count={6} />
               <ProductGridSkeleton count={6} />
             </>
-          ) : featuredProducts.length > 0 ? (
+          ) : newArrivalProducts.length > 0 || topPickProducts.length > 0 ? (
             <>
-              <ProductSlider
-                title={"New Arrival"}
-                mobileGridSize={5}
-                products={featuredProducts}
-                showNavigationButtons={true}
-              />
-              <ProductSlider
-                title={"Top Picks"}
-                mobileGridSize={5}
-                products={featuredProducts}
-                showNavigationButtons={true}
-              />
+              {newArrivalProducts.length > 0 && (
+                <ProductSlider
+                  title={"New Arrival"}
+                  mobileGridSize={5}
+                  products={newArrivalProducts}
+                  showNavigationButtons={true}
+                />
+              )}
+              {topPickProducts.length > 0 && (
+                <ProductSlider
+                  title={"Top Picks"}
+                  mobileGridSize={5}
+                  products={topPickProducts}
+                  showNavigationButtons={true}
+                />
+              )}
             </>
           ) : (
             <div className="text-center py-12">
