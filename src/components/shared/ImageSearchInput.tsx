@@ -138,7 +138,6 @@ export default function ImageSearchInput({
       }
     }
   };
-
   const clearImage = () => {
     setUploadedImageUrl(null);
     setPreviewImage(null);
