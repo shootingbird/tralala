@@ -10,6 +10,7 @@ export interface ProductsQueryParams {
   has_discount?: boolean;
   has_images?: boolean;
   code?: string;
+  filter?: string;
   created_after?: string;
   created_before?: string;
   updated_after?: string;
