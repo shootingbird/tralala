@@ -113,6 +113,7 @@ Example: chore: update dependencies
 docs: – For documentation updates
 Example: docs: update API usage guide
 
+
 refactor: – For restructuring code without changing functionality
 Example: refactor: optimize database query logic
 
