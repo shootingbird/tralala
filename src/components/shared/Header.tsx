@@ -17,6 +17,7 @@ import { usePathname } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/hooks/redux";
 import { selectCartItemCount } from "@/slices/cartSlice";
 import ImageSearchInput from "./ImageSearchInput";
+import { useGetCategoriesQuery } from "@/slices/products/productApiSlice";
 
 /* --- shadcn dropdown imports (assumes you have the components copied to "@/components/ui/*") --- */
 import {
@@ -50,6 +51,10 @@ export default function Header({
   const categories = useAppSelector((state) => state.categories.categories);
   const cartCount = useAppSelector(selectCartItemCount);
   const dispatch = useAppDispatch();
+
+  useGetCategoriesQuery(undefined, {
+    skip: categories.length > 0,
+  });
 
   // Fix hydration mismatch by ensuring auth state is only rendered on client
   useEffect(() => {

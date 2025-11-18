@@ -16,7 +16,7 @@ interface ImageSearchInputProps {
 
 export default function ImageSearchInput({
   onSearch,
-  placeholder = "Search products or upload image...",
+  placeholder = "Search products or upload image",
   className = "",
   categories = [],
 }: ImageSearchInputProps) {
@@ -29,22 +29,15 @@ export default function ImageSearchInput({
   const [uploadImage] = useUploadImageMutation();
   const [currentPlaceholder, setCurrentPlaceholder] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
-  const [shuffledCategories, setShuffledCategories] = useState<string[]>([]);
+  const [isPaused, setIsPaused] = useState(false);
+  const [shuffledCategories, setShuffledCategories] = useState<Category[]>([]);
 
   // Generate dynamic placeholders from categories
   useEffect(() => {
     if (categories.length > 0) {
-      const categoryPlaceholders = categories.map((cat) => {
-        return cat.name;
-      });
-
-      // Shuffle the array randomly
-      const shuffled = [...categoryPlaceholders].sort(
-        () => Math.random() - 0.5,
-      );
+      const shuffled = [...categories].sort(() => Math.random() - 0.5);
       setShuffledCategories(shuffled);
     } else {
-      // Only show default search text when no categories available
       setShuffledCategories([]);
     }
   }, [categories]);
@@ -56,10 +49,13 @@ export default function ImageSearchInput({
     let outTimeout: ReturnType<typeof setTimeout>;
 
     const cycle = () => {
+      if (isPaused) return;
       setIsAnimating(false);
       stayTimeout = setTimeout(() => {
+        if (isPaused) return;
         setIsAnimating(true);
         outTimeout = setTimeout(() => {
+          if (isPaused) return;
           setCurrentPlaceholder((prev) => (prev + 1) % shuffledCategories.length);
           cycle();
         }, 500);
@@ -72,7 +68,7 @@ export default function ImageSearchInput({
       clearTimeout(stayTimeout);
       clearTimeout(outTimeout);
     };
-  }, [shuffledCategories]);
+  }, [shuffledCategories, isPaused]);
 
   const toBase64 = (file: File): Promise<string> =>
     new Promise((resolve, reject) => {
@@ -121,16 +117,26 @@ export default function ImageSearchInput({
 
   const handleSearch = (e?: React.FormEvent) => {
     e?.preventDefault();
-
     const params = new URLSearchParams();
     if (uploadedImageUrl) {
       params.set("image_url", uploadedImageUrl);
-    } else if (query.trim()) {
+      router.push(`/products?${params.toString()}`);
+      onSearch?.(query, uploadedImageUrl || undefined);
+      return;
+    }
+    if (query.trim()) {
       params.set("q", query.trim());
-    } else return;
-
-    router.push(`/products?${params.toString()}`);
-    onSearch?.(query, uploadedImageUrl || undefined);
+      router.push(`/products?${params.toString()}`);
+      onSearch?.(query);
+      return;
+    }
+    if (shuffledCategories.length > 0) {
+      const current = shuffledCategories[currentPlaceholder];
+      if (current?.id) {
+        router.push(`/products?per_page=24&page=1&category=${current.id}`);
+        onSearch?.(current.name);
+      }
+    }
   };
 
   const clearImage = () => {
@@ -179,7 +185,7 @@ export default function ImageSearchInput({
           {!query && !uploadedImageUrl && (
             <div className="absolute inset-y-0 left-3 sm:left-4 flex items-center pointer-events-none overflow-hidden">
               <div
-                className={`text-sm sm:text-base text-gray-400 transition-all duration-500 ${
+                className={`text-sm sm:text-base text-gray-400 transition-all duration-500 truncate  ${
                   isAnimating
                     ? "translate-y-full opacity-0"
                     : "translate-y-0 opacity-100"
@@ -191,7 +197,7 @@ export default function ImageSearchInput({
                 }}
               >
                 {shuffledCategories.length > 0
-                  ? shuffledCategories[currentPlaceholder]
+                  ? shuffledCategories[currentPlaceholder]?.name
                   : placeholder}
               </div>
             </div>
@@ -239,6 +245,8 @@ export default function ImageSearchInput({
         <div className="h-full flex items-center px-[2px]">
           <button
             type="submit"
+            onMouseEnter={() => setIsPaused(true)}
+            onMouseLeave={() => setIsPaused(false)}
             className="h-[calc(100%-4px)] px-5 sm:px-6 bg-gradient-to-r from-[#f2683d] to-[#E94B11] hover:opacity-90 text-white font-medium text-sm sm:text-base rounded-full transition-all duration-200 disabled:opacity-50"
           >
             GO

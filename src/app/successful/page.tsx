@@ -24,7 +24,6 @@ export default function PaymentSuccessfulPage() {
 
                         <Button
                             onClick={() => router.push('/')}
-                            rounded={true}
                             className="max-w-[70%] mx-auto block rounded-full"
                         >
                             Continue shopping

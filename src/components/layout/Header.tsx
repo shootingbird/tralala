@@ -9,6 +9,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { ChevronDown, LogOut, User, ShoppingBag, Heart } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
 import { Category } from "@/types/product";
+import { useGetCategoriesQuery } from "@/slices/products/productApiSlice";
+import { useSelector } from "react-redux";
+import { RootState } from "@/lib/store/store";
 // import { useWishlist } from "@/context/WishlistContext";
 
 const navLinks = [
@@ -157,6 +160,13 @@ export function HeaderComponent({
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  const storeCategories = useSelector(
+    (state: RootState) => state.categories.categories
+  );
+  useGetCategoriesQuery(undefined, {
+    skip: storeCategories.length > 0,
+  });
+
   // Data-dropdown attribute is used to identify both desktop and mobile dropdown containers
   const dropdownContainerAttr = "data-dropdown-container";
 
@@ -218,6 +228,14 @@ export function HeaderComponent({
       mounted = false;
     };
   }, []);
+
+  // Sync local categories with store-provided categories when available
+  useEffect(() => {
+    if (categories.length === 0 && storeCategories.length > 0) {
+      setCategories(storeCategories);
+      setIsLoading(false);
+    }
+  }, [storeCategories]);
 
   // Lock body scroll when overlays are open
   useEffect(() => {
@@ -300,7 +318,9 @@ export function HeaderComponent({
                   <div className="w-full h-10 bg-gray-100 animate-pulse rounded-full" />
                 }
               >
-                <SearchComponent categories={categories} />
+                <SearchComponent
+                  categories={storeCategories.length ? storeCategories : categories}
+                />
               </Suspense>
             </div>
 
