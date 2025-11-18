@@ -1,7 +1,0 @@
-{
-  "build": {
-    "env": {
-      "NEXT_PUBLIC_API_URL": "https://steadfast-ecommerce-backend.onrender.com"
-    }
-  }
-}
